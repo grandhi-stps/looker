@@ -54,8 +54,6 @@ explore: job_tech {}
 
 explore: jobcode_tbl {}
 
-explore: t3 {}
-
 explore: user_roles {}
 
 explore: users {
