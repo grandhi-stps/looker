@@ -97,4 +97,209 @@ explore: Job {
     relationship: one_to_many
     sql_on: ${job.emplid}=${emp_checkin.emplid} ;;
   }
+  join: monthly_hours {
+    type:inner
+    relationship: one_to_one
+    sql_on:  ${job.emplid}=${emp_checkin.emplid} ;;
+  }
+}
+
+
+  view: monthly_hours {
+    derived_table: {
+      sql: select round(sum(extract(hour from total_duration))/4) "Avg Monthly Hours"
+               from hr_data_coe.emp_checkin where emplid='SA0320086'
+               ;;
+    }
+
+    measure: count {
+      type: count
+      drill_fields: [detail*]
+    }
+
+    dimension: avg_monthly_hours {
+      type: number
+      label: "Avg Monthly Hours"
+      sql: ${TABLE}."Avg Monthly Hours" ;;
+    }
+
+
+    set: detail {
+      fields: [avg_monthly_hours]
+    }
+  }
+
+
+
+############### 2 Work Force Dashboard  ##############
+
+explore: atsjobseeker {
+  label: "2 Work force"
+  view_name:ats_jobseeker
+
+  join: job{
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_jobseeker.applicant_id}=${job.applicant_id} ;;
+  }
+  join: ats_employment_history {
+    type: left_outer
+    relationship: one_to_one
+    sql_on:${ats_jobseeker.applicant_id} =${ats_employment_history.applicant_id} ;;
+  }
+  join: hrms_expenses {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${job.emplid}=${hrms_expenses.emplid} ;;
+  }
+  join: job_departments {
+    type: left_outer
+    relationship: many_to_one
+    sql_on: ${job.dept_id}=${job_departments.deptid} ;;
+  }
+  join: date_m {
+    type: left_outer
+    relationship: many_to_one
+    sql_on: ${ats_jobseeker.date_key}=${date_m.date_key} ;;
+  }
+  join: ats_personal_info {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_jobseeker.applicant_id}=${ats_personal_info.applicant_id} ;;
+  }
+  join: emp_diversity {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${job.emplid}=employe-${emp_diversity.emplid} ;;
+  }
+  join: job_tech {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${job.applicant_id}=job-${job_tech.techid} ;;
+  }
+  join: job_interviews{
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_jobseeker.applicant_id}=${job_interviews.applicant_id} ;;
+  }
+  join: leftcount {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_jobseeker.applicant_id}=${job_interviews.applicant_id} ;;
+  }
+  join:hire_vs_left  {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${job.applicant_id}=${job_interviews.applicant_id} ;;
+  }
+}
+view: leftcount {
+  derived_table: {
+    sql: SELECT
+        COUNT(DISTINCT (job."emplid")) AS count_of_emplid
+      FROM hr_data_coe.ats_jobseeker  AS ats_jobseeker
+      LEFT JOIN hr_data_coe.job  AS job ON (ats_jobseeker."applicant_id")=(job."applicant_id")
+      LEFT JOIN hr_data_coe.job_interviews  AS job_interviews ON (ats_jobseeker."applicant_id")=(job_interviews."applicant_id")
+
+      WHERE (job."terminationdate"  IS NOT NULL) AND ((((job_interviews."hiredate" ) >= ((SELECT DATE_TRUNC('day', (DATE_TRUNC('year', DATE_TRUNC('day', CURRENT_TIMESTAMP)) + (-2 || ' year')::INTERVAL)))) AND (job_interviews."hiredate" ) < ((SELECT DATE_TRUNC('day', ((DATE_TRUNC('year', DATE_TRUNC('day', CURRENT_TIMESTAMP)) + (-2 || ' year')::INTERVAL) + (3 || ' year')::INTERVAL)))))))
+       ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+
+  dimension: count_of_emplid {
+    type: number
+    sql: ${TABLE}."count_of_emplid" ;;
+  }
+
+  set: detail {
+    fields: [count_of_emplid]
+  }
+}
+
+view: hire_vs_left {
+  derived_table: {
+    sql: select extract(year from job_effdt) ,
+      count(distinct case when hiredate  is not null then j.emplid end) hire,
+      count(distinct case when terminationdate is not null then (emplid) end) leftcount
+      from hr_data_coe.job j,hr_data_coe.job_interviews ji
+      where j.applicant_id=ji.applicant_id
+      group by extract(year from job_effdt)
+       ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+
+  dimension: date_part {
+    type: number
+    sql: ${TABLE}."date_part" ;;
+  }
+
+  dimension: hire {
+    type: number
+    sql: ${TABLE}."hire" ;;
+  }
+
+  dimension: leftcount {
+    type: number
+    sql: ${TABLE}."leftcount" ;;
+  }
+
+  set: detail {
+    fields: [date_part, hire, leftcount]
+  }
+}
+
+
+
+
+######Rectuitment dashboard Model##########
+
+
+explore: ats__jobseeker {
+  label: "3 Recruitment emp"
+  view_name:ats_jobseeker
+
+  join: job{
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_jobseeker.applicant_id}=${job.applicant_id} ;;
+  }
+  join: job_interviews {
+    type: left_outer
+    relationship: one_to_one
+    sql_on:${ats_jobseeker.applicant_id} =${job_interviews.applicant_id} ;;
+  }
+  join:ats_about_us{
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_jobseeker.applicant_id}=${ats_about_us.applicant_id} ;;
+  }
+  join: job_tech {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_jobseeker.applicant_id}=${job_tech.techid} ;;
+  }
+  join: job_departments {
+    type: left_outer
+    relationship: many_to_one
+    sql_on: ${job.dept_id}=${job_departments.deptid} ;;
+  }
+  join: hrms_expenses {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${job.emplid}=${hrms_expenses.emplid} ;;
+  }
+  join: ats_references {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_references.applicant_id}=${ats_jobseeker.applicant_id} ;;
+  }
+
 }

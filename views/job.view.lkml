@@ -255,9 +255,13 @@ view: job {
     type: string
     sql: ${TABLE}."sal_grade" ;;
   }
-
   measure: salary {
     type: number
+    sql: ${TABLE}."salary" ;;
+    }
+
+  measure: avgsalary {
+    type: average
     sql: ${TABLE}."salary" ;;
   }
 
