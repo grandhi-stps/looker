@@ -259,7 +259,7 @@ view: hire_vs_left {
 
 
 
-######Rectuitment dashboard Model##########
+######################## 3   Rectuitment dashboard Model  ########################
 
 
 explore: ats__jobseeker {
@@ -301,5 +301,237 @@ explore: ats__jobseeker {
     relationship: one_to_one
     sql_on: ${ats_references.applicant_id}=${ats_jobseeker.applicant_id} ;;
   }
+  join:  CV_shortlisted {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_jobseeker.applicant_id}=${job.applicant_id} ;;
+  }
+  join:  cv_interviewed {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_jobseeker.applicant_id}=${job.applicant_id} ;;
+  }
+  join: offers_released {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_jobseeker.applicant_id}=${job.applicant_id} ;;
+  }
+  join: acceptance_rate {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_jobseeker.applicant_id}=${job.applicant_id} ;;
+  }
+  join: avg_recruitment_cost {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${job.emplid}=${hrms_expenses.emplid} ;;
+}
+  join: offer_released_vs_candidate_placed {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_about_us.applicant_id}=${ats_jobseeker.applicant_id} ;;
+  }
+  join: dept_wise_openings_placed {
+    type: left_outer
+    relationship: one_to_one
+    sql_on:${ats_jobseeker.applicant_id}=${job_tech.techid} ;;
+    }
+  join: source_of_references {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${ats_references.applicant_id}=${ats_jobseeker.applicant_id} ;;
+  }
 
+}
+  view: CV_shortlisted {
+    derived_table: {
+      sql: select  count(distinct case when cv_short_listed='Yes' then applicant_id end)
+              from hr_data_coe.ats_jobseeker
+               ;;
+    }
+
+    dimension: count {
+      type: number
+      sql: ${TABLE}."count" ;;
+    }
+
+  }
+
+view: cv_interviewed {
+  derived_table: {
+    sql: select count(distinct case when first_stage_status='Yes' then applicant_id end)
+      from hr_data_coe.ats_jobseeker
+       ;;
+  }
+
+  dimension: count {
+    type: number
+    sql: ${TABLE}."count" ;;
+  }
+
+  set: detail {
+    fields: [count]
+  }
+}
+
+view: offers_released {
+  derived_table: {
+    sql: select count(case when offerdate is not null then applicant_id end)
+      from hr_data_coe.job_interviews
+       ;;
+  }
+
+  dimension: count {
+    type: number
+    sql: ${TABLE}."count" ;;
+  }
+
+  set: detail {
+    fields: [count]
+  }
+
+}
+view: acceptance_rate {
+  derived_table: {
+    sql: select round((count(hiredate)::numeric/count(offerdate))*100)
+      from hr_data_coe.job_interviews
+       ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+
+  dimension: round {
+    type: number
+    sql: ${TABLE}."round" ;;
+  }
+
+  set: detail {
+    fields: [round]
+  }
+}
+view: avg_recruitment_cost {
+  derived_table: {
+    sql: select round(avg(cast(recruitment_cost as integer))) from hr_data_coe.hrms_expenses
+      ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+
+  measure: round {
+    type: number
+    sql: ${TABLE}."round" ;;
+  }
+
+  set: detail {
+    fields: [round]
+  }
+  }
+  view: offer_released_vs_candidate_placed {
+  derived_table: {
+    sql: select source,count(offerdate),round(cast(count(hiredate) as numeric)/count(offerdate)*100 )
+      from hr_data_coe.ats_about_us au inner join hr_data_coe.job_interviews ji
+      on ji.applicant_id=au.applicant_id
+      group by 1
+      order by 2 desc
+       ;;
+  }
+
+  dimension: source {
+    type: string
+    sql: ${TABLE}."source" ;;
+  }
+
+  dimension: count {
+    type: number
+    sql: ${TABLE}."count" ;;
+  }
+
+  dimension: round {
+    type: number
+    sql: ${TABLE}."round" ;;
+  }
+
+  set: detail {
+    fields: [source, count, round]
+  }
+}
+
+view: dept_wise_openings_placed {
+  derived_table: {
+    sql: select jd.departmentname,sum(vacancy) "Openings",count( case when hiredate is not null then applicant_id end) "Candidate Placed"
+      from hr_data_coe.job_tech jt inner join hr_data_coe.job_departments jd
+      on jt.deptid=jd.deptid
+      inner join hr_data_coe.job_interviews ji
+      on ji.applicant_id=jt.techid
+      group by 1
+      order by 2 desc
+       ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+
+  dimension: departmentname {
+    type: string
+    sql: ${TABLE}."departmentname" ;;
+  }
+
+  dimension: openings {
+    type: number
+    sql: ${TABLE}."Openings" ;;
+  }
+
+  dimension: candidate_placed {
+    type: number
+    label: "Candidate Placed"
+    sql: ${TABLE}."Candidate Placed" ;;
+  }
+
+  set: detail {
+    fields: [departmentname, openings, candidate_placed]
+  }
+}
+
+view: source_of_references {
+  derived_table: {
+    sql: select type_of_reference ,count(hiredate) Hired,round((cast(count(distinct case when hiredate is not null then ji.applicant_id end) as numeric)/count(distinct re.applicant_id))*100) "Hired%"
+       from hr_data_coe.ats_references re left outer join hr_data_coe.job_interviews ji
+       on re.applicant_id=ji.applicant_id
+       where type_of_reference<>'Vendor'
+       group by 1
+       order by 2 desc
+       ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+
+  dimension: type_of_reference {
+    type: string
+    sql: ${TABLE}."type_of_reference" ;;
+  }
+
+  dimension: hired {
+    type: number
+    sql: ${TABLE}."hired" ;;
+  }
+
+  dimension: hire {
+    type: number
+    sql: ${TABLE}."Hired%" ;;
+  }
+
+  set: detail {
+    fields: [type_of_reference, hired, hired]
+  }
 }
