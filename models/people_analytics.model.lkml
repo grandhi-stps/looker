@@ -65,8 +65,7 @@ explore: users {
 }
 
 
-
-
+#############   1 JOBS data job seeker ###################
 explore: Job {
   label: "1 Jobs data ,job seekers"
   view_name:job
@@ -341,7 +340,17 @@ explore: ats__jobseeker {
     relationship: one_to_one
     sql_on: ${ats_references.applicant_id}=${ats_jobseeker.applicant_id} ;;
   }
+  join:early_outs_by_dept_name {
+    type: left_outer
+    relationship: many_to_one
+    sql_on: ${job.dept_id}=${job_departments.deptid} ;;
+  }
 
+  join: avg_time_to_hire {
+    type: left_outer
+    relationship: one_to_one
+    sql_on: ${job_interviews.applicant_id}=${job_tech.techid} ;;
+  }
 }
   view: CV_shortlisted {
     derived_table: {
@@ -533,5 +542,65 @@ view: source_of_references {
 
   set: detail {
     fields: [type_of_reference, hired, hired]
+  }
+}
+
+
+view: early_outs_by_dept_name {
+  derived_table: {
+    sql: select jd.departmentname,
+      case when   (job_end_dt-job_effdt)::numeric/365<=1 then '0-1 yrs'
+           when (job_end_dt-job_effdt)::numeric/365>1 and (job_end_dt-job_effdt)::numeric/365<=3 then '1-3 yrs'
+         when  (job_end_dt-job_effdt)::numeric/365>3 then '3+ yrs'
+         end,
+        count(emplid)
+      from hr_data_coe.job j inner join hr_data_coe.job_departments jd
+      on j.dept_id=jd.deptid
+      where job_end_dt is not null
+      group by 1,2
+      order by 1,2 desc
+       ;;
+  }
+
+  dimension: departmentname {
+    type: string
+    sql: ${TABLE}."departmentname" ;;
+  }
+
+  dimension: case {
+    type: string
+    sql: ${TABLE}."case" ;;
+  }
+
+  dimension: count {
+    type: number
+    sql: ${TABLE}."count" ;;
+  }
+
+  set: detail {
+    fields: [departmentname, case, count]
+  }
+}
+
+view: avg_time_to_hire {
+  derived_table: {
+    sql: select abs( round(avg(hiredate-postingdate)))
+      from hr_data_coe.job_interviews ji inner join hr_data_coe.job_tech jt
+      on ji.applicant_id=jt.techid
+       ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+
+  dimension: abs {
+    type: number
+    sql: ${TABLE}."abs" ;;
+  }
+
+  set: detail {
+    fields: [abs]
   }
 }
