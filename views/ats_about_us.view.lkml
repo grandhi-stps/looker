@@ -18,6 +18,6 @@ view: ats_about_us {
 
   measure: count {
     type: count
-    drill_fields: []
+    drill_fields: [abt_id,applicant_id,source]
   }
 }

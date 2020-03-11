@@ -17,6 +17,6 @@ view: monthly_hours {
   }
 
   set: detail {
-    fields: [avg_monthly_hours]
+    fields: [detail*]
   }
 }

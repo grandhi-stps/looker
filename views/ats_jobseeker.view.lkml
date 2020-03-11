@@ -226,13 +226,12 @@ view: ats_jobseeker {
     sql: ${TABLE}."third_stage_status" ;;
   }
 
-  dimension: total_exp {
-    type: number
-    sql: ${TABLE}."total_exp" ;;
-  }
+  dimension: total_exp {}
 
   measure: count {
     type: count
-    drill_fields: [third_interviewer_name, second_interviewer_name, first_interviewer_name, applicant_name]
+    drill_fields: [third_interviewer_name, second_interviewer_name, first_interviewer_name, applicant_name,applicant_id,applicant_name,candidate_rejection_date
+                    ,applied_dt_date,applied_dt_month,applied_dt_quarter,applied_dt_quarter,applied_dt_raw,applied_dt_year
+                    ,client_rejection_year,current_designation,date_key,cv_short_listed,current_designation]
   }
 }

@@ -48,6 +48,6 @@ view: ats_education {
 
   measure: count {
     type: count
-    drill_fields: [school_name]
+    drill_fields: [school_name,edu_id,edu_city,edu_state,edu_country,school_name,end_date,start_date]
   }
 }

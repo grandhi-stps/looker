@@ -5,9 +5,9 @@ view: cv_shortlisted {
        ;;
   }
 
-  dimension: count {
+  measure: count {
     type: number
     sql: ${TABLE}."count" ;;
-  }
 
+ }
 }

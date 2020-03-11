@@ -30,6 +30,6 @@ view: source_of_references {
   }
 
   set: detail {
-    fields: [type_of_reference, hired, hired]
+    fields: [type_of_reference, hired, hired%,]
   }
 }

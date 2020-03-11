@@ -93,6 +93,6 @@ view: ats_employment_history {
 
   measure: count {
     type: count
-    drill_fields: [perviouscompanyname]
+    drill_fields: [perviouscompanyname,applicant_id,eh_address,eh_id,eh_state,reasonforleaving,responsbileduties,salaryfinalrateofpay,salarystartrateofpay,]
   }
 }

@@ -6,6 +6,7 @@ view: offers_released {
   }
 
   dimension: count {
+    drill_fields: [detail*]
     type: number
     sql: ${TABLE}."count" ;;
   }

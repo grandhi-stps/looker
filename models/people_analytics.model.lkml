@@ -10,51 +10,8 @@ datagroup: people_analytics_default_datagroup {
 
 persist_with: people_analytics_default_datagroup
 
-explore: ats_about_us {}
 
-explore: ats_acknowledgment {}
 
-explore: ats_additional_info {}
-
-explore: ats_certification {}
-
-explore: ats_education {}
-
-explore: ats_employment_history {}
-
-explore: ats_jobseeker {}
-
-explore: ats_personal_info {}
-
-explore: ats_references {}
-
-explore: ats_signof {}
-
-explore: date_m {}
-
-explore: emp_attrition {}
-
-explore: emp_attrn {}
-
-explore: emp_attrn_test {}
-
-explore: emp_checkin {}
-
-explore: emp_diversity {}
-
-explore: hrms_expenses {}
-
-explore: job {}
-
-explore: job_departments {}
-
-explore: job_interviews {}
-
-explore: job_tech {}
-
-explore: jobcode_tbl {}
-
-explore: user_roles {}
 
 explore: users {
   join: user_roles {

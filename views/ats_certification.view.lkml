@@ -30,6 +30,6 @@ view: ats_certification {
 
   measure: count {
     type: count
-    drill_fields: [id]
+    drill_fields: [id,applicant_id,cert_year,certificate_me,issuing_body]
   }
 }

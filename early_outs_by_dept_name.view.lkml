@@ -32,4 +32,5 @@ view: early_outs_by_dept_name {
   set: detail {
     fields: [departmentname, case, count]
   }
+  drill_fields: [detail*]
 }

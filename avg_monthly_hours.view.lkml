@@ -6,16 +6,13 @@ view: avg_monthly_hours {
   }
 
 
-
-
-  dimension: avg_monthly_hours {
+   dimension: avg_monthly_hours {
     type: number
-    label: "Avg Monthly Hours"
+   label: "Avg Monthly Hours"
     sql: ${TABLE}."Avg Monthly Hours" ;;
   }
-
-
-  set: detail {
+set: detail {
     fields: [avg_monthly_hours]
   }
+  drill_fields: [detail*]
 }

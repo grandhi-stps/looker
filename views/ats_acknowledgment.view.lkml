@@ -18,6 +18,6 @@ view: ats_acknowledgment {
 
   measure: count {
     type: count
-    drill_fields: []
+    drill_fields: [ac_id,accknowledgment,applicant_id]
   }
 }

@@ -80,6 +80,6 @@ view: ats_additional_info {
 
   measure: count {
     type: count
-    drill_fields: [id]
+    drill_fields: [id,acct_id,avail_start_year,avail_start_week,avail_start_date,avail_start_month,avail_start_quarter,]
   }
 }

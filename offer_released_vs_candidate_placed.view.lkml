@@ -26,4 +26,5 @@ view: offer_released_vs_candidate_placed {
   set: detail {
     fields: [source, count, round]
   }
+  drill_fields: [detail*]
 }

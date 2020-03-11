@@ -82,4 +82,5 @@ view: ats_personal_info {
     type: count
     drill_fields: [id, firstname, lastname]
   }
+
 }

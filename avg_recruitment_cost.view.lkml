@@ -15,6 +15,6 @@ view: avg_recruitment_cost {
   }
 
   set: detail {
-    fields: [round]
+    fields: [detail*]
   }
 }

@@ -6,6 +6,7 @@ view: cv_interviewed {
   }
 
   dimension: count {
+    drill_fields: [detail*]
     type: number
     sql: ${TABLE}."count" ;;
   }
@@ -13,4 +14,5 @@ view: cv_interviewed {
   set: detail {
     fields: [count]
   }
+
 }
