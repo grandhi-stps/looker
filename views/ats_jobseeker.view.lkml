@@ -234,5 +234,5 @@ view: ats_jobseeker {
                     ,applied_dt_date,applied_dt_month,applied_dt_quarter,applied_dt_quarter,applied_dt_raw,applied_dt_year
                     ,client_rejection_year,current_designation,date_key,cv_short_listed,current_designation]
   }
-  drill_fields: [applicant_id,applicant_name,role,total_exp]
+
 }
