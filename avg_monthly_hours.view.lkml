@@ -1,3 +1,5 @@
+include: "*.view" # include all the views
+
 view: avg_monthly_hours {
   derived_table: {
     sql: select round(sum(extract(hour from total_duration))/4) "Avg Monthly Hours"

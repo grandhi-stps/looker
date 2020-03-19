@@ -1,3 +1,5 @@
+include: "*.view" # include all the views
+
 view: cv_shortlisted {
   derived_table: {
     sql: select  count(distinct case when cv_short_listed='Yes' then applicant_id end)
@@ -10,4 +12,17 @@ view: cv_shortlisted {
     sql: ${TABLE}."count" ;;
 
  }
+  dimension: role {
+    type: string
+    sql: ${TABLE}."role" ;;
+  }
+  dimension: applicant_id {
+    type: number
+    sql: ${TABLE}."applicant_id" ;;
+  }
+
+  dimension: applicant_name {
+    type: string
+    sql: ${TABLE}."applicant_name" ;;
+  }
 }

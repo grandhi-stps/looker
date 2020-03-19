@@ -1,7 +1,13 @@
+#################################3/16/2020 lookml modification ##############################################
+
+
 connection: "hr_data"
 
 # include all the views
 include: "/views/**/*.view"
+
+
+#include: "*.dashboard" # include all the dashboards
 
 datagroup: people_analytics_default_datagroup {
   # sql_trigger: SELECT MAX(id) FROM etl_log;;
@@ -9,8 +15,6 @@ datagroup: people_analytics_default_datagroup {
 }
 
 persist_with: people_analytics_default_datagroup
-
-
 
 
 explore: users {
@@ -61,29 +65,29 @@ explore: Job {
 }
 
 
-  view: monthly_hours {
-    derived_table: {
-      sql: select round(sum(extract(hour from total_duration))/4) "Avg Monthly Hours"
+view: monthly_hours {
+  derived_table: {
+    sql: select round(sum(extract(hour from total_duration))/4) "Avg Monthly Hours"
                from hr_data_coe.emp_checkin where emplid='SA0320086'
                ;;
-    }
-
-    measure: count {
-      type: count
-      drill_fields: [detail*]
-    }
-
-    dimension: avg_monthly_hours {
-      type: number
-      label: "Avg Monthly Hours"
-      sql: ${TABLE}."Avg Monthly Hours" ;;
-    }
-
-
-    set: detail {
-      fields: [avg_monthly_hours]
-    }
   }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+
+  dimension: avg_monthly_hours {
+    type: number
+    label: "Avg Monthly Hours"
+    sql: ${TABLE}."Avg Monthly Hours" ;;
+  }
+
+
+  set: detail {
+    fields: [avg_monthly_hours]
+  }
+}
 
 
 
@@ -259,11 +263,13 @@ explore: ats__jobseeker {
   }
   join:  CV_shortlisted {
     type: left_outer
+    from: ats_jobseeker
     relationship: one_to_one
     sql_on: ${ats_jobseeker.applicant_id}=${job.applicant_id} ;;
   }
   join:  cv_interviewed {
     type: left_outer
+    from: ats_jobseeker
     relationship: one_to_one
     sql_on: ${ats_jobseeker.applicant_id}=${job.applicant_id} ;;
   }
@@ -274,6 +280,7 @@ explore: ats__jobseeker {
   }
   join: acceptance_rate {
     type: left_outer
+
     relationship: one_to_one
     sql_on: ${ats_jobseeker.applicant_id}=${job.applicant_id} ;;
   }
@@ -281,7 +288,7 @@ explore: ats__jobseeker {
     type: left_outer
     relationship: one_to_one
     sql_on: ${job.emplid}=${hrms_expenses.emplid} ;;
-}
+  }
   join: offer_released_vs_candidate_placed {
     type: left_outer
     relationship: one_to_one
@@ -291,7 +298,7 @@ explore: ats__jobseeker {
     type: left_outer
     relationship: one_to_one
     sql_on:${ats_jobseeker.applicant_id}=${job_tech.techid} ;;
-    }
+  }
   join: source_of_references {
     type: left_outer
     relationship: one_to_one
@@ -309,19 +316,19 @@ explore: ats__jobseeker {
     sql_on: ${job_interviews.applicant_id}=${job_tech.techid} ;;
   }
 }
-  view: CV_shortlisted {
-    derived_table: {
-      sql: select  count(distinct case when cv_short_listed='Yes' then applicant_id end)
+view: CV_shortlisted {
+  derived_table: {
+    sql: select  count(distinct case when cv_short_listed='Yes' then applicant_id end)
               from hr_data_coe.ats_jobseeker
                ;;
-    }
-
-    dimension: count {
-      type: number
-      sql: ${TABLE}."count" ;;
-    }
-
   }
+
+  dimension: count {
+    type: number
+    sql: ${TABLE}."count" ;;
+  }
+
+}
 
 view: cv_interviewed {
   derived_table: {
@@ -397,8 +404,8 @@ view: avg_recruitment_cost {
   set: detail {
     fields: [round]
   }
-  }
-  view: offer_released_vs_candidate_placed {
+}
+view: offer_released_vs_candidate_placed {
   derived_table: {
     sql: select source,count(offerdate),round(cast(count(hiredate) as numeric)/count(offerdate)*100 )
       from hr_data_coe.ats_about_us au inner join hr_data_coe.job_interviews ji

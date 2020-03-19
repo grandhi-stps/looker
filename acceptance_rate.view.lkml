@@ -1,3 +1,5 @@
+include: "*.view" # include all the views
+
 view: acceptance_rate {
   derived_table: {
     sql: select round((count(hiredate)::numeric/count(offerdate))*100)
@@ -16,6 +18,6 @@ view: acceptance_rate {
   }
 
   set: detail {
-    fields: [round]
+    fields: [detail*]
   }
 }
