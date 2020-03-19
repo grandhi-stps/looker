@@ -275,6 +275,7 @@ explore: ats__jobseeker {
   }
   join: offers_released {
     type: left_outer
+    from: ats_jobseeker
     relationship: one_to_one
     sql_on: ${ats_jobseeker.applicant_id}=${job.applicant_id} ;;
   }
