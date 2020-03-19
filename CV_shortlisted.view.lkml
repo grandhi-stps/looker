@@ -17,6 +17,7 @@ view: cv_shortlisted {
     sql: ${TABLE}."role" ;;
   }
   dimension: applicant_id {
+    primary_key: yes
     type: number
     sql: ${TABLE}."applicant_id" ;;
   }
