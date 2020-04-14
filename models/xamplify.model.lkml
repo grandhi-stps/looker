@@ -165,7 +165,7 @@ view: campaign1 {
   measure: Email_Opened{
     type: count_distinct
     sql: ${view_user_id} ;;
-    drill_fields: [vendor_company_name,partner_company_name,redistributed_campaign_id,redistributed_campaign_name,
+    drill_fields: [vendor_company_name,partner_company_name,redistributed_campaign_id,redistributed_campaign_name,view_user_id,
       email_id,
       contact_first_name,
       contact_last_name]
@@ -214,7 +214,7 @@ view: campaign1 {
   measure: Views {
     type: count_distinct
     sql: ${view_id} ;;
-    drill_fields: [partner_company_name,redistributed_campaign_id,redistributed_campaign_name,
+    drill_fields: [partner_company_name,redistributed_campaign_id,redistributed_campaign_name,view_id,
       email_id,
       contact_first_name,
       contact_last_name,
