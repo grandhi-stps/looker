@@ -985,7 +985,7 @@ view:leads_deals {
       "Date".cal_month "Month",
       "Date".month_name "Month Name",
       "Date".cal_week "Week",
-      "Campaign Deal Reg".id as "Deal ID",
+      "Campaign Deal Reg".id as "ID",
       "Campaign Deal Reg".is_deal as "Is Deal",
       "Campaign Deal Reg".created_time as "Deal Created Time",
       "Campaign Deal Reg".first_name as "Deal First Name",
@@ -999,15 +999,16 @@ view:leads_deals {
       "Campaign Deal Reg".lead_street as "Lead Street",
       "Campaign Deal Reg".postal_code "Postal Code",
       "Campaign Deal Reg".partner_company_id as "Partner Company ID",
-      "Campaign Deal Reg".partner_company_name as "Partner Company Name"
-
-
+      "Campaign Deal Reg".partner_company_name as "Partner Company Name",
+      "Campaign Deal Status".deal_status as "Deal Status",
+      "Campaign Deal Reg".company as "Deal Company"
       from
       xamplify_test.xa_campaign_d "Vendor Campaign"
       INNER JOIN xamplify_test.xa_user_d "Vendor Users" ON ("Vendor Campaign".customer_id = "Vendor Users".user_id)
       INNER JOIN xamplify_test.xa_company_d "Vendor Company" ON ("Vendor Users".company_id = "Vendor Company".company_id)
       left JOIN xamplify_test.xa_campaign_d "Redistributed Cam" ON ("Vendor Campaign".campaign_id = "Redistributed Cam".parent_campaign_id)
       left join xamplify_test.xa_campaign_deal_registration_d "Campaign Deal Reg" on "Redistributed Cam".campaign_id = "Campaign Deal Reg".campaign_id
+      left join xamplify_test.xa_campaign_deal_status_d "Campaign Deal Status" on "Campaign Deal Status".deal_id = "Campaign Deal Reg".id
       left join xamplify_test.xa_date_dim "Date" on (split_part("Campaign Deal Reg".created_time::text , '-',1)||split_part("Campaign Deal Reg".created_time::text , '-',2)||left(split_part("Campaign Deal Reg".created_time::text , '-',3),2))::int
       = "Date".date_key
        ;;
@@ -1018,10 +1019,30 @@ view:leads_deals {
     drill_fields: [detail*]
   }
 
+  measure: Deals  {
+    type:count_distinct
+    sql: (case when ${is_deal} then ${id} END);;
+    drill_fields: [ partner_company_name,vendor_campaign_name,deal_first_name,deal_last_name,deal_email_id,
+      deal_phone_number,deal_company,deal_created_time_date]
+
+  }
+  measure: Leads  {
+    type:count_distinct
+    sql: ${id};;
+    drill_fields: [partner_company_name,vendor_campaign_name,deal_first_name,deal_last_name,deal_email_id,
+      deal_phone_number,deal_company,deal_created_time_date]
+
+  }
+
   dimension: vendor_campaign_id {
     type: number
     label: "Vendor Campaign ID"
     sql: ${TABLE}."Vendor Campaign ID" ;;
+  }
+  dimension: deal_status {
+    type: string
+    label: "Deal Status"
+    sql: ${TABLE}."Deal Status" ;;
   }
 
   dimension: vendor_campaign_name {
@@ -1129,10 +1150,10 @@ view:leads_deals {
     sql: ${TABLE}."Week" ;;
   }
 
-  dimension: deal_id {
+  dimension: id {
     type: number
-    label: "Deal ID"
-    sql: ${TABLE}."Deal ID" ;;
+    label: "ID"
+    sql: ${TABLE}."ID" ;;
   }
 
   dimension: is_deal {
@@ -1219,6 +1240,12 @@ view:leads_deals {
     sql: ${TABLE}."Partner Company Name" ;;
   }
 
+  dimension: deal_company {
+    type: string
+    label: "Deal Company"
+    sql: ${TABLE}."company" ;;
+  }
+
 
   set: detail {
     fields: [
@@ -1241,7 +1268,7 @@ view:leads_deals {
       month,
       month_name,
       week,
-      deal_id,
+      id,
       is_deal,
       deal_created_time_time,
       deal_first_name,
@@ -1255,7 +1282,9 @@ view:leads_deals {
       lead_street,
       postal_code,
       partner_company_id,
-      partner_company_name
+      partner_company_name,
+      deal_status,
+      deal_company
     ]
   }
 }
