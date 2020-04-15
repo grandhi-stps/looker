@@ -85,13 +85,24 @@ view: campaign1 {
       "Email View".id "View ID",
       "Email View".time "View Time",
       "Email View".user_id as "View User ID",
+      "Email View".action_id "Action ID",
+      "Email View".country "View Country",
+      "Email View".state "View State",
+      "Email View".city as "View City",
+      "Email View".zip as "View Zip Code",
+      "Email View".longitude as "View Longitude",
+      "Email View".latitude as  "View Latitude",
       "Contact Received Campaigns".user_id as "Contact User ID",
       "Contact Received Campaigns".user_list_id as "Contact User List ID",
       "Contact Received Campaigns".contact_company as "Contact Company",
       "Contact Received Campaigns".email_id as "Contact Email ID",
       "Contact Received Campaigns".contact_first_name as "Contact First Name",
       "Contact Received Campaigns".contact_last_name as "Contact Last Name",
-      "Contact Received Campaigns".contact_mobile_number as "Contact Mobile Number"
+      "Contact Received Campaigns".contact_mobile_number as "Contact Mobile Number",
+      "Contact Received Campaigns".contact_country as "Contact Country",
+      "Contact Received Campaigns".contact_state as "Contact State",
+      "Contact Received Campaigns".contact_city as "Contact City",
+      "Contact Received Campaigns".contact_zip as "Contact Zip Code"
       from
       xamplify_test.xa_campaign_d "Vendor Campaign1"
       left outer join
@@ -153,32 +164,40 @@ view: campaign1 {
   }
   measure: Total_Recipients {
     type: count_distinct
-    sql: ${contact_user_id} ;;
-    drill_fields: [vendor_company_name,partner_company_name,redistributed_campaign_id,redistributed_campaign_name,
-      email_id,
-      contact_first_name,
-      contact_last_name]
+    sql: ${contact_user_id};;
+   # sql_distinct_key: ${contact_user_id} ;;
+    drill_fields: [
+      email_id
+      ]
   }
-
-
 
   measure: Email_Opened{
     type: count_distinct
     sql: ${view_user_id} ;;
-    drill_fields: [vendor_company_name,partner_company_name,redistributed_campaign_id,redistributed_campaign_name,view_user_id,
-      email_id,
-      contact_first_name,
-      contact_last_name]
+    sql_distinct_key: ${view_user_id};;
+    drill_fields: [
+      email_id
+      ]
   }
+
+ # dimension: Boolean_filter{
+  #  type: yesno
+   # sql: (${campaign1.contact_user_id}=${campaign1.view_user_id});;
+  #}
 
   measure: Email_Not_Opened{
     type: number
-    sql: ${Total_Recipients}-${Email_Opened} ;;
-    drill_fields: [vendor_company_name,partner_company_name,redistributed_campaign_id,redistributed_campaign_name,
-      email_id,
-      contact_first_name,
-      contact_last_name]
+    sql: ${Total_Recipients}-${Email_Opened};;
+  #sql: case when ${contact_user_id} != ${view_user_id} then ${contact_user_id} end;;
+   #filters: {
+  #field: Boolean_filter
+  #value: "no"
+   #}
+    drill_fields: [
+      email_id
+      ]
   }
+
 
 
   measure: Email_Opened_Percent{
@@ -214,10 +233,8 @@ view: campaign1 {
   measure: Views {
     type: count_distinct
     sql: ${view_id} ;;
-    drill_fields: [partner_company_name,redistributed_campaign_id,redistributed_campaign_name,view_id,
+    drill_fields: [view_id,
       email_id,
-      contact_first_name,
-      contact_last_name,
       view_time_date]
   }
 
@@ -487,6 +504,76 @@ view: campaign1 {
     sql: ${TABLE}."Contact Mobile Number" ;;
   }
 
+  dimension: contact_country {
+    type: string
+    map_layer_name: countries
+    label: "Contact Country"
+    sql: ${TABLE}."Contact Country" ;;
+  }
+
+  dimension: contact_state {
+    type: string
+    map_layer_name: us_states
+    label: "Contact State"
+    sql: ${TABLE}."Contact State" ;;
+  }
+  dimension: contact_city {
+    type: string
+    label: "Contact City"
+    sql: ${TABLE}."Contact City" ;;
+  }
+
+  dimension: contact_zip {
+    type: zipcode
+    label: "Contact Zip Code"
+    sql: ${TABLE}."Contact Zip Code" ;;
+  }
+
+  dimension: country {
+    type: string
+    map_layer_name: countries
+    label: "View Country"
+    sql: ${TABLE}."View Country" ;;
+  }
+
+  dimension: state {
+    type: string
+    map_layer_name: us_states
+    label: "View State"
+    sql: ${TABLE}."View State" ;;
+  }
+  dimension: city {
+    type: string
+    label: "View City"
+    sql: ${TABLE}."View City" ;;
+  }
+
+  dimension: zip {
+    type: zipcode
+    label: "View Zip Code"
+    sql: ${TABLE}."View Zip Code" ;;
+  }
+
+  dimension:longitude {
+    type: string
+    label: "View Longitude"
+    sql: ${TABLE}."View Longitude" ;;
+
+  }
+
+  dimension:latitude{
+    type: string
+    label: "View Latitude"
+    sql: ${TABLE}."View Latitude" ;;
+
+  }
+
+  dimension: user_location {
+  type: location
+  sql_latitude: ${latitude} ;;
+  sql_longitude: ${longitude} ;;
+}
+
 
   set:campaigns_launched{
     fields: [vendor_company_name,
@@ -557,7 +644,18 @@ view: campaign1 {
       email_id,
       contact_first_name,
       contact_last_name,
-      contact_mobile_number
+      contact_mobile_number,
+      contact_country,
+      contact_state,
+      contact_city,
+      contact_zip,
+      country,
+      state,
+      city,
+      zip,
+      longitude,
+      latitude,
+      user_location
     ]
   }
 }
@@ -630,8 +728,8 @@ view:vendors {
 
   measure: Parnters{
     type: count_distinct
-    sql: ${partner_company_name1} ;;
-    drill_fields: [partner_first_name,partner_last_name,partner_company_name1]
+    sql: ${partner_company_name};;
+    drill_fields: [partner_company_name]
 
   }
 
@@ -1032,6 +1130,93 @@ view:leads_deals {
     drill_fields: [partner_company_name,vendor_campaign_name,deal_first_name,deal_last_name,deal_email_id,
       deal_phone_number,deal_company,deal_created_time_date]
 
+  }
+  measure: 20Q1leads{
+    type: count_distinct
+    sql: case when ${year_qtr}='20Q1' then ${id} end ;;
+  }
+
+  measure: 20Q2leads{
+    type: count_distinct
+    sql: case when ${year_qtr}='20Q2' then ${id} end ;;
+  }
+
+  measure: 20Q1Deals{
+    type: count_distinct
+    sql: case when ${year_qtr}='20Q1' and ${is_deal}='true' then ${id} end ;;
+  }
+
+  measure: 20Q2Deals{
+    type: count_distinct
+    sql: case when ${year_qtr}='20Q2' and ${is_deal}='true' then ${id} end ;;
+  }
+
+  measure: 20Q1DealPercentage {
+    type: number
+    sql: ${20Q1Deals}/${20Q1leads} ;;
+
+  }
+
+  measure: 20Q2DealPercentage {
+    type: number
+    sql: ${20Q2Deals}/${20Q2leads} ;;
+
+    }
+
+  measure: Lead_QTD_Growth_Percentage {
+    type: number
+    sql: ${20Q2leads}-${20Q1leads}/${20Q2leads} ;;
+  }
+
+  measure: Deal_QTD_Growth_Percentage {
+    type: number
+    sql: ${20Q2Deals}-${20Q1Deals}/${20Q2Deals} ;;
+  }
+
+  measure: Prev_Month_Leads {
+    type: count_distinct
+    sql:case when extract(month from ${deal_created_time_date})= (extract(month from now())-1)
+      then ${id} end;;
+  }
+  measure: Cur_Month_Leads {
+    type: count_distinct
+    sql:case when extract(month from ${deal_created_time_date})= extract(month from now())
+      then ${id} end;;
+  }
+  measure: Prev_Month_Deals{
+    type: count_distinct
+    sql:case when extract(month from ${deal_created_time_date})= (extract(month from now())-1)
+             and ${is_deal}='true'
+    then ${id} end;;
+  }
+  measure: Cur_Month_Deals{
+    type: count_distinct
+    sql:case when extract(month from ${deal_created_time_date})= extract(month from now())
+             and ${is_deal}='true'
+    then ${id} end;;
+  }
+ measure:Prev_Month_Deals_Percentage{
+   type: number
+  sql: ${Prev_Month_Deals}/${Prev_Month_Leads} ;;
+ }
+ measure: Cur_Month_Deals_Percentage{
+   type: number
+  sql: ${Cur_Month_Deals}/${Cur_Month_Leads} ;;
+ }
+  measure:Percentage_Leads_Growth{
+    type: number
+    sql: 100*(${Cur_Month_Leads}-${Prev_Month_Leads})/NULLIF(${Cur_Month_Leads},0);;
+    value_format: "0\%"
+  }
+  measure:Percentage_Deals_Growth{
+    type:number
+    sql: 100*(${Cur_Month_Deals}-${Prev_Month_Deals})/NULLIF(${Cur_Month_Deals},0);;
+    value_format: "0\%"
+  }
+  measure: Percentage_MOM_Deals{
+    type: number
+    sql: 100*(${Cur_Month_Deals_Percentage}-${Prev_Month_Deals_Percentage})/NULLIF(${Cur_Month_Deals_Percentage},0);;
+    value_format: "0\%"
   }
 
   dimension: vendor_campaign_id {
