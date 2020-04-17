@@ -154,6 +154,11 @@ view: campaign1 {
     type: count_distinct
     sql: ${vendor_campaign_id} ;;
     drill_fields: [Campaigns_created*]
+    link: {
+      label: "Detail Report"
+      url: "{{link}}&pivots=
+      vendor_campaign_name"
+    }
   }
 
 
@@ -174,49 +179,91 @@ view: campaign1 {
   measure: Email_Opened{
     type: count_distinct
     sql: ${view_user_id} ;;
-    sql_distinct_key: ${view_user_id};;
     drill_fields: [
       email_id
       ]
   }
 
- # dimension: Boolean_filter{
-  #  type: yesno
-   # sql: (${campaign1.contact_user_id}=${campaign1.view_user_id});;
+
+
+  #dimension: Boolean_filter{
+   # type: yesno
+    #sql: (${campaign1.contact_user_id})=
+    #(${campaign1.view_user_id});;
   #}
 
   measure: Email_Not_Opened{
     type: number
     sql: ${Total_Recipients}-${Email_Opened};;
-  #sql: case when ${contact_user_id} != ${view_user_id} then ${contact_user_id} end;;
-   #filters: {
-  #field: Boolean_filter
-  #value: "no"
-   #}
+    link: {
+      label: "Detail Report"
+      url: "https://stratappspartner.looker.com/looks/29"
+    }
+   # drill_fields: [
+    #  email_id
+     # ]
+  }
+
+
+
+  measure: Email_Not_Openedstr{
+    type: string
+    sql: CAST (${Email_Not_Opened} as Character Varying ) ;;
+  }
+
+  measure: Email_Openedstr{
+    type: string
+    sql: CAST ( ${Email_Opened} as Character Varying ) ;;
     drill_fields: [
       email_id
-      ]
+    ]
   }
-
-
-
   measure: Email_Opened_Percent{
     type: number
-
-    sql:100.00* ${Email_Opened}/NULLIF(${Total_Recipients},0) ;;
+   sql:Round(100.00* ${Email_Opened}/NULLIF(${Total_Recipients},0)) ;;
     value_format: "0\%"
   }
+
+  measure: Email_Opened_Percentstr{
+    type: string
+    sql:Cast(${Email_Opened_Percent} as character Varying);;
+
+  }
+
+
+measure: Email_opened1 {
+  type: string
+  sql: Concat(${Email_Opened_Percentstr},'%',' (',${Email_Openedstr} ,')');;
+  #html: {{${Email_Opened_Percentstr  }} || {{ ${Email_Openedstr} }} of total>> ;;
+}
+
 
   measure: Email_Not_Opened_Percent {
     type: number
-    sql: 100.00* ${Email_Not_Opened}/NULLIF(${Total_Recipients},0) ;;
+    sql: round(100.00* ${Email_Not_Opened}/NULLIF(${Total_Recipients},0)) ;;
     value_format: "0\%"
+  }
+  measure: Email_Not_Opened_Percentstr {
+    type: string
+    sql: cast(${Email_Not_Opened_Percent} as Character varying);;
+
+  }
+  measure: Email_Not_Opened1 {
+    type: string
+    sql: Concat(${Email_Not_Opened_Percentstr},'%',' (',${Email_Not_Openedstr} ,')');;
+
   }
 
   measure: Redistributed_Campaigns{
     type: count_distinct
     sql: ${redistributed_campaign_id} ;;
     drill_fields: [partner_company_name,redistributed_campaign_id,redistributed_campaign_name]
+    link: {
+      label: "Detail Report"
+      url: "{{https://stratappspartner.looker.com/looks/20}}&pivots
+      "
+    }
+
   }
 
 
@@ -228,6 +275,7 @@ view: campaign1 {
       email_id,
       contact_first_name,
       contact_last_name]
+
   }
 
   measure: Views {
@@ -755,9 +803,14 @@ view:vendors {
   }
   measure: Vendor_Cam_Lauched{
     type: count_distinct
-    sql: (case when ${vendor_cam_is_launched} then ${vendor_campaign_id} END);;
+
     #(IF ${vendor_cam_is_launched}  THEN  ${vendor_campaign_id} END);;
     drill_fields: [vendor_campaign_id,vendor_campaign_type,vendor_campaign_name]
+    link: {
+      label: "Detail Report"
+      url: "{{https://stratappspartner.looker.com/looks/20}}"
+    }
+    sql: (case when ${vendor_cam_is_launched} then ${vendor_campaign_id} END);;
   }
 
   measure: Deals  {
@@ -1152,71 +1205,99 @@ view:leads_deals {
   }
 
   measure: 20Q1DealPercentage {
-    type: number
-    sql: ${20Q1Deals}/${20Q1leads} ;;
-
-  }
+  type: number
+  sql:100* ${20Q1Deals}/coalesce(NULLIF(${20Q1leads},0),1) ;;
+  value_format: "0\%"
+      }
 
   measure: 20Q2DealPercentage {
-    type: number
-    sql: ${20Q2Deals}/${20Q2leads} ;;
+  type: number
+  sql: 100* ${20Q2Deals}/coalesce(NULLIF(${20Q2leads},0),1);;
+  value_format: "0\%"
 
     }
 
   measure: Lead_QTD_Growth_Percentage {
     type: number
-    sql: ${20Q2leads}-${20Q1leads}/${20Q2leads} ;;
+    sql:100*coalesce((${20Q2leads}-${20Q1leads}),0)/coalesce(NULLIF(${20Q1leads},0),1);;
+    value_format: "0\%"
   }
 
   measure: Deal_QTD_Growth_Percentage {
     type: number
-    sql: ${20Q2Deals}-${20Q1Deals}/${20Q2Deals} ;;
+    sql: 100*coalesce((${20Q2Deals}-${20Q1Deals}),0)/coalesce(NULLIF(${20Q1Deals},0),1);;
+    value_format: "0\%"
+  }
+
+      measure: Percentage_QOQ_Deals{
+        type: number
+        sql:100*coalesce((${20Q2DealPercentage}-${20Q1DealPercentage}),0)/coalesce(NULLIF(${20Q1DealPercentage},0),1);;
+        value_format: "0\%"
   }
 
   measure: Prev_Month_Leads {
     type: count_distinct
     sql:case when extract(month from ${deal_created_time_date})= (extract(month from now())-1)
-      then ${id} end;;
+          and extract(year from ${deal_created_time_date})=2020  then ${id} end;;
   }
   measure: Cur_Month_Leads {
     type: count_distinct
     sql:case when extract(month from ${deal_created_time_date})= extract(month from now())
-      then ${id} end;;
+          and extract(year from ${deal_created_time_date})=2020 then ${id} end;;
   }
   measure: Prev_Month_Deals{
     type: count_distinct
     sql:case when extract(month from ${deal_created_time_date})= (extract(month from now())-1)
-             and ${is_deal}='true'
+              and extract(year from ${deal_created_time_date})=2020 and ${is_deal}='true'
     then ${id} end;;
   }
   measure: Cur_Month_Deals{
     type: count_distinct
     sql:case when extract(month from ${deal_created_time_date})= extract(month from now())
-             and ${is_deal}='true'
+          and extract(year from ${deal_created_time_date} )=2020   and ${is_deal}='true'
     then ${id} end;;
   }
  measure:Prev_Month_Deals_Percentage{
    type: number
-  sql: ${Prev_Month_Deals}/${Prev_Month_Leads} ;;
+  sql: 100*${Prev_Month_Deals}/coalesce(NULLIF(${Prev_Month_Leads},0),1);;
+  value_format: "0\%"
  }
  measure: Cur_Month_Deals_Percentage{
    type: number
-  sql: ${Cur_Month_Deals}/${Cur_Month_Leads} ;;
+  sql: 100*${Cur_Month_Deals}/coalesce(NULLIF(${Cur_Month_Leads},0),1) ;;
+  value_format: "0\%"
  }
   measure:Percentage_Leads_Growth{
     type: number
-    sql: 100*(${Cur_Month_Leads}-${Prev_Month_Leads})/NULLIF(${Cur_Month_Leads},0);;
+    sql: 100*coalesce((${Cur_Month_Leads}-${Prev_Month_Leads}),0)/coalesce(NULLIF(${Prev_Month_Leads},0),1);;
     value_format: "0\%"
   }
   measure:Percentage_Deals_Growth{
     type:number
-    sql: 100*(${Cur_Month_Deals}-${Prev_Month_Deals})/NULLIF(${Cur_Month_Deals},0);;
+    sql: 100*coalesce((${Cur_Month_Deals}-${Prev_Month_Deals}),0)/coalesce(NULLIF(${Prev_Month_Deals},0),1);;
     value_format: "0\%"
   }
   measure: Percentage_MOM_Deals{
     type: number
-    sql: 100*(${Cur_Month_Deals_Percentage}-${Prev_Month_Deals_Percentage})/NULLIF(${Cur_Month_Deals_Percentage},0);;
+    sql: 100*coalesce((${Cur_Month_Deals_Percentage}-${Prev_Month_Deals_Percentage}),0)/coalesce(NULLIF(${Prev_Month_Deals_Percentage},0),1);;
     value_format: "0\%"
+  }
+  dimension: created_week {
+    type:date_week_of_year
+    label: "Redistributed Cam Week"
+    sql: ${TABLE}."Redistributed Cam Created Time" ;;
+  }
+
+  dimension: created_week1 {
+    type:date_week_of_year
+    label: "Redistributed Cam Week1"
+    sql: ${TABLE}."Redistributed Cam Created Time" ;;
+    order_by_field:created_week
+  }
+  dimension: Week_NO{
+    type:string
+    label: "Week_No"
+    sql: concat(cast(${created_week1} as character varying),'Week') ;;
   }
 
   dimension: vendor_campaign_id {
@@ -1289,6 +1370,8 @@ view:leads_deals {
     label: "Redistributed Cam Created Time"
     sql: ${TABLE}."Redistributed Cam Created Time" ;;
   }
+
+
 
   dimension: parent_campaign_id {
     type: number
@@ -1475,6 +1558,79 @@ view:leads_deals {
 }
 
 
+explore:nurture_campaigns  {}
+view: nurture_campaigns {
+  derived_table: {
+    sql: with t1 as (
+      select * from xamplify_test.xa_emailtemplates_d order by id limit 13
+      ),
+      t2 as (select * from xamplify_test.xa_drip_email_history_d)
+      select distinct t1.name,t1.subject,t2.user_id,u.email_id,u.firstname,u.lastname,c.company_name,t2.sent_time
+      from t1
+      left join t2 on (t1.id = t2.email_template_id)
+      left join xamplify_test.xa_user_d u on (t2.user_id = u.user_id)
+      left join xamplify_test.xa_company_d c on (u.company_id = c.company_id)
+       ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+
+  dimension: name {
+    type: string
+    sql: ${TABLE}."name" ;;
+  }
+
+  dimension: subject {
+    type: string
+    sql: ${TABLE}."subject" ;;
+  }
+
+  dimension: user_id {
+    type: number
+    sql: ${TABLE}."user_id" ;;
+  }
+
+  dimension: email_id {
+    type: string
+    sql: ${TABLE}."email_id" ;;
+  }
+
+  dimension: firstname {
+    type: string
+    sql: ${TABLE}."firstname" ;;
+  }
+
+  dimension: lastname {
+    type: string
+    sql: ${TABLE}."lastname" ;;
+  }
+
+  dimension: company_name {
+    type: string
+    sql: ${TABLE}."company_name" ;;
+  }
+
+  dimension_group: sent_time {
+    type: time
+    sql: ${TABLE}."sent_time" ;;
+  }
+
+  set: detail {
+    fields: [
+      name,
+      subject,
+      user_id,
+      email_id,
+      firstname,
+      lastname,
+      company_name,
+      sent_time_time
+    ]
+  }
+}
 
 
 
