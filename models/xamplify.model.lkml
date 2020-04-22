@@ -153,20 +153,184 @@ view: campaign1 {
 
 
 
-   dimension: Date_name {
-    type: string
-    sql:
+     dimension: Date_name {
+      type: string
+      sql:
            CASE
-            WHEN {% parameter Date_selector %} = 'Last 4 Quarters' THEN cast( ${year_qtr} as character varying)
-            when {%parameter Date_selector %} = 'Last 4 Months' Then ${month_name}
-            when {%parameter Date_selector %} = 'Last 4 Weeks' Then cast(${week} as character varying )
-             ELSE NULL
-             END ;;
+           when {% parameter Date_selector %} = 'Last 4 Quarters'
+  and
+  (( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*4)
+        +
+        ( extract(quarter from age(now(), (${redistributed_cam_launch_time_date})))) )>=0
+        and
+              (( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*4)
+        +
+        ( extract(quarter from age(now(), (${redistributed_cam_launch_time_date})))) )<4
+
+  then cast (${year_qtr} as character varying)
+
+  when {% parameter Date_selector %} = 'Last 4 Months'
+   and
+   ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*12)
+        +
+    ( extract(month from age(now(), (${redistributed_cam_launch_time_date})))))>=0
+ and
+  ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*12)
+        +
+   ( extract(month from age(now(), (${redistributed_cam_launch_time_date})))))<4
+
+ then ${month_name}
+
+ when {% parameter Date_selector %} = 'Last 4 Weeks'
+  and
+    ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*54)
+        +
+        ( extract(WEEK from age(now(), (${redistributed_cam_launch_time_date})))) )>=0
+
+     and
+              ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*54)
+        +
+        ( extract(WEEK from age(now(), (${redistributed_cam_launch_time_date})))) )<4
+then cast(${week} as character varying)
+                 end
+                ;;
+  }
+  measure: Emailopened_Count{
+    type:count_distinct
+    sql:
+
+    case when {% parameter Date_selector %} = 'Last 4 Quarters'
+  and
+  (( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*4)
+        +
+        ( extract(quarter from age(now(), (${redistributed_cam_launch_time_date})))) )>=0
+        and
+              (( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*4)
+        +
+        ( extract(quarter from age(now(), (${redistributed_cam_launch_time_date})))) )<4
+
+  then ${view_user_id}
+
+  when {% parameter Date_selector %} = 'Last 4 Months'
+   and
+   ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*12)
+        +
+    ( extract(month from age(now(), (${redistributed_cam_launch_time_date})))))>=0
+ and
+  ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*12)
+        +
+   ( extract(month from age(now(), (${redistributed_cam_launch_time_date})))))<4
+
+ then ${view_user_id}
+
+ when {% parameter Date_selector %} = 'Last 4 Weeks'
+  and
+    ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*54)
+        +
+        ( extract(WEEK from age(now(), (${redistributed_cam_launch_time_date})))) )>=0
+
+     and
+              ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*54)
+        +
+        ( extract(WEEK from age(now(), (${redistributed_cam_launch_time_date})))) )<4
+then ${view_user_id}
+                 end
+                ;;
+  }
+
+  measure: Views_Count{
+    type:count_distinct
+    sql:
+
+    case when {% parameter Date_selector %} = 'Last 4 Quarters'
+  and
+  (( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*4)
+        +
+        ( extract(quarter from age(now(), (${redistributed_cam_launch_time_date})))) )>=0
+        and
+              (( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*4)
+        +
+        ( extract(quarter from age(now(), (${redistributed_cam_launch_time_date})))) )<4
+
+  then ${view_id}
+
+  when {% parameter Date_selector %} = 'Last 4 Months'
+   and
+   ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*12)
+        +
+    ( extract(month from age(now(), (${redistributed_cam_launch_time_date})))))>=0
+ and
+  ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*12)
+        +
+   ( extract(month from age(now(), (${redistributed_cam_launch_time_date})))))<4
+
+ then ${view_id}
+
+ when {% parameter Date_selector %} = 'Last 4 Weeks'
+  and
+    ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*54)
+        +
+        ( extract(WEEK from age(now(), (${redistributed_cam_launch_time_date})))) )>=0
+
+     and
+              ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*54)
+        +
+        ( extract(WEEK from age(now(), (${redistributed_cam_launch_time_date})))) )<4
+then ${view_id}
+                 end
+                ;;
+  }
+
+  measure: leads_Count{
+    type:count_distinct
+    sql:
+
+    case when {% parameter Date_selector %} = 'Last 4 Quarters'
+  and
+  (( extract(year from age(now(), (${deal_created_time_date})))*4)
+        +
+        ( extract(quarter from age(now(), (${deal_created_time_date})))) )>=0
+        and
+              (( extract(year from age(now(), (${deal_created_time_date})))*4)
+        +
+        ( extract(quarter from age(now(), (${deal_created_time_date})))) )<4
+
+  then ${deal_id}
+
+  when {% parameter Date_selector %} = 'Last 4 Months'
+   and
+   ( ( extract(year from age(now(), (${deal_created_time_date})))*12)
+        +
+    ( extract(month from age(now(), (${deal_created_time_date})))))>=0
+ and
+  ( ( extract(year from age(now(), (${deal_created_time_date})))*12)
+        +
+   ( extract(month from age(now(), (${deal_created_time_date})))))<4
+
+ then ${deal_id}
+
+ when {% parameter Date_selector %} = 'Last 4 Weeks'
+  and
+    ( ( extract(year from age(now(), (${deal_created_time_date})))*54)
+        +
+        ( extract(WEEK from age(now(), (${deal_created_time_date})))) )>=0
+
+     and
+              ( ( extract(year from age(now(), (${deal_created_time_date})))*54)
+        +
+        ( extract(WEEK from age(now(), (${deal_created_time_date})))) )<4
+then ${deal_id}
+                 end
+                ;;
   }
 
 
 
+dimension: category {
+  type:  string
+  sql: ${TABLE}.'Email_opend' ;;
 
+}
 
     measure: count {
       type: count
@@ -208,24 +372,49 @@ view: campaign1 {
       type: count_distinct
       sql: ${redistributed_campaign_id} ;;
 
-      drill_fields: [partner_company_name,redistributed_campaign_id,redistributed_campaign_name]
+      drill_fields: [partner_company_name,redistributed_campaign_name]
+
+      link: {
+        label: "Redistributed Details"
+        url: "https://stratappspartner.looker.com/looks/37?
+        &f[campaign1.vendor_company_name]={{ _filters['campaign1.vendor_company_name'] | url_encode }}
+        &f[campaign1.partner_company_name]={{ _filters['campaign1.partner_company_name'] | url_encode }}
+        &f[campaign1.redistributed_campaign_name]={{ _filters['campaign1.redistributed_campaign_name'] | url_encode }}
+        &f[campaign1.redistributed_cam_launch_time_date]={{ _filters['campaign1.redistributed_cam_launch_time_date'] | url_encode }}"
+      }
 
     }
 
-    measure: Total_Recipients {
-      type: count_distinct
-      sql: ${contact_user_id};;
-      # sql_distinct_key: ${contact_user_id} ;;
-      drill_fields: [
-        partner_company_name,redistributed_campaign_name,email_id,contact_mobile_number
-      ]
+  measure: Total_Recipients {
+    type: count_distinct
+    sql: ${contact_user_id};;
+    # sql_distinct_key: ${contact_user_id} ;;
+    drill_fields: [
+      email_id
+    ]
+    link: {
+      label: "Total Recipients Map"
+      url: "https://stratappspartner.looker.com/looks/36?toggle=pik
+      &f[campaign1.vendor_company_name]={{ _filters['campaign1.vendor_company_name'] | url_encode }}
+      "
     }
+
+    link: {
+      label: "Total Recipient details"
+      url: "https://stratappspartner.looker.com/looks/38?
+      &f[campaign1.vendor_company_name]={{ _filters['campaign1.vendor_company_name'] | url_encode }}
+      &f[campaign1.partner_company_name]={{ _filters['campaign1.partner_company_name'] | url_encode }}
+      &f[campaign1.redistributed_campaign_name]={{ _filters['campaign1.redistributed_campaign_name'] | url_encode }}
+      &f[campaign1.redistributed_cam_launch_time_date]={{ _filters['campaign1.redistributed_cam_launch_time_date'] | url_encode }}"
+    }
+
+  }
 
     measure: Email_Opened{
       type: count_distinct
       sql: ${view_user_id} ;;
       drill_fields: [
-        partner_company_name,redistributed_campaign_name,email_id,contact_mobile_number
+        email_id
       ]
     }
 
@@ -241,7 +430,7 @@ view: campaign1 {
       type: number
       sql: ${Total_Recipients}-${Email_Opened};;
       link: {
-        label: "Detail Report"
+        label: "Email Not Opened Details"
         url: "https://stratappspartner.looker.com/looks/33?
         &f[campaign1.vendor_company_name]={{ _filters['campaign1.vendor_company_name'] | url_encode }}
         &f[campaign1.partner_company_name]={{ _filters['campaign1.partner_company_name'] | url_encode }}
@@ -327,8 +516,8 @@ view: campaign1 {
       type: count_distinct
       sql: ${view_id} ;;
       drill_fields: [
-        partner_company_name,redistributed_campaign_name,email_id,contact_mobile_number,
-        view_time_date]
+        email_id,
+        view_time_time,view_id]
     }
 
     measure: partners {
@@ -339,8 +528,6 @@ view: campaign1 {
     measure: Deals  {
       type:count_distinct
       sql: (case when ${is_deal} then ${deal_id} END);;
-
-
     }
     measure: Leads  {
       type:count_distinct
@@ -364,6 +551,7 @@ view: campaign1 {
       type: string
       label: "Vendor Campaign Name"
       sql: ${TABLE}."Vendor Campaign Name" ;;
+      drill_fields: [partner_company_name,redistributed_campaign_type]
     }
 
     dimension: vendor_company_id {
@@ -418,14 +606,13 @@ view: campaign1 {
       type: string
       label: "Partner Company Name"
       sql: ${TABLE}."Partner Company Name" ;;
-      group_label: "datagrouping"
+      drill_fields: [redistributed_campaign_type]
     }
 
     dimension: redistributed_campaign_name {
       type: string
       label: "Redistributed Campaign Name"
       sql: ${TABLE}."Redistributed Campaign Name" ;;
-      group_label: "datagrouping"
       drill_fields: [partner_company_name]
     }
 
@@ -433,7 +620,6 @@ view: campaign1 {
       type: string
       label: "Redistributed Campaign Type"
       sql: ${TABLE}."Redistributed Campaign Type" ;;
-      group_label: "datagrouping"
     }
 
     dimension: redistributed_cam_schedule_type {
@@ -563,6 +749,7 @@ view: campaign1 {
       type: time
       label: "View Time"
       sql: ${TABLE}."View Time" ;;
+      drill_fields: [email_id]
     }
 
     dimension: view_user_id {
@@ -740,9 +927,10 @@ view: campaign1 {
 
     dimension: Apx_location {
       type: location
-      sql_latitude:${Apx_lat} ;;
-      sql_longitude:${Apx_long};;
+      sql_latitude:round(${Apx_lat},1) ;;
+      sql_longitude:round(${Apx_long},1);;
     }
+
 
 
 
@@ -908,7 +1096,7 @@ view: campaign1 {
     measure:campaigns_received_Partner{
       type: count_distinct
       sql: ${partner_received_campaign} ;;
-      drill_fields: [vendor_campaign_id,vendor_campaign_type,vendor_campaign_name]
+      drill_fields: [vendor_campaign_type,vendor_campaign_name]
 
     }
 
@@ -916,20 +1104,20 @@ view: campaign1 {
     measure: campaigns_Redistribued_by_Partners{
       type: count_distinct
       sql: ${parent_campaign_id} ;;
-      drill_fields: [vendor_campaign_id,vendor_campaign_type,vendor_campaign_name]
+      drill_fields: [vendor_campaign_type,vendor_campaign_name]
     }
 
     measure:Not_Redistributed  {
       type:number
       sql: ${campaigns_received_Partner}- ${campaigns_Redistribued_by_Partners} ;;
-      drill_fields: [vendor_campaign_id,vendor_campaign_type,vendor_campaign_name]
+      drill_fields: [vendor_campaign_type,vendor_campaign_name]
 
     }
     measure: Vendor_Cam_Lauched{
       type: count_distinct
 
       #(IF ${vendor_cam_is_launched}  THEN  ${vendor_campaign_id} END);;
-      drill_fields: [vendor_campaign_id,vendor_campaign_type,vendor_campaign_name]
+      drill_fields: [vendor_campaign_type,vendor_campaign_name]
       link: {
         label: "Detail Report"
         url: "{{https://stratappspartner.looker.com/looks/20}}"
@@ -954,7 +1142,7 @@ view: campaign1 {
     measure: Redistributed_Campaigns  {
       type:count_distinct
       sql: ${redistributed_campaign_id};;
-      drill_fields: [redistributed_campaign_id,redistributed_campaign_name]
+      drill_fields: [redistributed_campaign_name]
 
     }
 
@@ -1012,12 +1200,18 @@ view: campaign1 {
       type: string
       label: "Partner Company Name"
       sql: ${TABLE}."Partner Company Name" ;;
-      link: {
-        label: "Detail Report1"
-        url: "https://stratappspartner.looker.com/looks/35?
-        &f[campaign1.vendor_company_name]={{_filters['vendors.vendor_company_name'] | url_encode }}
-        &f[campaign1.partner_company_name]={{_filters['vendors.partner_company_name'] | url_encode }}"
+     # link: {
+      #  label: "Detail Report1"
+       # url: "https://stratappspartner.looker.com/looks/35?
+      #  &f[campaign1.vendor_company_name]={{_filters['vendors.vendor_company_name'] | url_encode }}
+       # &f[campaign1.partner_company_name]={{_filters['vendors.partner_company_name'] | url_encode }}"
+      #}
+      link:{
+        label:"{{value}} Partner Dashboard"
+        url: "https://stratappspartner.looker.com/dashboards/16?Vendor%20Company%20Name={{_filters['vendors.vendor_company_name'] | url_encode }}&Partner%20Company%20Name={{ value | encode_uri }}"
+        icon_url: "http://www.looker.com/favicon.ico"
       }
+      drill_fields: [vendor_campaign_name]
     }
 
     dimension: redistributed_campaign_id {
@@ -1030,6 +1224,11 @@ view: campaign1 {
       type: string
       label: "Redistributed Campaign Name"
       sql: ${TABLE}."Redistributed Campaign Name" ;;
+      link:{
+        label:"{{value}} Partner Dashboard"
+        url: "https://stratappspartner.looker.com/dashboards/16?Vendor%20Company%20Name={{_filters['vendors.vendor_company_name'] | url_encode }}&Campaign%20Name={{ value | encode_uri }}"
+        icon_url: "http://www.looker.com/favicon.ico"
+      }
     }
 
     dimension: redistributed_campaign_type {
@@ -1448,21 +1647,26 @@ view: campaign1 {
       sql: 100*coalesce(((${Cur_Year_Deals}-${Prev_Year_Deals})*100),0)/coalesce(NULLIF(${Prev_Year_Deals},0),1) ;;
 
     }
-
-       dimension: Year_Mon {
-        type: string
-        sql:  concat(cast(extract(year from ${deal_status_created_time_date}) as character varying),'-',
-          cast(extract(month  from ${deal_status_created_time_date} ) as character varying));;
+    dimension: Year_Mon {
+      type: string
+      sql:  concat(cast(extract(year from ${deal_status_created_time_date}) as character varying),'-',
+          cast(extract(month  from ${deal_status_created_time_date} ) as character varying))
+          ;;
 
       }
 
-
+        dimension: month_startdate_enddate{
+          type: string
+          sql: concat(to_char("Deal Created Time",'mon'),' ','(',extract(day from date_trunc('week', "Deal Created Time")::date) || ' - ' ||
+               extract(day from (date_trunc('week', "Deal Created Time") + '6 days') ::date),')')
+         ;;
+        }
 
 
     dimension: created_week {
       type:date_week_of_year
       label: "Redistributed Cam Week"
-      sql: ${TABLE}."Redistributed Cam Created Time" ;;
+      sql: ${TABLE}."Deal Created Time" ;;
     }
 
     dimension: Created_year {
@@ -1474,20 +1678,20 @@ view: campaign1 {
     dimension: week_no {
       type: date_day_of_week
       label: "Redistributed Cam Weekno"
-      sql: extract('week' from "Redistributed Cam Created Time") ;;
+      sql: extract('week' from "Deal Created Time") ;;
     }
 
 
     dimension: created_week_startdate{
       type: date_week
       label: "created_week_startdate"
-      sql: ${TABLE}."Redistributed Cam Created Time" ;;
+      sql: ${TABLE}."Deal Created Time" ;;
 
     }
     dimension: created_week1 {
       type:date_week_of_year
       label: "Redistributed Cam Week1"
-      sql: ${TABLE}."Redistributed Cam Created Time" ;;
+      sql: ${TABLE}."Deal Created Time" ;;
       order_by_field:created_week
     }
 
@@ -1860,22 +2064,25 @@ view: vendor_nurtures {
                   xa_emailtemplates_d.type AS type,
                     CAST(xa_emailtemplates_d.subject AS TEXT) AS subject,
                   xa_user_role_d.role_id AS role_id,
+                   xa_drip_email_history_d.action_id as action_id_drip,
                   a.action_type as action_type_a,
                   a.action_id as action_id_a,
                   a.action_name as action_name_a
 
                 FROM xamplify_test.xa_user_d xa_user_d
                   LEFT JOIN xamplify_test.xa_campaign_d xa_campaign_d ON (xa_user_d.user_id = xa_campaign_d.customer_id)
-                  LEFT JOIN xamplify_test.xa_company_d xa_company_d ON (xa_user_d.company_id = xa_company_d.company_id)
+                  LEFT JOIN (select * from xamplify_test.xa_company_d where xa_company_d.company_id not in(231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
+                  380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)) xa_company_d ON (xa_user_d.company_id = xa_company_d.company_id)
                   LEFT JOIN xamplify_test.xa_campaign_d xa_campaign_d1 ON (xa_campaign_d.campaign_id = xa_campaign_d1.parent_campaign_id)
                   LEFT JOIN xamplify_test.xa_campaign_user_userlist_d xa_campaign_user_userlist_d ON (xa_campaign_d.campaign_id = xa_campaign_user_userlist_d.campaign_id)
-                  left JOIN xamplify_test.xa_drip_email_history_d xa_drip_email_history_d ON (xa_user_d.user_id = xa_drip_email_history_d.user_id)
+                  left JOIN (select * from xamplify_test.xa_drip_email_history_d where xa_drip_email_history_d.action_id>=22 and xa_drip_email_history_d.action_id<=36) xa_drip_email_history_d ON (xa_user_d.user_id = xa_drip_email_history_d.user_id)
                   full join (select * from xamplify_test.xa_action_type_d
               where xa_action_type_d.action_id >= 22 and xa_action_type_d.action_id <= 36) a on (xa_drip_email_history_d.action_id=a.action_id)
                   left JOIN xamplify_test.xa_emailtemplates_d xa_emailtemplates_d ON (xa_drip_email_history_d.email_template_id = xa_emailtemplates_d.id)
                   left JOIN xamplify_test.xa_user_role_d xa_user_role_d ON (xa_user_d.user_id = xa_user_role_d.user_id)
-                  --and xa_company_d.company_id=399
-                  --and  xa_user_role_d.role_id in(2,13)
+                  -- where xa_company_d.company_id not in(231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
+                  --380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)
+                 -- and  xa_user_role_d.role_id in(2,13)
 
 
                  ;;
@@ -2009,7 +2216,12 @@ view: vendor_nurtures {
   dimension: user_id_xa_drip_email_history_d {
     type: number
     label: "user_id_drip"
-    sql: ${TABLE}.user_id (xa_drip_email_history_d) ;;
+    sql: ${TABLE}.user_id_drip ;;
+  }
+  dimension: action_id_xa_drip_email_history_d {
+    type: number
+    label: "action_id_drip"
+    sql: ${TABLE}.action_id_drip ;;
   }
 
   dimension_group: sent_time {
@@ -2036,6 +2248,27 @@ view: vendor_nurtures {
     type: number
     sql: ${TABLE}.role_id ;;
   }
+  dimension: action_name_Category {
+    sql:
+     CASE
+     when ${action_name_a}='vendor_welcome' THEN 'Welcome Nurtures'
+    when ${action_name_a}='vendor_csm_intro' THEN 'Welcome Nurtures'
+    when ${action_name_a}='vendor_kick_off' THEN 'Welcome Nurtures'
+    when ${action_name_a}='vendor_complete_profile_success_nurture#1' THEN 'Company Profile Nurtures'
+    when ${action_name_a}='vendor_incomplete_profile' THEN 'Company Profile Nurtures'
+    when ${action_name_a}='vendor_inactive_support_nurture#1' THEN 'Company Profile Nurtures'
+    when ${action_name_a}='vendor_inactive_support_nurture#2' THEN 'Company Profile Nurtures'
+    when ${action_name_a}='vendor_adding_partner_nurture' THEN 'OnBoard Partner Nurtures'
+    when ${action_name_a}='vendor_first_campaign_congrats' THEN 'Campaign Nurtures'
+    when ${action_name_a}='vendor_first_campaign_nurture#1' THEN 'Campaign Nurtures'
+    when ${action_name_a}='vendor_first_campaign_nurture#2' THEN 'Campaign Nurtures'
+    when ${action_name_a}='vendor_first_campaign_nurture#3' THEN 'Campaign Nurtures'
+    when ${action_name_a}='vendor_success_nurture#2' THEN 'Campaign Nurtures'
+    when ${action_name_a}='vendor_removal_warning' THEN 'Removal warning Nurtures'
+    when ${action_name_a}='vendor_churn_farewell_nurture' THEN 'Removal warning Nurtures'
+    END ;;
+  }
+
 
   set: detail {
     fields: [
@@ -2064,9 +2297,11 @@ view: vendor_nurtures {
       type,
       subject,
       role_id,
+      action_id_xa_drip_email_history_d,
       action_id_a,
       action_type_a,
-      action_name_a
+      action_name_a,
+      action_name_Category
     ]
   }
 }
