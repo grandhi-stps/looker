@@ -93,18 +93,16 @@ view: campaign1 {
       "Email View".longitude as "View Longitude",
       "Email View".latitude as  "View Latitude",
       "Contact Received Campaigns".user_id as "Contact User ID",
-      "Contact Received Campaigns".user_list_id as "Contact User List ID",
-      "Contact Received Campaigns".contact_company as "Contact Company",
-      "Contact Received Campaigns".email_id as "Contact Email ID",
-      "Contact Received Campaigns".contact_first_name as "Contact First Name",
-      "Contact Received Campaigns".contact_last_name as "Contact Last Name",
-      "Contact Received Campaigns".contact_mobile_number as "Contact Mobile Number",
-      "Contact Received Campaigns".contact_country as "Contact Country",
-      "Contact Received Campaigns".contact_state as "Contact State",
-      "Contact Received Campaigns".contact_city as "Contact City",
-      "Contact Received Campaigns".contact_zip as "Contact Zip Code"
-
-
+      "Contact Received Campaigns".user_list_id as "Contact User List ID"
+      --"Contact Received Campaigns".contact_company as "Contact Company",
+      --"Contact Received Campaigns".email_id as "Contact Email ID",
+      --"Contact Received Campaigns".contact_first_name as "Contact First Name",
+      --"Contact Received Campaigns".contact_last_name as "Contact Last Name",
+      --"Contact Received Campaigns".contact_mobile_number as "Contact Mobile Number",
+      --"Contact Received Campaigns".contact_country as "Contact Country",
+      --"Contact Received Campaigns".contact_state as "Contact State",
+      --"Contact Received Campaigns".contact_city as "Contact City",
+      --"Contact Received Campaigns".contact_zip as "Contact Zip Code"
       from
       xamplify_test.xa_campaign_d "Vendor Campaign1"
       left outer join
@@ -116,25 +114,36 @@ view: campaign1 {
       ON (("Redistributed Cam1".campaign_id = "Email View".campaign_id)
       and "Email View".user_id = "Contact Received Campaigns".user_id)
       where "Redistributed Cam1".is_nurture_campaign = true
-      )
+      ),
+       c as (select distinct user_id as "Contact User ID1",
+contact_company as "Contact Company",
+email_id as "Contact Email ID",
+contact_first_name as "Contact First Name",
+contact_last_name as "Contact Last Name",
+contact_mobile_number as "Contact Mobile Number",
+contact_country as "Contact Country",
+contact_state as "Contact State",
+contact_city as "Contact City",
+contact_zip as "Contact Zip Code",ROW_NUMBER () OVER (PARTITION BY user_id order by 1,2,3,4,5,6,7,8,9,10 desc nulls last) as row_number1
+from xamplify_test.xa_campaign_user_userlist_d)
       select * from a left join b on a."Redistributed Campaign ID" = b."Redistributed Campaign ID1"
+      inner join c on b."Contact User ID" = c."Contact User ID1"
       where a."Vendor Company ID" in (202,262,268,269,283,291,305,325,328,343,399,422,464)
+      and c.row_number1 = 1
  ;;
   }
   parameter: Date_selector {
     label: "Date_Selector"
     description: "This filter applies only for Quarter,Month,Week Report "
-    description: "Choose a metric"
     allowed_value: { value: "Last 4 Quarters" }
     allowed_value: { value: "Last 4 Months" }
     allowed_value: { value: "Last 4 Weeks" }
   }
 
 
-
-     dimension: Date_name {
-      type: string
-      sql:
+  dimension: Date_name {
+    type: string
+    sql:
            CASE
            when {% parameter Date_selector %} = 'Last 4 Quarters'
   and
@@ -158,18 +167,20 @@ view: campaign1 {
         +
    ( extract(month from age(now(), (${redistributed_cam_launch_time_date})))))<4
 
- then contact ( ${month_name},' - ' , ${vendor_cam_created_time_year})
+
+ then concat ( ${month_name},' - ' , cast( ${vendor_cam_created_time_year} as character varying ))
+
 
  when {% parameter Date_selector %} = 'Last 4 Weeks'
   and
-    ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*54)
+    ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*53)
         +
-        ( extract(WEEK from age(now(), (${redistributed_cam_launch_time_date})))) )>=0
+        ( extract(week from  age(now(), (${redistributed_cam_launch_time_date})))) )>=0
 
      and
-              ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*54)
+              ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*53)
         +
-        ( extract(WEEK from age(now(), (${redistributed_cam_launch_time_date})))) )<4
+        ( extract(week from  age(now() , (${redistributed_cam_launch_time_date})))) )<4
 then cast(${week} as character varying)
                  end
                 ;;
@@ -204,14 +215,14 @@ then cast(${week} as character varying)
 
  when {% parameter Date_selector %} = 'Last 4 Weeks'
   and
-    ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*54)
+    ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*53)
         +
-        ( extract(WEEK from age(now(), (${redistributed_cam_launch_time_date})))) )>=0
+        ( extract(week from age(now() , (${redistributed_cam_launch_time_date})))) )>=0
 
      and
-              ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*54)
+              ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*53)
         +
-        ( extract(WEEK from age(now(), (${redistributed_cam_launch_time_date})))) )<4
+        ( extract(week from  age(now() , (${redistributed_cam_launch_time_date})))) )<4
 then ${view_user_id}
                  end
                 ;;
@@ -247,14 +258,14 @@ then ${view_user_id}
 
  when {% parameter Date_selector %} = 'Last 4 Weeks'
   and
-    ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*54)
+    ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*53)
         +
-        ( extract(WEEK from age(now(), (${redistributed_cam_launch_time_date})))) )>=0
+        ( extract(week from age(now(), (${redistributed_cam_launch_time_date})))) )>=0
 
      and
-              ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*54)
+              ( ( extract(year from age(now(), (${redistributed_cam_launch_time_date})))*53)
         +
-        ( extract(WEEK from age(now(), (${redistributed_cam_launch_time_date})))) )<4
+        ( extract(week from age(now() , (${redistributed_cam_launch_time_date})))) )<4
 then ${view_id}
                  end
                 ;;
@@ -290,14 +301,14 @@ then ${view_id}
 
  when {% parameter Date_selector %} = 'Last 4 Weeks'
   and
-    ( ( extract(year from age(now(), (${deal_created_time_date})))*54)
+    ( ( extract(year from age(now(), (${deal_created_time_date})))*53)
         +
-        ( extract(WEEK from age(now(), (${deal_created_time_date})))) )>=0
+        ( extract(week from  age(now(), (${deal_created_time_date})))) )>=0
 
      and
-              ( ( extract(year from age(now(), (${deal_created_time_date})))*54)
+              ( ( extract(year from age(now(), (${deal_created_time_date})))*53)
         +
-        ( extract(WEEK from age(now(), (${deal_created_time_date})))) )<4
+        ( extract(week from   age(now() , (${deal_created_time_date})))) )<4
 then ${deal_id}
                  end
                 ;;
@@ -336,19 +347,20 @@ then ${deal_id}
 
  when {% parameter Date_selector %} = 'Last 4 Weeks'
   and
-    ( ( extract(year from age(now(), (${deal_created_time_date})))*54)
+    ( ( extract(year from age(now(), (${deal_created_time_date})))*53)
         +
-        ( extract(WEEK from age(now(), (${deal_created_time_date})))) )>=0
+        ( extract(week from age(now() , (${deal_created_time_date})))) )>=0
 
      and
-              ( ( extract(year from age(now(), (${deal_created_time_date})))*54)
+              ( ( extract(year from age(now(), (${deal_created_time_date})))*53)
         +
-        ( extract(WEEK from age(now(), (${deal_created_time_date})))) )<4
+        ( extract(week from age(now()  , (${deal_created_time_date})))) )<4
         and ${is_deal}=true
 then ${deal_id}
                  end
                 ;;
   }
+
 
 
 dimension: category {
@@ -410,36 +422,41 @@ dimension: category {
 
     }
 
-  measure: Total_Recipients {
+   measure: Total_Recipients {
     type: count_distinct
     sql: ${contact_user_id};;
     # sql_distinct_key: ${contact_user_id} ;;
     drill_fields: [
-      email_id
+      email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city
     ]
-    link: {
-      label: "Total Recipients Map"
-      url: "https://stratappspartner.looker.com/looks/36?toggle=pik
-      &f[campaign1.vendor_company_name]={{ _filters['campaign1.vendor_company_name'] | url_encode }}
-      "
-    }
+    #link: {
+     # label: "Total Recipients Map"
+      #url: "https://stratappspartner.looker.com/looks/36?toggle=pik
+      #&f[campaign1.vendor_company_name]={{ _filters['campaign1.vendor_company_name'] | url_encode }}
+      #"
+    #}
 
-    link: {
-      label: "Total Recipient details"
-      url: "https://stratappspartner.looker.com/looks/38?
-      &f[campaign1.vendor_company_name]={{ _filters['campaign1.vendor_company_name'] | url_encode }}
-      &f[campaign1.partner_company_name]={{ _filters['campaign1.partner_company_name'] | url_encode }}
-      &f[campaign1.redistributed_campaign_name]={{ _filters['campaign1.redistributed_campaign_name'] | url_encode }}
-      &f[campaign1.redistributed_cam_launch_time_date]={{ _filters['campaign1.redistributed_cam_launch_time_date'] | url_encode }}"
-    }
+    #link: {
+     # label: "Total Recipient details"
+    #  url: "https://stratappspartner.looker.com/looks/38?
+     # &f[campaign1.vendor_company_name]={{ _filters['campaign1.vendor_company_name'] | url_encode }}
+    #  &f[campaign1.partner_company_name]={{ _filters['campaign1.partner_company_name'] | url_encode }}
+     # &f[campaign1.redistributed_campaign_name]={{ _filters['campaign1.redistributed_campaign_name'] | url_encode }}
+    #  &f[campaign1.redistributed_cam_launch_time_date]={{ _filters['campaign1.redistributed_cam_launch_time_date'] | url_encode }}"
+    #}
 
   }
+
+
+
+
+
 
     measure: Email_Opened{
       type: count_distinct
       sql: ${view_user_id} ;;
       drill_fields: [
-        email_id
+        email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city
       ]
     }
 
@@ -530,19 +547,26 @@ dimension: category {
     }
 
 
-    measure: Active_recipients {
-      type: count_distinct
-      sql: ${view_user_id} ;;
-      drill_fields: [detail*]
 
+
+  measure: Active_recipients {
+    type: count_distinct
+    sql: ${view_user_id} ;;
+    link:{
+      label:
+
+      "{{value}} Active Users Detail Reports"
+      url:"https://stratappspartner.looker.com/dashboards/25?Vendor%20Company%20Name={{ _filters['campaign1.vendor_company_name'] | url_encode }}&Location={{ value | encode_uri }}"
+      icon_url: "http://www.looker.com/favicon.ico"
     }
+  }
 
     measure: Views {
       type: count_distinct
       sql: ${view_id} ;;
       drill_fields: [
         email_id,
-        view_time_time,view_id]
+        view_time_time,view_id,email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city]
     }
 
     measure: partners {
@@ -552,7 +576,7 @@ dimension: category {
     }
     measure: Deals  {
       type:count_distinct
-      sql: (case when ${is_deal} then ${deal_id} END);;
+      sql: (case when ${is_deal} =true then ${deal_id} END);;
     }
     measure: Leads  {
       type:count_distinct
@@ -789,6 +813,12 @@ dimension: category {
       sql: ${TABLE}."Contact User ID" ;;
     }
 
+  dimension: contact_user_id1 {
+    type: number
+    label: "Contact User ID1"
+    sql: ${TABLE}."Contact User ID1" ;;
+  }
+
     dimension: contact_user_list_id {
       type: number
       label: "Contact User List ID"
@@ -850,26 +880,25 @@ dimension: category {
       sql: ${TABLE}."Contact Zip Code" ;;
     }
 
-    dimension: country {
+  dimension: country {
 
-      # map_layer_name: countries
-      label: "View Country"
-      sql: ${TABLE}."View Country" ;;
-      drill_fields: [state, city]
-    }
+   map_layer_name: countries
+    label: "View Country"
+    sql: ${TABLE}."View Country" ;;
+  }
 
-    dimension: state {
+  dimension: state {
 
-      # map_layer_name: us_states
-      label: "View State"
-      sql: ${TABLE}."View State" ;;
-      drill_fields: [zip, city]
-    }
-    dimension: city {
+    map_layer_name: us_states
+    label: "View State"
+    sql: ${TABLE}."View State" ;;
+  }
+  dimension: city {
 
-      label: "View City"
-      sql: ${TABLE}."View City" ;;
-    }
+    label: "View City"
+    sql: ${TABLE}."View City" ;;
+  }
+
 
     dimension: zip {
       type: zipcode
@@ -890,6 +919,7 @@ dimension: category {
       label: "View Latitude"
       sql: ${TABLE}."View Latitude" ;;
     }
+
 
     dimension: Apx_lat  {
       type: number
@@ -1024,6 +1054,7 @@ dimension: category {
         view_time_time,
         view_user_id,
         contact_user_id,
+        contact_user_id1,
         contact_user_list_id,
         contact_company,
         email_id,
@@ -1525,20 +1556,24 @@ dimension: category {
       drill_fields: [detail*]
     }
 
+
     measure: Deals  {
       type:count_distinct
       sql: (case when ${is_deal} then ${id} END);;
-      drill_fields: [ partner_company_name,vendor_campaign_name,deal_first_name,deal_last_name,deal_email_id,
-        deal_phone_number,deal_company,deal_created_time_date]
+      drill_fields: [partner_company_name,
+      redistributed_campaign_name,
+      deal_email_id
+      ]
+      }
 
-    }
-    measure: Leads  {
-      type:count_distinct
-      sql: ${id};;
-      drill_fields: [partner_company_name,vendor_campaign_name,deal_first_name,deal_last_name,deal_email_id,
-        deal_phone_number,deal_company,deal_created_time_date]
+      measure: Leads  {
+        type:count_distinct
+        sql: ${id};;
+        drill_fields: [partner_company_name,
+          redistributed_campaign_name,redistributed_campaign_type,deal_email_id
+        ]
+     }
 
-    }
     measure: 20Q1leads{
       type: count_distinct
       sql: case when ${year_qtr}='20Q1' then ${id} end ;;
@@ -1547,6 +1582,8 @@ dimension: category {
     measure: 20Q2leads{
       type: count_distinct
       sql: case when ${year_qtr}='20Q2' then ${id} end ;;
+      drill_fields: [partner_company_name,
+        redistributed_campaign_name,redistributed_campaign_type,deal_email_id,deal_first_name,deal_last_name,deal_created_time_date]
     }
 
     measure: 20Q1Deals{
@@ -1557,6 +1594,8 @@ dimension: category {
     measure: 20Q2Deals{
       type: count_distinct
       sql: case when ${year_qtr}='20Q2' and ${is_deal}='true' then ${id} end ;;
+      drill_fields: [partner_company_name,
+        redistributed_campaign_name,redistributed_campaign_type,deal_email_id,deal_first_name,deal_last_name,deal_created_time_date]
     }
 
     measure: 20Q1DealPercentage {
@@ -1595,28 +1634,45 @@ dimension: category {
       sql:case when extract(month from ${deal_created_time_date})= (extract(month from now())-1)
         and extract(year from ${deal_created_time_date})=2020  then ${id} end;;
     }
+
+
+
     measure: Cur_Month_Leads {
       type: count_distinct
       sql:case when extract(month from ${deal_created_time_date})= extract(month from now())
         and extract(year from ${deal_created_time_date})=2020 then ${id} end;;
+
     }
+
+
+
+
     measure: Prev_Month_Deals{
       type: count_distinct
       sql:case when extract(month from ${deal_created_time_date})= (extract(month from now())-1)
               and extract(year from ${deal_created_time_date})=2020 and ${is_deal}='true'
     then ${id} end;;
     }
+
+
+
     measure: Cur_Month_Deals{
       type: count_distinct
       sql:case when extract(month from ${deal_created_time_date})= extract(month from now())
                       and extract(year from ${deal_created_time_date} )=2020   and ${is_deal}='true'
                 then ${id} end;;
+
+
     }
+
+
     measure:Prev_Month_Deals_Percentage{
       type: number
       sql: 100*${Prev_Month_Deals}/coalesce(NULLIF(${Prev_Month_Leads},0),1);;
       value_format: "0\%"
     }
+
+
     measure: Cur_Month_Deals_Percentage{
       type: number
       sql: 100*${Cur_Month_Deals}/coalesce(NULLIF(${Cur_Month_Leads},0),1) ;;
@@ -1647,18 +1703,22 @@ dimension: category {
       type: count_distinct
       sql:case when extract(year from ${deal_created_time_date})= extract(year from now())
         and extract(year from ${deal_created_time_date})=2020 then ${id} end;;
+
     }
+
     measure: Prev_Year_Deals{
       type: count_distinct
       sql:case when extract(year from ${deal_created_time_date})= (extract(year from now())-1)
               and extract(year from ${deal_created_time_date})=2020 and ${is_deal}='true'
     then ${id} end;;
+
     }
     measure: Cur_Year_Deals{
       type: count_distinct
       sql:case when extract(year from ${deal_created_time_date})= extract(year from now())
                       and extract(year from ${deal_created_time_date} )=2020   and ${is_deal}='true'
                 then ${id} end;;
+
     }
 
     measure: Percent_change_Leads {
@@ -1678,6 +1738,7 @@ dimension: category {
           cast(extract(month  from ${deal_status_created_time_date} ) as character varying))
           ;;
 
+
       }
 
         dimension: month_startdate_enddate{
@@ -1685,7 +1746,8 @@ dimension: category {
           sql: concat(to_char("Deal Created Time",'Mon'),' ','(',extract(day from date_trunc('week', "Deal Created Time")::date) || ' - ' ||
                extract(day from (date_trunc('week', "Deal Created Time") + '6 days') ::date),')')
          ;;
-        }
+
+            }
 
 
     dimension: created_week {
@@ -1780,6 +1842,9 @@ dimension: category {
       type: string
       label: "Redistributed Campaign Type"
       sql: ${TABLE}."Redistributed Campaign Type" ;;
+      drill_fields: [partner_company_name,
+        redistributed_campaign_name,redistributed_campaign_type,deal_email_id]
+
     }
 
     dimension: redistributed_cam_schedule_type {
@@ -1823,6 +1888,10 @@ dimension: category {
       type: string
       label: "Year Qtr"
       sql: ${TABLE}."Year Qtr" ;;
+      drill_fields: [partner_company_name,
+        redistributed_campaign_name,redistributed_campaign_type,deal_email_id
+      ]
+
     }
 
     dimension: month {
@@ -2123,6 +2192,13 @@ view: vendor_nurtures {
     drill_fields: [company_name,created_time_raw,datereg_raw,name,subject,sent_time_raw]
   }
 
+  measure: action_id_drill {
+    type: count_distinct
+    label: "action_id_drill"
+    sql: ${action_id_a} ;;
+    drill_fields: [action_name_a]
+  }
+
   dimension: user_id {
     type: number
     sql: ${TABLE}.user_id ;;
@@ -2331,354 +2407,341 @@ view: vendor_nurtures {
   }
 }
 
-  explore:partner_nurtures  {}
-  view: partner_nurtures {
-    derived_table: {
-      sql: SELECT "xa_user_d"."user_id" AS "user_id",
-                  "xa_user_d"."email_id" AS "email_id",
-                  "xa_user_d"."firstname" AS "firstname",
-                  "xa_user_d"."lastname" AS "lastname",
-                  "xa_user_d"."datereg" AS "datereg",
-                  "xa_user_d"."created_time" AS "created_time",
-                  "xa_user_d"."company_id" AS "company_id",
-                  "xa_company_d"."company_id" AS "company_id (xa_company_d)",
-                  "xa_company_d"."company_name" AS "company_name",
-                  "xa_campaign_d1"."campaign_id" AS "campaign_id (xa_campaign_d1)",
-                  "xa_campaign_d1"."customer_id" AS "customer_id (xa_campaign_d1)",
-                  "xa_campaign_d1"."campaign_name" AS "campaign_name (xa_campaign_d1)",
-                  "xa_campaign_d1"."campaign_type" AS "campaign_type (xa_campaign_d1)",
-                  "xa_campaign_d1"."created_time" AS "created_time (xa_campaign_d1)",
-                  "xa_campaign_d1"."launch_time" AS "launch_time (xa_campaign_d1)",
-                  "xa_campaign_d1"."parent_campaign_id" AS "parent_campaign_id (xa_campaign_d1)",
-                  "xa_campaign_d1"."is_launched" AS "is_launched (xa_campaign_d1)",
-                  "xa_campaign_user_userlist_d"."campaign_id" AS "campaign_id (xa_campaign_user_userlist_d)",
-                  "xa_campaign_user_userlist_d"."user_id" AS "user_id (xa_campaign_user_userlist_d)",
-                  "xa_campaign_user_userlist_d"."email_id" AS "email_id (xa_campaign_user_userlist_d)",
-                  "xa_campaign_user_userlist_d"."partner_company_name" AS "partner_company_name",
-                  "xa_campaign_user_userlist_d"."partner_first_name" AS "partner_first_name",
-                  "xa_campaign_user_userlist_d"."partner_last_name" AS "partner_last_name",
-                  "xa_campaign_user_userlist_d"."contact_user_id" AS "contact_user_id",
-                  "xa_campaign_user_userlist_d"."contact_first_name" AS "contact_first_name",
-                  "xa_campaign_user_userlist_d"."contact_last_name" AS "contact_last_name",
-                  "xa_campaign_user_userlist_d"."contact_company" AS "contact_company",
-                  "xa_campaign_user_userlist_d"."contact_mobile_number" AS "contact_mobile_number",
-                  "xa_drip_email_history_d"."sent_time" AS "sent_time",
-                  "xa_emailtemplates_d"."name" AS "name",
-                  CAST("xa_emailtemplates_d"."subject" AS TEXT) AS "subject",
-                  "xa_user_d1"."user_id" AS "user_id (xa_user_d1)",
-                  "xa_user_d1"."email_id" AS "email_id (xa_user_d1)",
-                  "xa_user_d1"."firstname" AS "firstname (xa_user_d1)",
-                  "xa_user_d1"."lastname" AS "lastname (xa_user_d1)",
-                  "xa_user_d1"."datereg" AS "datereg (xa_user_d1)",
-                  "xa_user_d1"."created_time" AS "created_time (xa_user_d1)",
-                  "xa_user_d1"."company_id" AS "company_id (xa_user_d1)",
-                  "xa_company_d1"."company_id" AS "company_id (xa_company_d1)",
-                  "xa_company_d1"."company_name" AS "company_name (xa_company_d1)",
-                  "xa_user_role_d"."user_id" AS "user_id (xa_user_role_d)",
-                  "xa_user_role_d"."role_id" AS "role_id"
-                FROM "xamplify_test"."xa_user_d" "xa_user_d"
-                  left JOIN "xamplify_test"."xa_campaign_d" "xa_campaign_d" ON ("xa_user_d"."user_id" = "xa_campaign_d"."customer_id")
-                  left JOIN "xamplify_test"."xa_campaign_d" "xa_campaign_d1" ON ("xa_campaign_d"."campaign_id" = "xa_campaign_d1"."parent_campaign_id")
-                  LEFT JOIN "xamplify_test"."xa_company_d" "xa_company_d" ON ("xa_user_d"."company_id" = "xa_company_d"."company_id")
-                  left JOIN "xamplify_test"."xa_user_d" "xa_user_d1" ON ("xa_campaign_d1"."customer_id" = "xa_user_d1"."user_id")
-                  LEFT JOIN "xamplify_test"."xa_company_d" "xa_company_d1" ON ("xa_user_d1"."company_id" = "xa_company_d1"."company_id")
-                  left JOIN "xamplify_test"."xa_drip_email_history_d" "xa_drip_email_history_d" ON ("xa_user_d1"."user_id" = "xa_drip_email_history_d"."user_id")
-                  INNER JOIN "xamplify_test"."xa_emailtemplates_d" "xa_emailtemplates_d" ON ("xa_drip_email_history_d"."email_template_id" = "xa_emailtemplates_d"."id")
-                  LEFT JOIN "xamplify_test"."xa_campaign_user_userlist_d" "xa_campaign_user_userlist_d" ON ("xa_campaign_d1"."campaign_id" = "xa_campaign_user_userlist_d"."campaign_id")
-                  left JOIN "xamplify_test"."xa_user_role_d" "xa_user_role_d" ON ("xa_user_d"."user_id" = "xa_user_role_d"."user_id")
-                  --and "xa_company_d"."company_id"=399
-                  and  "xa_user_role_d"."role_id" in(2,13)
+
+
+explore:partner_nurtures  {}
+view: partner_nurtures {
+  derived_table: {
+    sql: SELECT xa_user_d.user_id AS user_id,
+                  xa_user_d.email_id AS email_id,
+                  xa_user_d.company_id AS company_id,
+          xa_company_d.company_id AS company_id_c,
+                  xa_company_d.company_name AS company_name,
+          xa_campaign_d1.campaign_id AS campaign_id_cam1,
+                  xa_campaign_d1.customer_id AS customer_id_cam1,
+                  xa_campaign_d1.campaign_name AS campaign_name_cam1,
+                  xa_campaign_d1.created_time AS created_time_cam1,
+                  xa_campaign_d1.launch_time AS launch_time_cam1,
+                  xa_campaign_d1.parent_campaign_id AS parent_campaign_id_cam1,
+                  xa_campaign_user_userlist_d.campaign_id AS campaign_id_cul,
+                  xa_campaign_user_userlist_d.user_id AS user_id_cul,
+                  xa_campaign_user_userlist_d.email_id AS email_id_cul,
+                  xa_campaign_user_userlist_d.partner_company_name AS partner_company_name,
+                  xa_campaign_user_userlist_d.partner_first_name AS partner_first_name,
+                  xa_campaign_user_userlist_d.partner_last_name AS partner_last_name,
+                  xa_campaign_user_userlist_d.contact_user_id AS contact_user_id_cul,
+                  xa_campaign_user_userlist_d.contact_first_name AS contact_first_name,
+                  xa_campaign_user_userlist_d.contact_last_name AS contact_last_name,
+                  xa_campaign_user_userlist_d.contact_company AS contact_company,
+                  xa_drip_email_history_d.sent_time AS sent_time,
+                  xa_emailtemplates_d.name AS name,
+                  CAST(xa_emailtemplates_d.subject AS TEXT) AS subject,
+          xa_user_d1.user_id AS user_id_p,
+                  xa_user_d1.email_id AS email_id_p,
+                  xa_user_d1.firstname AS firstname_p,
+                  xa_user_d1.lastname AS lastname_p,
+                  xa_user_d1.datereg AS datereg_p,
+                  xa_user_d1.created_time AS created_time_p,
+                  xa_user_d1.company_id AS company_id_p,
+          xa_company_d1.company_id AS company_id_c1,
+                  xa_company_d1.company_name AS company_name_c1,
+          xa_user_role_d.user_id AS user_id_role,
+                  xa_user_role_d.role_id AS role_id,
+          xa_drip_email_history_d.action_id as action_id_drip,
+                  a.action_type as action_type_a,
+                  a.action_id as action_id_a,
+                  a.action_name as action_name_a
+
+        FROM xamplify_test.xa_user_d xa_user_d
+                  left JOIN xamplify_test.xa_campaign_d xa_campaign_d ON (xa_user_d.user_id = xa_campaign_d.customer_id)
+                  left JOIN xamplify_test.xa_campaign_d xa_campaign_d1 ON (xa_campaign_d.campaign_id = xa_campaign_d1.parent_campaign_id)
+                  LEFT JOIN (select * from xamplify_test.xa_company_d where xa_company_d.company_id not in(231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
+                  380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)) xa_company_d ON (xa_user_d.company_id = xa_company_d.company_id)
+                  left JOIN xamplify_test.xa_user_d xa_user_d1 ON (xa_campaign_d1.customer_id = xa_user_d1.user_id)
+                  LEFT JOIN xamplify_test.xa_company_d xa_company_d1 ON (xa_user_d1.company_id = xa_company_d1.company_id)
+                  left JOIN (select * from xamplify_test.xa_drip_email_history_d where xa_drip_email_history_d.action_id>=37 and xa_drip_email_history_d.action_id<=48) xa_drip_email_history_d ON (xa_user_d1.user_id = xa_drip_email_history_d.user_id)
+                  full join (select * from xamplify_test.xa_action_type_d
+              where xa_action_type_d.action_id >= 37 and xa_action_type_d.action_id <= 48) a on (xa_drip_email_history_d.action_id=a.action_id)
+                  left JOIN xamplify_test.xa_emailtemplates_d xa_emailtemplates_d ON (xa_drip_email_history_d.email_template_id = xa_emailtemplates_d.id)
+                  LEFT JOIN xamplify_test.xa_campaign_user_userlist_d xa_campaign_user_userlist_d ON (xa_campaign_d1.campaign_id = xa_campaign_user_userlist_d.campaign_id)
+                  left JOIN xamplify_test.xa_user_role_d xa_user_role_d ON (xa_user_d.user_id = xa_user_role_d.user_id)
+                  --where  xa_user_role_d.role_id in(2,13)
                  ;;
-    }
-
-    measure: count {
-      type: count
-      drill_fields: [detail*]
-    }
-    measure: Name {
-      type: count_distinct
-      sql: ${name};;
-      drill_fields: [company_name_xa_company_d1,created_time_xa_user_d1_raw,datereg_xa_user_d1_raw,name,subject,sent_time_raw]
-    }
-    dimension: user_id {
-      type: number
-      sql: ${TABLE}."user_id" ;;
-    }
-
-    dimension: email_id {
-      type: string
-      sql: ${TABLE}."email_id" ;;
-    }
-
-    dimension: firstname {
-      type: string
-      sql: ${TABLE}."firstname" ;;
-    }
-
-    dimension: lastname {
-      type: string
-      sql: ${TABLE}."lastname" ;;
-    }
-
-    dimension_group: datereg {
-      type: time
-      sql: ${TABLE}."datereg" ;;
-    }
-
-    dimension_group: created_time {
-      type: time
-      sql: ${TABLE}."created_time" ;;
-    }
-
-    dimension: company_id {
-      type: number
-      sql: ${TABLE}."company_id" ;;
-    }
-
-    dimension: company_id_xa_company_d {
-      type: number
-      label: "company_id (xa_company_d)"
-      sql: ${TABLE}."company_id (xa_company_d)" ;;
-    }
-
-    dimension: company_name {
-      type: string
-      sql: ${TABLE}."company_name" ;;
-    }
-
-    dimension: campaign_id_xa_campaign_d1 {
-      type: number
-      label: "campaign_id (xa_campaign_d1)"
-      sql: ${TABLE}."campaign_id (xa_campaign_d1)" ;;
-    }
-
-    dimension: customer_id_xa_campaign_d1 {
-      type: number
-      label: "customer_id (xa_campaign_d1)"
-      sql: ${TABLE}."customer_id (xa_campaign_d1)" ;;
-    }
-
-    dimension: campaign_name_xa_campaign_d1 {
-      type: string
-      label: "campaign_name (xa_campaign_d1)"
-      sql: ${TABLE}."campaign_name (xa_campaign_d1)" ;;
-    }
-
-    dimension: campaign_type_xa_campaign_d1 {
-      type: string
-      label: "campaign_type (xa_campaign_d1)"
-      sql: ${TABLE}."campaign_type (xa_campaign_d1)" ;;
-    }
-
-    dimension_group: created_time_xa_campaign_d1 {
-      type: time
-      label: "created_time (xa_campaign_d1)"
-      sql: ${TABLE}."created_time (xa_campaign_d1)" ;;
-    }
-
-    dimension_group: launch_time_xa_campaign_d1 {
-      type: time
-      label: "launch_time (xa_campaign_d1)"
-      sql: ${TABLE}."launch_time (xa_campaign_d1)" ;;
-    }
-
-    dimension: parent_campaign_id_xa_campaign_d1 {
-      type: number
-      label: "parent_campaign_id (xa_campaign_d1)"
-      sql: ${TABLE}."parent_campaign_id (xa_campaign_d1)" ;;
-    }
-
-    dimension: is_launched_xa_campaign_d1 {
-      type: string
-      label: "is_launched (xa_campaign_d1)"
-      sql: ${TABLE}."is_launched (xa_campaign_d1)" ;;
-    }
-
-    dimension: campaign_id_xa_campaign_user_userlist_d {
-      type: number
-      label: "campaign_id (xa_campaign_user_userlist_d)"
-      sql: ${TABLE}."campaign_id (xa_campaign_user_userlist_d)" ;;
-    }
-
-    dimension: user_id_xa_campaign_user_userlist_d {
-      type: number
-      label: "user_id (xa_campaign_user_userlist_d)"
-      sql: ${TABLE}."user_id (xa_campaign_user_userlist_d)" ;;
-    }
-
-    dimension: email_id_xa_campaign_user_userlist_d {
-      type: string
-      label: "email_id (xa_campaign_user_userlist_d)"
-      sql: ${TABLE}."email_id (xa_campaign_user_userlist_d)" ;;
-    }
-
-    dimension: partner_company_name {
-      type: string
-      sql: ${TABLE}."partner_company_name" ;;
-    }
-
-    dimension: partner_first_name {
-      type: string
-      sql: ${TABLE}."partner_first_name" ;;
-    }
-
-    dimension: partner_last_name {
-      type: string
-      sql: ${TABLE}."partner_last_name" ;;
-    }
-
-    dimension: contact_user_id {
-      type: number
-      sql: ${TABLE}."contact_user_id" ;;
-    }
-
-    dimension: contact_first_name {
-      type: string
-      sql: ${TABLE}."contact_first_name" ;;
-    }
-
-    dimension: contact_last_name {
-      type: string
-      sql: ${TABLE}."contact_last_name" ;;
-    }
-
-    dimension: contact_company {
-      type: string
-      sql: ${TABLE}."contact_company" ;;
-    }
-
-    dimension: contact_mobile_number {
-      type: string
-      sql: ${TABLE}."contact_mobile_number" ;;
-    }
-
-    dimension_group: sent_time {
-      type: time
-      sql: ${TABLE}."sent_time" ;;
-    }
-
-    dimension: name {
-      type: string
-      sql: ${TABLE}."name" ;;
-    }
-
-    dimension: subject {
-      type: string
-      sql: ${TABLE}."subject" ;;
-    }
-
-    dimension: user_id_xa_user_d1 {
-      type: number
-      label: "user_id (xa_user_d1)"
-      sql: ${TABLE}."user_id (xa_user_d1)" ;;
-    }
-
-    dimension: email_id_xa_user_d1 {
-      type: string
-      label: "email_id (xa_user_d1)"
-      sql: ${TABLE}."email_id (xa_user_d1)" ;;
-    }
-
-    dimension: firstname_xa_user_d1 {
-      type: string
-      label: "firstname (xa_user_d1)"
-      sql: ${TABLE}."firstname (xa_user_d1)" ;;
-    }
-
-    dimension: lastname_xa_user_d1 {
-      type: string
-      label: "lastname (xa_user_d1)"
-      sql: ${TABLE}."lastname (xa_user_d1)" ;;
-    }
-
-    dimension_group: datereg_xa_user_d1 {
-      type: time
-      label: "datereg (xa_user_d1)"
-      sql: ${TABLE}."datereg (xa_user_d1)" ;;
-    }
-
-    dimension_group: created_time_xa_user_d1 {
-      type: time
-      label: "created_time (xa_user_d1)"
-      sql: ${TABLE}."created_time (xa_user_d1)" ;;
-    }
-
-    dimension: company_id_xa_user_d1 {
-      type: number
-      label: "company_id (xa_user_d1)"
-      sql: ${TABLE}."company_id (xa_user_d1)" ;;
-    }
-
-    dimension: company_id_xa_company_d1 {
-      type: number
-      label: "company_id (xa_company_d1)"
-      sql: ${TABLE}."company_id (xa_company_d1)" ;;
-    }
-
-    dimension: company_name_xa_company_d1 {
-      type: string
-      label: "company_name (xa_company_d1)"
-      sql: ${TABLE}."company_name (xa_company_d1)" ;;
-    }
-
-    dimension: user_id_xa_user_role_d {
-      type: number
-      label: "user_id (xa_user_role_d)"
-      sql: ${TABLE}."user_id (xa_user_role_d)" ;;
-    }
-
-    dimension: role_id {
-      type: number
-      sql: ${TABLE}."role_id" ;;
-    }
-
-    set: detail {
-      fields: [
-        user_id,
-        email_id,
-        firstname,
-        lastname,
-        datereg_time,
-        created_time_time,
-        company_id,
-        company_id_xa_company_d,
-        company_name,
-        campaign_id_xa_campaign_d1,
-        customer_id_xa_campaign_d1,
-        campaign_name_xa_campaign_d1,
-        campaign_type_xa_campaign_d1,
-        created_time_xa_campaign_d1_time,
-        launch_time_xa_campaign_d1_time,
-        parent_campaign_id_xa_campaign_d1,
-        is_launched_xa_campaign_d1,
-        campaign_id_xa_campaign_user_userlist_d,
-        user_id_xa_campaign_user_userlist_d,
-        email_id_xa_campaign_user_userlist_d,
-        partner_company_name,
-        partner_first_name,
-        partner_last_name,
-        contact_user_id,
-        contact_first_name,
-        contact_last_name,
-        contact_company,
-        contact_mobile_number,
-        sent_time_time,
-        name,
-        subject,
-        user_id_xa_user_d1,
-        email_id_xa_user_d1,
-        firstname_xa_user_d1,
-        lastname_xa_user_d1,
-        datereg_xa_user_d1_time,
-        created_time_xa_user_d1_time,
-        company_id_xa_user_d1,
-        company_id_xa_company_d1,
-        company_name_xa_company_d1,
-        user_id_xa_user_role_d,
-        role_id
-      ]
-    }
   }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+  measure: Name {
+    type: count_distinct
+    sql: ${name};;
+    drill_fields: [company_name_xa_company_d1,created_time_xa_user_d1_raw,datereg_xa_user_d1_raw,name,subject,sent_time_raw]
+  }
+  dimension: user_id {
+    type: number
+    sql: ${TABLE}.user_id ;;
+  }
+
+  dimension: email_id {
+    type: string
+    sql: ${TABLE}.email_id ;;
+  }
+
+
+  dimension: company_id {
+    type: number
+    sql: ${TABLE}.company_id ;;
+  }
+
+  dimension: company_id_xa_company_d {
+    type: number
+    label: "company_id_c"
+    sql: ${TABLE}.company_id_c ;;
+  }
+
+  dimension: company_name {
+    type: string
+    sql: ${TABLE}.company_name ;;
+  }
+
+  dimension: campaign_id_xa_campaign_d1 {
+    type: number
+    label: "campaign_id_cam1"
+    sql: ${TABLE}.campaign_id_cam1 ;;
+  }
+
+  dimension: customer_id_xa_campaign_d1 {
+    type: number
+    label: "customer_id_cam1"
+    sql: ${TABLE}.customer_id_cam1 ;;
+  }
+
+  dimension: campaign_name_xa_campaign_d1 {
+    type: string
+    label: "campaign_name_cam1"
+    sql: ${TABLE}.campaign_name_cam1 ;;
+  }
+
+
+  dimension_group: created_time_xa_campaign_d1 {
+    type: time
+    label: "created_time_cam1"
+    sql: ${TABLE}.created_time_cam1 ;;
+  }
+
+  dimension_group: launch_time_xa_campaign_d1 {
+    type: time
+    label: "launch_time_cam1"
+    sql: ${TABLE}.launch_time_cam1 ;;
+  }
+
+  dimension: parent_campaign_id_xa_campaign_d1 {
+    type: number
+    label: "parent_campaign_id_cam1"
+    sql: ${TABLE}.parent_campaign_id_cam1 ;;
+  }
+
+  dimension: campaign_id_xa_campaign_user_userlist_d {
+    type: number
+    label: "campaign_id_cul"
+    sql: ${TABLE}.campaign_id_cul ;;
+  }
+
+  dimension: user_id_xa_campaign_user_userlist_d {
+    type: number
+    label: "user_id_cul"
+    sql: ${TABLE}.user_id_cul ;;
+  }
+
+  dimension: email_id_xa_campaign_user_userlist_d {
+    type: string
+    label: "email_id_cul"
+    sql: ${TABLE}.email_id_cul ;;
+  }
+
+  dimension: partner_company_name {
+    type: string
+    sql: ${TABLE}.partner_company_name ;;
+  }
+
+  dimension: partner_first_name {
+    type: string
+    sql: ${TABLE}.partner_first_name ;;
+  }
+
+  dimension: partner_last_name {
+    type: string
+    sql: ${TABLE}.partner_last_name ;;
+  }
+
+  dimension: contact_user_id {
+    type: number
+    sql: ${TABLE}.contact_user_id ;;
+  }
+
+  dimension: contact_first_name {
+    type: string
+    sql: ${TABLE}.contact_first_name ;;
+  }
+
+  dimension: contact_last_name {
+    type: string
+    sql: ${TABLE}.contact_last_name ;;
+  }
+
+  dimension: contact_company {
+    type: string
+    sql: ${TABLE}.contact_company ;;
+  }
+
+
+  dimension_group: sent_time {
+    type: time
+    sql: ${TABLE}.sent_time ;;
+  }
+
+  dimension: name {
+    type: string
+    sql: ${TABLE}.name ;;
+  }
+
+  dimension: subject {
+    type: string
+    sql: ${TABLE}.subject ;;
+  }
+
+  dimension: user_id_xa_user_d1 {
+    type: number
+    label: "user_id_p"
+    sql: ${TABLE}.user_id_p ;;
+  }
+
+  dimension: email_id_xa_user_d1 {
+    type: string
+    label: "email_id_p)"
+    sql: ${TABLE}.email_id_p ;;
+  }
+
+  dimension: firstname_xa_user_d1 {
+    type: string
+    label: "firstname_p"
+    sql: ${TABLE}.firstname_p ;;
+  }
+
+  dimension: lastname_xa_user_d1 {
+    type: string
+    label: "lastname_p"
+    sql: ${TABLE}.lastname_p ;;
+  }
+
+  dimension_group: datereg_xa_user_d1 {
+    type: time
+    label: "datereg_p"
+    sql: ${TABLE}.datereg_p ;;
+  }
+
+  dimension_group: created_time_xa_user_d1 {
+    type: time
+    label: "created_time_p"
+    sql: ${TABLE}.created_time_p ;;
+  }
+
+  dimension: company_id_xa_user_d1 {
+    type: number
+    label: "company_id_p"
+    sql: ${TABLE}.company_id_p ;;
+  }
+
+  dimension: company_id_xa_company_d1 {
+    type: number
+    label: "company_id_c1"
+    sql: ${TABLE}.company_id_c1 ;;
+  }
+
+  dimension: company_name_xa_company_d1 {
+    type: string
+    label: "company_name_c1"
+    sql: ${TABLE}.company_name_c1 ;;
+  }
+
+  dimension: user_id_xa_user_role_d {
+    type: number
+    label: "user_id_role"
+    sql: ${TABLE}.user_id (xa_user_role_d) ;;
+  }
+
+  dimension: role_id {
+    type: number
+    sql: ${TABLE}.role_id ;;
+  }
+  dimension: action_id_a {
+    type: number
+    label: "action_id_a"
+    sql: ${TABLE}.action_id_a ;;
+  }
+  dimension: action_type_a {
+    type: string
+    label: "action_type_a"
+    sql: ${TABLE}.action_type_a ;;
+  }
+  dimension: action_name_a {
+    type: string
+    label: "action_name_a"
+    sql: ${TABLE}.action_name_a ;;
+  }
+  dimension: action_id_xa_drip_email_history_d {
+    type: number
+    label: "action_id_drip"
+    sql: ${TABLE}.action_id_drip ;;
+  }
+
+
+  set: detail {
+    fields: [
+      user_id,
+      email_id,
+      company_id,
+      company_id_xa_company_d,
+      company_name,
+      campaign_id_xa_campaign_d1,
+      customer_id_xa_campaign_d1,
+      campaign_name_xa_campaign_d1,
+      created_time_xa_campaign_d1_time,
+      launch_time_xa_campaign_d1_time,
+      parent_campaign_id_xa_campaign_d1,
+      campaign_id_xa_campaign_user_userlist_d,
+      user_id_xa_campaign_user_userlist_d,
+      email_id_xa_campaign_user_userlist_d,
+      partner_company_name,
+      partner_first_name,
+      partner_last_name,
+      contact_user_id,
+      contact_first_name,
+      contact_last_name,
+      contact_company,
+      sent_time_time,
+      name,
+      subject,
+      user_id_xa_user_d1,
+      email_id_xa_user_d1,
+      firstname_xa_user_d1,
+      lastname_xa_user_d1,
+      datereg_xa_user_d1_time,
+      created_time_xa_user_d1_time,
+      company_id_xa_user_d1,
+      company_id_xa_company_d1,
+      company_name_xa_company_d1,
+      user_id_xa_user_role_d,
+      role_id,
+      action_id_xa_drip_email_history_d,
+      action_id_a,
+      action_name_a,
+      action_type_a
+
+    ]
+  }
+}
 
 
 
