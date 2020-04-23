@@ -123,33 +123,12 @@ view: campaign1 {
   }
   parameter: Date_selector {
     label: "Date_Selector"
+    description: "This filter applies only for Quarter,Month,Week Report "
     description: "Choose a metric"
     allowed_value: { value: "Last 4 Quarters" }
     allowed_value: { value: "Last 4 Months" }
     allowed_value: { value: "Last 4 Weeks" }
   }
-
-
- measure: metric {
-  type: number
-  sql: CASE
-          WHEN {% parameter Date_selector %} = 'Last 4 Quarters' THEN ${Email_Opened}
-          WHEN {% parameter Date_selector %} = 'Last 4 Quarters' THEN ${Views}
-         WHEN {% parameter Date_selector %} = 'Last 4 Quarters' THEN  ${Leads}
-          WHEN {% parameter Date_selector %} = 'Last 4 Quarters' THEN ${Deals}
-          WHEN {% parameter Date_selector %} = 'Last 4 Months' THEN ${Email_Opened}
-          WHEN {% parameter Date_selector %} = 'Last 4 Months' THEN ${Views}
-          WHEN {% parameter Date_selector %} = 'Last 4 Months' THEN ${Leads}
-          WHEN {% parameter Date_selector %} = 'Last 4 Months' THEN ${Deals}
-          WHEN {% parameter Date_selector %} = 'Last 4 Weeks' THEN ${Email_Opened}
-          WHEN {% parameter Date_selector %} = 'Last 4 Weeks' THEN ${Views}
-          WHEN {% parameter Date_selector %} = 'Last 4 Weeks' THEN ${Leads}
-          WHEN {% parameter Date_selector %} = 'Last 4 Weeks' THEN ${Deals}
-          ELSE NULL
-        END ;;
-
-  }
-
 
 
 
@@ -179,7 +158,7 @@ view: campaign1 {
         +
    ( extract(month from age(now(), (${redistributed_cam_launch_time_date})))))<4
 
- then ${month_name}
+ then contact ( ${month_name},' - ' , ${vendor_cam_created_time_year})
 
  when {% parameter Date_selector %} = 'Last 4 Weeks'
   and
@@ -324,6 +303,52 @@ then ${deal_id}
                 ;;
   }
 
+
+  measure: Deals_Count{
+    type:count_distinct
+    sql:
+
+    case when {% parameter Date_selector %} = 'Last 4 Quarters'
+  and
+  (( extract(year from age(now(), (${deal_created_time_date})))*4)
+        +
+        ( extract(quarter from age(now(), (${deal_created_time_date})))) )>=0
+        and
+              (( extract(year from age(now(), (${deal_created_time_date})))*4)
+        +
+        ( extract(quarter from age(now(), (${deal_created_time_date})))) )<4
+        and ${is_deal}=true
+
+  then ${deal_id}
+
+  when {% parameter Date_selector %} = 'Last 4 Months'
+   and
+   ( ( extract(year from age(now(), (${deal_created_time_date})))*12)
+        +
+    ( extract(month from age(now(), (${deal_created_time_date})))))>=0
+ and
+  ( ( extract(year from age(now(), (${deal_created_time_date})))*12)
+        +
+   ( extract(month from age(now(), (${deal_created_time_date})))))<4
+  and ${is_deal}=true
+
+ then ${deal_id}
+
+ when {% parameter Date_selector %} = 'Last 4 Weeks'
+  and
+    ( ( extract(year from age(now(), (${deal_created_time_date})))*54)
+        +
+        ( extract(WEEK from age(now(), (${deal_created_time_date})))) )>=0
+
+     and
+              ( ( extract(year from age(now(), (${deal_created_time_date})))*54)
+        +
+        ( extract(WEEK from age(now(), (${deal_created_time_date})))) )<4
+        and ${is_deal}=true
+then ${deal_id}
+                 end
+                ;;
+  }
 
 
 dimension: category {
@@ -1657,7 +1682,7 @@ dimension: category {
 
         dimension: month_startdate_enddate{
           type: string
-          sql: concat(to_char("Deal Created Time",'mon'),' ','(',extract(day from date_trunc('week', "Deal Created Time")::date) || ' - ' ||
+          sql: concat(to_char("Deal Created Time",'Mon'),' ','(',extract(day from date_trunc('week', "Deal Created Time")::date) || ' - ' ||
                extract(day from (date_trunc('week', "Deal Created Time") + '6 days') ::date),')')
          ;;
         }
