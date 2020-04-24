@@ -141,7 +141,7 @@ from xamplify_test.xa_campaign_user_userlist_d)
   }
 
 
-  dimension: Date_name {
+  dimension: Quarter {
     type: string
     sql:
            CASE
@@ -156,6 +156,14 @@ from xamplify_test.xa_campaign_user_userlist_d)
         ( extract(quarter from age(now(), (${redistributed_cam_launch_time_date})))) )<4
 
   then cast (${year_qtr} as character varying)
+  end;;
+   drill_fields: [Months]
+  }
+
+    dimension: Months {
+    type: string
+    sql:
+    CASE
 
   when {% parameter Date_selector %} = 'Last 4 Months'
    and
@@ -169,6 +177,14 @@ from xamplify_test.xa_campaign_user_userlist_d)
 
 
  then concat ( ${month_name},' - ' , cast( ${vendor_cam_created_time_year} as character varying ))
+
+end;;
+}
+
+      dimension: Quarters {
+        type: string
+        sql:
+        CASE
 
 
  when {% parameter Date_selector %} = 'Last 4 Weeks'
@@ -409,7 +425,7 @@ dimension: category {
       type: count_distinct
       sql: ${redistributed_campaign_id} ;;
 
-      drill_fields: [partner_company_name,redistributed_campaign_name]
+      drill_fields: [partner_company_name,redistributed_campaign_id,redistributed_campaign_name]
 
       link: {
         label: "Redistributed Details"
@@ -552,13 +568,8 @@ dimension: category {
   measure: Active_recipients {
     type: count_distinct
     sql: ${view_user_id} ;;
-    link:{
-      label:
+    drill_fields: [email_id,contact_first_name,contact_last_name,country,state,city,contact_mobile_number]
 
-      "{{value}} Active Users Detail Reports"
-      url:"https://stratappspartner.looker.com/dashboards/25?Vendor%20Company%20Name={{ _filters['campaign1.vendor_company_name'] | url_encode }}&Location={{ value | encode_uri }}"
-      icon_url: "http://www.looker.com/favicon.ico"
-    }
   }
 
     measure: Views {
@@ -699,6 +710,7 @@ dimension: category {
       type: time
       label: "Redistributed Cam Launch Time"
       sql: ${TABLE}."Redistributed Cam Launch Time" ;;
+      drill_fields: [redistributed_cam_launch_time_month,redistributed_cam_launch_time_week]
     }
 
     dimension: date {
@@ -1737,18 +1749,27 @@ dimension: category {
       sql:  concat(cast(extract(year from ${deal_status_created_time_date}) as character varying),'-',
           cast(extract(month  from ${deal_status_created_time_date} ) as character varying))
           ;;
+          order_by_field: deal_status_created_time_month
 
 
       }
 
-        dimension: month_startdate_enddate{
+        dimension: month_startdate_enddatee{
           type: string
-          sql: concat(to_char("Deal Created Time",'Mon'),' ','(',extract(day from date_trunc('week', "Deal Created Time")::date) || ' - ' ||
-               extract(day from (date_trunc('week', "Deal Created Time") + '6 days') ::date),')')
+          sql: concat(to_char((date_trunc('week',${date_date})),'Mon'),' ',extract(day from date_trunc('week', ${date_date})) || ' - ' || to_char(((date_trunc('week',${date_date})) + '6 days'),'Mon'),' ',
+               extract(day from (date_trunc('week', ${date_date}) + '6 days')))
          ;;
+        order_by_field: date_week
 
             }
 
+    dimension: month_startdate_enddate{
+      type: string
+      sql: concat(to_char((date_trunc('week',"Deal Created Time")),'Mon'),' ',extract(day from date_trunc('week', "Deal Created Time")) || ' - ' || to_char(((date_trunc('week',"Deal Created Time")) + '6 days'),'Mon'),' ',
+               extract(day from (date_trunc('week', "Deal Created Time") + '6 days')))
+         ;;
+    order_by_field: deal_created_time_week
+    }
 
     dimension: created_week {
       type:date_week_of_year
@@ -1879,9 +1900,10 @@ dimension: category {
       sql: ${TABLE}."Redistributed Cam Launch Time" ;;
     }
 
-    dimension: date {
-      type: date
+    dimension_group:: date {
+      type: time
       sql: ${TABLE}."Date" ;;
+      order_by_field: date_week_of_year
     }
 
     dimension: year_qtr {
@@ -2027,7 +2049,7 @@ dimension: category {
         parent_campaign_id,
         redistributed_cam_is_launched,
         redistributed_cam_launch_time_time,
-        date,
+        date_date,
         year_qtr,
         month,
         month_name,
@@ -2192,12 +2214,40 @@ view: vendor_nurtures {
     drill_fields: [company_name,created_time_raw,datereg_raw,name,subject,sent_time_raw]
   }
 
-  measure: action_id_drill {
+   measure: Active_Nurtures{
     type: count_distinct
-    label: "action_id_drill"
+
     sql: ${action_id_a} ;;
-    drill_fields: [action_name_a]
+    drill_fields: [action_name_a,action_type_a,action_name_Category]
   }
+
+
+
+  measure: Vendor_nurtures{
+    type: count_distinct
+    sql: ${action_type_a} ;;
+   drill_fields: [action_name_a,action_type_a,action_name_Category]
+  }
+
+  measure: Inactive_nurtures {
+    type: count_distinct
+    sql: ${action_type_a} ;;
+    drill_fields: [action_name_a,action_type_a,action_name_Category]
+  }
+
+  measure: Nurture_companies {
+    type: count_distinct
+    sql: ${company_id_xa_company_d};;
+    drill_fields: [company_name,action_name_Category,name,subject,sent_time_date]
+  }
+  measure: Nurture_Without_companies {
+    type: count_distinct
+    sql: ${company_id_xa_company_d};;
+   drill_fields: [company_name,created_time_date,datereg_date]
+  }
+
+
+
 
   dimension: user_id {
     type: number
@@ -2307,11 +2357,14 @@ view: vendor_nurtures {
     type: string
     label: "action_type_a"
     sql: ${TABLE}.action_type_a ;;
+
   }
   dimension: action_name_a {
     type: string
     label: "action_name_a"
     sql: ${TABLE}.action_name_a ;;
+
+
   }
 
   dimension: user_id_xa_drip_email_history_d {
@@ -2350,6 +2403,7 @@ view: vendor_nurtures {
     sql: ${TABLE}.role_id ;;
   }
   dimension: action_name_Category {
+    type: string
     sql:
      CASE
      when ${action_name_a}='vendor_welcome' THEN 'Welcome Nurtures'
@@ -2368,7 +2422,22 @@ view: vendor_nurtures {
     when ${action_name_a}='vendor_removal_warning' THEN 'Removal warning Nurtures'
     when ${action_name_a}='vendor_churn_farewell_nurture' THEN 'Removal warning Nurtures'
     END ;;
+
+    #drill_fields: [company_name,created_time_date,datereg_date]
+     link: {
+      label: "{{value}} Vendors with Nurtures Detail"
+      url: "https://stratappspartner.looker.com/dashboards/26?Category={{ value | encode_uri }}"
+      icon_url: "http://www.looker.com/favicon.ico"
+    }
+
+    link: {
+      label: "{{value}} Vendors without Nurtures Detail"
+      url: "https://stratappspartner.looker.com/dashboards/27?Category<>{{ value | encode_uri }}"
+      icon_url: "http://www.looker.com/favicon.ico"
+    }
+
   }
+
 
 
   set: detail {
