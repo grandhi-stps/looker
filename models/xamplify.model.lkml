@@ -130,6 +130,7 @@ from xamplify_test.xa_campaign_user_userlist_d)
       inner join c on b."Contact User ID" = c."Contact User ID1"
       where a."Vendor Company ID" in (202,262,268,269,283,291,305,325,328,343,399,422,464)
       and c.row_number1 = 1
+     -- and b."Contact User ID" is not null
  ;;
   }
   parameter: Date_selector {
@@ -440,11 +441,16 @@ dimension: category {
 
    measure: Total_Recipients {
     type: count_distinct
+
     sql: ${contact_user_id};;
     # sql_distinct_key: ${contact_user_id} ;;
+
+   # html: {{rendered_value}} , {{Active_recipients.rendered_value}};;
     drill_fields: [
       email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city
     ]
+
+
     #link: {
      # label: "Total Recipients Map"
       #url: "https://stratappspartner.looker.com/looks/36?toggle=pik
@@ -673,6 +679,8 @@ dimension: category {
       type: string
       label: "Redistributed Campaign Name"
       sql: ${TABLE}."Redistributed Campaign Name" ;;
+
+
       drill_fields: [partner_company_name]
     }
 
@@ -810,7 +818,7 @@ dimension: category {
       type: time
       label: "View Time"
       sql: ${TABLE}."View Time" ;;
-      drill_fields: [email_id]
+      drill_fields: [partner_company_name,redistributed_campaign_name,email_id]
     }
 
     dimension: view_user_id {
@@ -1759,17 +1767,22 @@ dimension: category {
           sql: concat(to_char((date_trunc('week',${date_date})),'Mon'),' ',extract(day from date_trunc('week', ${date_date})) || ' - ' || to_char(((date_trunc('week',${date_date})) + '6 days'),'Mon'),' ',
                extract(day from (date_trunc('week', ${date_date}) + '6 days')))
          ;;
-        order_by_field: date_week
+        order_by_field: week
 
             }
 
-    dimension: month_startdate_enddate{
-      type: string
-      sql: concat(to_char((date_trunc('week',"Deal Created Time")),'Mon'),' ',extract(day from date_trunc('week', "Deal Created Time")) || ' - ' || to_char(((date_trunc('week',"Deal Created Time")) + '6 days'),'Mon'),' ',
+           dimension: month_startdate_enddate{
+            type: string
+            #allow_fill: yes
+            sql: concat(to_char((date_trunc('week',"Deal Created Time")),'Mon'),' ',extract(day from date_trunc('week', "Deal Created Time")) || ' - ' || to_char(((date_trunc('week',"Deal Created Time")) + '6 days'),'Mon'),' ',
                extract(day from (date_trunc('week', "Deal Created Time") + '6 days')))
          ;;
-    order_by_field: deal_created_time_week
-    }
+            order_by_field: deal_created_time_week
+          }
+
+
+
+
 
     dimension: created_week {
       type:date_week_of_year
@@ -1902,7 +1915,7 @@ dimension: category {
 
     dimension_group:: date {
       type: time
-      sql: ${TABLE}."Date" ;;
+      sql: ${TABLE}."Date";;
       order_by_field: date_week_of_year
     }
 
@@ -2209,7 +2222,7 @@ view: vendor_nurtures {
     drill_fields: [detail*]
   }
   measure: Name {
-    type: count_distinct
+   type: count_distinct
     sql: ${name};;
     drill_fields: [company_name,created_time_raw,datereg_raw,name,subject,sent_time_raw]
   }
@@ -2246,7 +2259,10 @@ view: vendor_nurtures {
    drill_fields: [company_name,created_time_date,datereg_date]
   }
 
-
+  measure: launch_time {
+    type: date
+    sql: min(${launch_time_date}) ;;
+  }
 
 
   dimension: user_id {
@@ -2326,6 +2342,8 @@ view: vendor_nurtures {
     type: time
     sql: ${TABLE}.launch_time ;;
   }
+
+
 
   dimension: parent_campaign_id {
     type: number
@@ -2510,6 +2528,7 @@ view: partner_nurtures {
                   xa_user_d1.firstname AS firstname_p,
                   xa_user_d1.lastname AS lastname_p,
                   xa_user_d1.datereg AS datereg_p,
+                  xa_user_d1.datelastlogin AS datelastlogin_p,
                   xa_user_d1.created_time AS created_time_p,
                   xa_user_d1.company_id AS company_id_p,
           xa_company_d1.company_id AS company_id_c1,
@@ -2710,6 +2729,12 @@ view: partner_nurtures {
     sql: ${TABLE}.datereg_p ;;
   }
 
+  dimension_group: datelastlogin_xa_user_d1 {
+    type: time
+    label: "datelastlogin_p"
+    sql: ${TABLE}.datelastlogin_p ;;
+  }
+
   dimension_group: created_time_xa_user_d1 {
     type: time
     label: "created_time_p"
@@ -2797,6 +2822,7 @@ view: partner_nurtures {
       firstname_xa_user_d1,
       lastname_xa_user_d1,
       datereg_xa_user_d1_time,
+      datelastlogin_xa_user_d1_time,
       created_time_xa_user_d1_time,
       company_id_xa_user_d1,
       company_id_xa_company_d1,
