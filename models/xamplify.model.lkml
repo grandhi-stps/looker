@@ -1780,6 +1780,12 @@ dimension: category {
             order_by_field: deal_created_time_week
           }
 
+    dimension: week_start_date {
+      type: string
+      sql: date_trunc('week',${date_date} ;;
+    }
+
+
 
 
 
@@ -2260,8 +2266,8 @@ view: vendor_nurtures {
   }
 
   measure: launch_time {
-    type: date
-    sql: min(${launch_time_date}) ;;
+    type: count_distinct
+     sql: ${launch_time_raw} ;;
   }
 
 
@@ -2442,19 +2448,23 @@ view: vendor_nurtures {
     END ;;
 
     #drill_fields: [company_name,created_time_date,datereg_date]
-     link: {
-      label: "{{value}} Vendors with Nurtures Detail"
-      url: "https://stratappspartner.looker.com/dashboards/26?Category={{ value | encode_uri }}"
+
+
+
+
+    link:{
+      label:"{{value}} With Nurture Details"
+      url: "https://stratappspartner.looker.com/looks/97?&f[vendor_nurtures.action_name_Category]={{ value | encode_uri }}"
+      icon_url: "http://www.looker.com/favicon.ico"
+    }
+    link:{
+      label:"{{value}} Without Nurture Details"
+      url: "https://stratappspartner.looker.com/looks/98?&f[vendor_nurtures.action_name_Category]=-{{ value | encode_uri }}"
       icon_url: "http://www.looker.com/favicon.ico"
     }
 
-    link: {
-      label: "{{value}} Vendors without Nurtures Detail"
-      url: "https://stratappspartner.looker.com/dashboards/27?Category<>{{ value | encode_uri }}"
-      icon_url: "http://www.looker.com/favicon.ico"
-    }
 
-  }
+ }
 
 
 
@@ -2566,6 +2576,53 @@ view: partner_nurtures {
     sql: ${name};;
     drill_fields: [company_name_xa_company_d1,created_time_xa_user_d1_raw,datereg_xa_user_d1_raw,name,subject,sent_time_raw]
   }
+
+  measure: Partner_Nurture {
+    type: count_distinct
+    sql: ${action_id_a};;
+    drill_fields: [action_name_a]
+
+  }
+  measure: Active_Nurture {
+    type: count_distinct
+    sql: ${name};;
+
+  }
+
+      measure: InActive_Nurture {
+        type: number
+        sql: count(distinct ${action_id_a})-count(distinct ${name})
+          ;;
+
+      }
+
+  measure: Total_Partners{
+    type: count_distinct
+    sql: ${user_id_xa_user_d1};;
+    drill_fields: [company_name,email_id_xa_user_d1,created_time_xa_user_d1_date,datereg_xa_user_d1_date]
+
+  }
+  measure: Partners_with_nurture{
+    type: count_distinct
+    sql: ${user_id_xa_user_d1};;
+    drill_fields: [company_name,email_id_xa_user_d1,firstname_xa_user_d1,lastname_xa_user_d1,created_time_xa_user_d1_date,datereg_xa_user_d1_date]
+
+  }
+  measure: Partners_without_nurture{
+    type: count_distinct
+    sql: ${user_id_xa_user_d1};;
+    drill_fields:[company_name,email_id_xa_user_d1,firstname_xa_user_d1,lastname_xa_user_d1,created_time_xa_user_d1_date,datereg_xa_user_d1_date]
+
+  }
+  measure: Partners_count{
+    type: count_distinct
+    sql: ${user_id_xa_user_d1};;
+    drill_fields:[company_name,email_id_xa_user_d1,name,subject,sent_time_date]
+
+  }
+
+
+
   dimension: user_id {
     type: number
     sql: ${TABLE}.user_id ;;
@@ -3404,3 +3461,217 @@ view: partner_nurtures {
       sql_on: ${xa_user_list_d1.listby_partner_id}=${xa_user_d.user_id} ;;
     }
   }
+
+
+explore:teammembers  {}
+view: teammembers {
+  derived_table: {
+    sql:
+    select distinct
+      "Vendor Campaign".campaign_id as "Vendor Campaign ID",
+      "Vendor Campaign".campaign_name as "Vendor Campaign Name",
+      "Vendor Company".company_id as "Vendor Company ID",
+      "Vendor Company".company_name as "Vendor Company Name",
+      "Vendor Campaign".is_launched "Vendor Cam Is Launched",
+      "Vendor Campaign".launch_time "Vendor Cam Launch Time",
+      "Vendor Campaign".campaign_type "Vendor Campaign Type",
+      "Vendor Campaign".campaign_schedule_type "Vendor Cam Schedule Type",
+      "Vendor Campaign".created_time "Vendor Cam Created Time",
+    --  "Partner Company".company_id "Partner Company ID",
+    --  "Partner Company".company_name "Partner Company Name",
+    "Social connection".id as "Social ID",
+    "Social connection".profile_name as "socialconn name",
+      "Social connection".source as "Social_Source",
+    "Social connection".user_id as "Social user ID",
+    "Videofiles". id as "Video ID",
+    "Videofiles".title as "Video Title",
+    "Videofiles".created_time as "Video Created Time",
+    "Team Member".team_member_id as "Teammember ID",
+    "Team Member".id as "Team ID",
+    "Team Member".email_id as "Teammember email_id",
+    "Team Member".firstname as "Teammember Firstname",
+    "Team Member".lastname as "Teammember Lastname",
+    "Team Member".status as "Teammember status",
+    "Team Member".created_time as "Teammember Created Time",
+    "Team Member".company_id as "Teammember company_id",
+  "Emailtemplates".id as "Email Template ID"
+      from
+      xamplify_test.xa_team_member_d "Team Member"
+      left JOIN xamplify_test.xa_user_d "Vendor Users" ON ("Team Member".team_member_id = "Vendor Users".user_id)
+      left JOIN xamplify_test.xa_company_d "Vendor Company" ON ("Team Member".company_id = "Vendor Company".company_id)
+      --left JOIN xamplify_test.xa_campaign_d "Redistributed Cam" ON ("Vendor Campaign".campaign_id = "Redistributed Cam".parent_campaign_id)
+      --left JOIN xamplify_test.xa_user_d "Partner Users" ON ("Redistributed Cam".customer_id = "Partner Users".user_id)
+     -- left JOIN xamplify_test.xa_company_d "Partner Company" ON ("Partner Users".company_id = "Partner Company".company_id)
+     left  join xamplify_test.xa_campaign_d "Vendor Campaign" on ("Vendor Campaign".customer_id="Team Member".team_member_id)
+    left join xamplify_test.xa_socialconn_d "Social connection" on("Social connection".user_id="Team Member".team_member_id)
+    left join xamplify_test.xa_videofiles_d "Videofiles" on("Team Member".team_member_id="Videofiles".customer_id)
+   inner join xamplify_test.xa_emailtemplates_d "Emailtemplates" on("Team Member".team_member_id="Emailtemplates".user_id)
+   --where "Vendor Company"."Vendor Company ID" in (202,262,268,269,283,291,305,325,328,343,399,422,464)
+    ;;
+  }
+  dimension: vendor_campaign_id {
+    type: number
+    label: "Vendor Campaign ID"
+    sql: ${TABLE}."Vendor Campaign ID" ;;
+  }
+
+  dimension: vendor_campaign_name {
+    type: string
+    label: "Vendor Campaign Name"
+    sql: ${TABLE}."Vendor Campaign Name" ;;
+  }
+
+  dimension: vendor_company_id {
+    type: number
+    label: "Vendor Company ID"
+    sql: ${TABLE}."Vendor Company ID" ;;
+  }
+
+  dimension: vendor_company_name {
+    type: string
+    label: "Vendor Company Name"
+    sql: ${TABLE}."Vendor Company Name" ;;
+  }
+
+  dimension: vendor_cam_is_launched {
+    type: string
+    label: "Vendor Cam Is Launched"
+    sql: ${TABLE}."Vendor Cam Is Launched" ;;
+  }
+
+  dimension_group: vendor_cam_launch_time {
+    type: time
+    label: "Vendor Cam Launch Time"
+    sql: ${TABLE}."Vendor Cam Launch Time" ;;
+  }
+
+  dimension: vendor_campaign_type {
+    type: string
+    label: "Vendor Campaign Type"
+    sql: ${TABLE}."Vendor Campaign Type" ;;
+  }
+
+  dimension: vendor_cam_schedule_type {
+    type: string
+    label: "Vendor Cam Schedule Type"
+    sql: ${TABLE}."Vendor Cam Schedule Type" ;;
+  }
+
+  dimension_group: vendor_cam_created_time {
+    type: time
+    label: "Vendor Cam Created Time"
+    sql: ${TABLE}."Vendor Cam Created Time" ;;
+  }
+
+  dimension: social_id {
+    type: number
+    label: "Social ID"
+    sql:  ${TABLE}."Social ID";;
+  }
+
+  dimension: profile_name {
+    type: string
+    label:  "socialconn name"
+    sql: ${TABLE}. "socialconn name" ;;
+  }
+
+  dimension: social_user_id {
+    type:  number
+    label: "Social user ID"
+    sql: ${TABLE}."Social user ID" ;;
+  }
+  dimension: video_id {
+    type: number
+    label: "Video ID"
+    sql: ${TABLE}."Video ID" ;;
+  }
+
+  dimension:  video_title{
+    type: string
+    label: "Video Customer ID"
+    sql: ${TABLE}."Video Customer ID" ;;
+  }
+
+  dimension_group: video_created_time {
+    type: time
+    label: "Video Created Time"
+    sql: ${TABLE}."Video Created Time" ;;
+  }
+  dimension: teammember_id {
+    type:  number
+    label: "Teammember ID"
+    sql: ${TABLE}."Teammember ID" ;;
+  }
+
+  dimension: team_id {
+    type: number
+    label: "Team ID"
+    sql: ${TABLE}."Team ID" ;;
+  }
+
+  dimension:  teammember_email_id{
+    type: string
+    label: "Teammember email_id"
+    sql: ${TABLE}."Teammember email_id" ;;
+  }
+  dimension: teammember_firstname {
+    type: string
+    label: "Teammember Firstname"
+    sql: ${TABLE}."Teammember Firstname" ;;
+  }
+  dimension: teammember_lastname {
+    type:  string
+    label: "Teammember Lastname"
+    sql: ${TABLE}."Teammember Lastname" ;;
+  }
+  dimension: status {
+    type: string
+    label: "Teammember status"
+    sql: ${TABLE}."Teammember status" ;;
+  }
+  dimension_group: teammember_created_time {
+    type: time
+    label: "Teammember Created Time"
+    sql: ${TABLE}."Teammember Created Time" ;;
+  }
+  dimension: teammember_companyid {
+    type: number
+    label: "Teammember company_id"
+    sql: ${TABLE}."Teammember company_id" ;;
+  }
+
+  dimension: email_template_id {
+    type: number
+    label: "Email Template ID"
+    sql: ${TABLE}."Email Template ID" ;;
+  }
+
+  set: detail {
+    fields: [
+      vendor_campaign_id,
+      vendor_campaign_name,
+      vendor_company_id,
+      vendor_company_name,
+      vendor_cam_is_launched,
+      vendor_cam_launch_time_time,
+      vendor_campaign_type,
+      vendor_cam_schedule_type,
+      vendor_cam_created_time_time,
+      social_id,
+      profile_name,
+      social_user_id,
+      social_id,
+      video_id,
+      video_title,
+      video_created_time_time,
+      team_id,
+      teammember_companyid,
+      teammember_created_time_time,
+      teammember_email_id,
+      teammember_lastname,
+      teammember_firstname,
+      status,email_template_id
+    ]
+
+  }
+}
