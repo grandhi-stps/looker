@@ -1191,14 +1191,14 @@ dimension: category {
     }
     measure: Vendor_Cam_Lauched{
       type: count_distinct
-
+      sql: (case when ${vendor_cam_is_launched} then ${vendor_campaign_id} END);;
       #(IF ${vendor_cam_is_launched}  THEN  ${vendor_campaign_id} END);;
       drill_fields: [vendor_campaign_type,vendor_campaign_name]
-      link: {
-        label: "Detail Report"
-        url: "{{https://stratappspartner.looker.com/looks/20}}"
-      }
-      sql: (case when ${vendor_cam_is_launched} then ${vendor_campaign_id} END);;
+     # link: {
+      #  label: "Detail Report"
+       # url: "{{https://stratappspartner.looker.com/looks/20}}"
+    #  }
+
     }
 
     measure: Deals  {
@@ -1780,6 +1780,7 @@ dimension: category {
             order_by_field: deal_created_time_week
           }
 
+
     dimension: week_start_date {
       type: string
       sql: date_trunc('week',${date_date} ;;
@@ -2184,6 +2185,7 @@ view: vendor_nurtures {
                   xa_user_d.datelastlogin AS datelastlogin,
                   xa_user_d.created_time AS created_time,
                  xa_user_d.mobile_number AS mobile_number,
+                xa_user_d.company_id as User_Company_Id,
 
                   xa_campaign_d.campaign_id AS campaign_id_d,
                  xa_campaign_d.customer_id AS customer_id,
@@ -2213,7 +2215,7 @@ view: vendor_nurtures {
     ORDER BY launch_time asc
   ) rank
     from xamplify_test.xa_campaign_d) a
-    where a.rank<=5  ) as  xa_campaign_d ON (xa_user_d.user_id =xa_campaign_d.customer_id)
+    where a.rank<=5  ) as xa_campaign_d ON (xa_user_d.user_id =xa_campaign_d.customer_id)
                   LEFT JOIN (select * from xamplify_test.xa_company_d where xa_company_d.company_id not in(231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
                   380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)) xa_company_d ON (xa_user_d.company_id = xa_company_d.company_id)
                   LEFT JOIN xamplify_test.xa_campaign_d xa_campaign_d1 ON (xa_campaign_d.campaign_id = xa_campaign_d1.parent_campaign_id)
@@ -2236,11 +2238,11 @@ view: vendor_nurtures {
     drill_fields: [company_name,created_time_raw,datereg_raw,name,subject,sent_time_raw]
   }
 
-   measure: Active_Nurtures{
+  measure: Active_Nurtures{
     type: count_distinct
 
     sql: ${action_id_a} ;;
-    drill_fields: [action_name_a,action_type_a,action_name_Category]
+    drill_fields: [action_name_a,action_name_Category]
   }
 
 
@@ -2248,13 +2250,13 @@ view: vendor_nurtures {
   measure: Vendor_nurtures{
     type: count_distinct
     sql: ${action_type_a} ;;
-   drill_fields: [action_name_a,action_type_a,action_name_Category]
+    drill_fields: [action_name_a,action_name_Category]
   }
 
   measure: Inactive_nurtures {
     type: count_distinct
     sql: ${action_type_a} ;;
-    drill_fields: [action_name_a,action_type_a,action_name_Category]
+    drill_fields: [action_name_a,action_name_Category]
   }
 
   measure: Nurture_companies {
@@ -2271,6 +2273,13 @@ view: vendor_nurtures {
   measure: launch_time {
     type: count_distinct
      sql: ${launch_time_raw} ;;
+  }
+
+  measure: Inactive_vendors{
+    type: count_distinct
+    sql: ${user_id} ;;
+    drill_fields: [email_id,created_time_date,datereg_date,name,sent_time_date]
+
   }
 
 
@@ -2314,13 +2323,17 @@ view: vendor_nurtures {
     type: string
     sql: ${TABLE}.mobile_number ;;
   }
-
+  dimension: company_id_xa_user_d {
+    type: number
+    label: "User_Company_Id"
+    sql: ${TABLE}.User_Company_Id ;;
+  }
 
 
   dimension: campaign_id_xa_campaign_d {
     type: number
     label: "campaign_id_d"
-    sql: ${TABLE}."campaign_id_d" ;;
+    sql: ${TABLE}.campaign_id_d ;;
   }
 
   dimension: customer_id {
@@ -2478,7 +2491,7 @@ view: vendor_nurtures {
       datelastlogin_time,
       created_time_time,
       mobile_number,
-
+      company_id_xa_user_d,
       campaign_id_xa_campaign_d,
       customer_id,
       campaign_name,
@@ -2550,23 +2563,25 @@ view: partner_nurtures {
                   a.action_id as action_id_a,
                   a.action_name as action_name_a
 
-        FROM xamplify_test.xa_user_d xa_user_d
-                  left JOIN xamplify_test.xa_campaign_d xa_campaign_d ON (xa_user_d.user_id = xa_campaign_d.customer_id)
-                  left JOIN xamplify_test.xa_campaign_d xa_campaign_d1 ON (xa_campaign_d.campaign_id = xa_campaign_d1.parent_campaign_id)
-                  LEFT JOIN (select c.company_id,c.company_name from xamplify_test.xa_company_d c, xamplify_test.xa_user_d  u,xamplify_test.xa_user_role_d r
-                  where u.company_id=c.company_id
-                  and u.user_id=r.user_id
-                  and r.role_id in(2,13) and c.company_id not in(231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
-                  380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)
-            ) xa_company_d ON (xa_user_d.company_id = xa_company_d.company_id)
-                  left JOIN xamplify_test.xa_user_d xa_user_d1 ON (xa_campaign_d1.customer_id = xa_user_d1.user_id)
-                  LEFT JOIN xamplify_test.xa_company_d xa_company_d1 ON (xa_user_d1.company_id = xa_company_d1.company_id)
-                  left JOIN (select * from xamplify_test.xa_drip_email_history_d where xa_drip_email_history_d.action_id>=37 and xa_drip_email_history_d.action_id<=48) xa_drip_email_history_d ON (xa_user_d1.user_id = xa_drip_email_history_d.user_id)
-                  full join (select * from xamplify_test.xa_action_type_d
-              where xa_action_type_d.action_id >= 37 and xa_action_type_d.action_id <= 48) a on (xa_drip_email_history_d.action_id=a.action_id)
-                  left JOIN xamplify_test.xa_emailtemplates_d xa_emailtemplates_d ON (xa_drip_email_history_d.email_template_id = xa_emailtemplates_d.id)
-                  LEFT JOIN xamplify_test.xa_campaign_user_userlist_d xa_campaign_user_userlist_d ON (xa_campaign_d1.campaign_id = xa_campaign_user_userlist_d.campaign_id)
-                  left JOIN xamplify_test.xa_user_role_d xa_user_role_d ON (xa_user_d.user_id = xa_user_role_d.user_id)
+               FROM xamplify_test.xa_user_d xa_user_d
+                 left JOIN xamplify_test.xa_campaign_d xa_campaign_d ON (xa_user_d.user_id = xa_campaign_d.customer_id)
+                 left JOIN xamplify_test.xa_campaign_d xa_campaign_d1 ON (xa_campaign_d.campaign_id = xa_campaign_d1.parent_campaign_id)
+                 LEFT JOIN (select c.company_id,c.company_name from xamplify_test.xa_company_d c, xamplify_test.xa_user_d  u,xamplify_test.xa_user_role_d r
+                 where u.company_id=c.company_id
+                 and u.user_id=r.user_id
+                 and r.role_id in(2,13) and c.company_id not in(231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
+                 380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)
+           ) xa_company_d ON (xa_user_d.company_id = xa_company_d.company_id)
+                 left JOIN xamplify_test.xa_user_d xa_user_d1 ON (xa_campaign_d1.customer_id = xa_user_d1.user_id)
+                 LEFT JOIN xamplify_test.xa_company_d xa_company_d1 ON (xa_user_d1.company_id = xa_company_d1.company_id)
+                 left JOIN (select * from xamplify_test.xa_drip_email_history_d where xa_drip_email_history_d.action_id>=37 and xa_drip_email_history_d.action_id<=48) xa_drip_email_history_d ON (xa_user_d1.user_id = xa_drip_email_history_d.user_id)
+                 full join (select * from xamplify_test.xa_action_type_d
+             where xa_action_type_d.action_id >= 37 and xa_action_type_d.action_id <= 48) a on (xa_drip_email_history_d.action_id=a.action_id)
+                 left JOIN xamplify_test.xa_emailtemplates_d xa_emailtemplates_d ON (xa_drip_email_history_d.email_template_id = xa_emailtemplates_d.id)
+                 LEFT JOIN xamplify_test.xa_campaign_user_userlist_d xa_campaign_user_userlist_d ON (xa_campaign_d1.campaign_id = xa_campaign_user_userlist_d.campaign_id)
+                 left JOIN xamplify_test.xa_user_role_d xa_user_role_d ON (xa_user_d.user_id = xa_user_role_d.user_id)
+                  --where  xa_user_role_d.role_id in(2,13)
+
 
                  ;;
   }
@@ -2622,25 +2637,25 @@ view: partner_nurtures {
   measure: Total_Partners{
     type: count_distinct
     sql: ${user_id_xa_user_d1};;
-    drill_fields: [company_name,email_id_xa_user_d1,created_time_xa_user_d1_date,datereg_xa_user_d1_date]
+    drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,created_time_xa_user_d1_date,datereg_xa_user_d1_date]
 
   }
   measure: Partners_with_nurture{
     type: count_distinct
     sql: ${user_id_xa_user_d1};;
-    drill_fields: [company_name,email_id_xa_user_d1,firstname_xa_user_d1,lastname_xa_user_d1,created_time_xa_user_d1_date,datereg_xa_user_d1_date]
+    drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,firstname_xa_user_d1,lastname_xa_user_d1,created_time_xa_user_d1_date,datereg_xa_user_d1_date]
 
   }
   measure: Partners_without_nurture{
     type: count_distinct
     sql: ${user_id_xa_user_d1};;
-    drill_fields:[company_name,email_id_xa_user_d1,firstname_xa_user_d1,lastname_xa_user_d1,created_time_xa_user_d1_date,datereg_xa_user_d1_date]
+    drill_fields:[company_name_xa_company_d1,email_id_xa_user_d1,firstname_xa_user_d1,lastname_xa_user_d1,created_time_xa_user_d1_date,datereg_xa_user_d1_date]
 
   }
   measure: Partners_count{
     type: count_distinct
     sql: ${user_id_xa_user_d1};;
-    drill_fields:[company_name,email_id_xa_user_d1,name,subject,sent_time_date]
+    drill_fields:[company_name_xa_company_d1,email_id_xa_user_d1,name,subject,sent_time_date]
 
   }
 
