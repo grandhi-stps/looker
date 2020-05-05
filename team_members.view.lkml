@@ -1,7 +1,6 @@
-view: teammembers {
+view: team_members {
   derived_table: {
-    sql: select
-      "Vendor Campaign".campaign_id as "Vendor Campaign ID",
+    sql: select "Vendor Campaign".campaign_id as "Vendor Campaign ID",
       "Vendor Campaign".campaign_name as "Vendor Campaign Name",
       "Vendor Company".company_id as "Vendor Company ID",
       "Vendor Company".company_name as "Vendor Company Name",
@@ -10,12 +9,15 @@ view: teammembers {
       "Vendor Campaign".campaign_type "Vendor Campaign Type",
       "Vendor Campaign".campaign_schedule_type "Vendor Cam Schedule Type",
       "Vendor Campaign".created_time "Vendor Cam Created Time",
-    --  "Partner Company".company_id "Partner Company ID",
-    --  "Partner Company".company_name "Partner Company Name",
-    "Social connection".id as "Soc ID",
-    "Social connection".profile_name as "socialconn name",
-      "Social connection".source as "Social_Source",
-    "Social connection".user_id as "Social user ID",
+     "Redistributed Campaign".campaign_id as "Redistributed Campaign ID",
+      "Redistributed Campaign".campaign_name as "Redistributed Campaign Name",
+      "Redistributed Campaign".is_launched "Redistributed Cam Is Launched",
+      "Redistributed Campaign".launch_time "Redistributed Cam Launch Time",
+      "Redistributed Campaign".campaign_type "Redistributed Cam Type",
+      "Redistributed Campaign".campaign_schedule_type "Redistributed Cam Schedule Type",
+      "Redistributed Campaign".created_time "Redistributed Camp Created Time",
+     "Partner Company".company_id "Partner Company ID",
+     "Partner Company".company_name "Partner Company Name",
     "Videofiles".  id as "Video ID",
     "Videofiles".customer_id as "Video Customer ID",
     "Videofiles".title as "Video Title",
@@ -27,17 +29,28 @@ view: teammembers {
     "Team Member".lastname as "Teammember Lastname",
     "Team Member".status as "Teammember status",
     "Team Member".created_time as "Teammember Created Time",
-    "Team Member".company_id as "Teammember company_id"
+    "Team Member".company_id as "Teammember company_id",
+   -- "EmailTemplates". created_time as "Emailtemplate created time",
+    --"EmailTemplates".id as "Emailtemplate ID",
+    --"EmailTemplates" .name as "Emailtemplate name",
+    "Userlist".created_time as "Userlist Createdtime",
+    "Userlist".is_partner_userlist as "Is Partner UserList",
+    "Userlist".listby_partner_id as "List by Partner ID",
+    "Userlist".user_list_id as "User List ID",
+    "Userlist".user_list_name as "User List Name"
+
+
       from
       xamplify_test.xa_team_member_d "Team Member"
-      left JOIN xamplify_test.xa_user_d "Vendor Users" ON ("Team Member".team_member_id = "Vendor Users".user_id)
+      --left JOIN xamplify_test.xa_user_d "Vendor Users" ON ("Team Member".team_member_id = "Vendor Users".user_id)
       left JOIN xamplify_test.xa_company_d "Vendor Company" ON ("Team Member".company_id = "Vendor Company".company_id)
       left JOIN xamplify_test.xa_user_list_d "Userlist" ON ("Userlist".customer_id = "Team Member".team_member_id)
       left JOIN xamplify_test.xa_user_d "Partner Users" ON ("Userlist".listby_partner_id = "Partner Users".user_id)
       left JOIN xamplify_test.xa_company_d "Partner Company" ON ("Partner Users".company_id = "Partner Company".company_id)
      left  join xamplify_test.xa_campaign_d "Vendor Campaign" on ("Vendor Campaign".customer_id="Team Member".team_member_id)
-    left join xamplify_test.xa_socialconn_d "Social connection" on("Social connection".user_id="Team Member".team_member_id)
-    left join xamplify_test.xa_videofiles_d "Videofiles" on("Team Member".team_member_id="Videofiles".customer_id)
+     left  join xamplify_test.xa_campaign_d "Redistributed Campaign" on ("Vendor Campaign".campaign_id="Redistributed Campaign".parent_campaign_id)
+     left join xamplify_test.xa_videofiles_d "Videofiles" on("Team Member".team_member_id="Videofiles".customer_id)
+     --left join xamplify_test.xa_emailtemplates_d "EmailTemplates" on("Team Member".team_member_id="EmailTemplates".user_id)
  ;;
   }
 
@@ -100,27 +113,58 @@ view: teammembers {
     sql: ${TABLE}."Vendor Cam Created Time" ;;
   }
 
-  dimension: soc_id {
+  dimension: redistributed_campaign_id {
     type: number
-    label: "Soc ID"
-    sql: ${TABLE}."Soc ID" ;;
+    label: "Redistributed Campaign ID"
+    sql: ${TABLE}."Redistributed Campaign ID" ;;
   }
 
-  dimension: socialconn_name {
+  dimension: redistributed_campaign_name {
     type: string
-    label: "socialconn name"
-    sql: ${TABLE}."socialconn name" ;;
+    label: "Redistributed Campaign Name"
+    sql: ${TABLE}."Redistributed Campaign Name" ;;
   }
 
-  dimension: social_source {
+  dimension: redistributed_cam_is_launched {
     type: string
-    sql: ${TABLE}."Social_Source" ;;
+    label: "Redistributed Cam Is Launched"
+    sql: ${TABLE}."Redistributed Cam Is Launched" ;;
   }
 
-  dimension: social_user_id {
+  dimension_group: redistributed_cam_launch_time {
+    type: time
+    label: "Redistributed Cam Launch Time"
+    sql: ${TABLE}."Redistributed Cam Launch Time" ;;
+  }
+
+  dimension: redistributed_cam_type {
+    type: string
+    label: "Redistributed Cam Type"
+    sql: ${TABLE}."Redistributed Cam Type" ;;
+  }
+
+  dimension: redistributed_cam_schedule_type {
+    type: string
+    label: "Redistributed Cam Schedule Type"
+    sql: ${TABLE}."Redistributed Cam Schedule Type" ;;
+  }
+
+  dimension_group: redistributed_camp_created_time {
+    type: time
+    label: "Redistributed Camp Created Time"
+    sql: ${TABLE}."Redistributed Camp Created Time" ;;
+  }
+
+  dimension: partner_company_id {
     type: number
-    label: "Social user ID"
-    sql: ${TABLE}."Social user ID" ;;
+    label: "Partner Company ID"
+    sql: ${TABLE}."Partner Company ID" ;;
+  }
+
+  dimension: partner_company_name {
+    type: string
+    label: "Partner Company Name"
+    sql: ${TABLE}."Partner Company Name" ;;
   }
 
   dimension: video_id {
@@ -195,6 +239,36 @@ view: teammembers {
     sql: ${TABLE}."Teammember company_id" ;;
   }
 
+  dimension_group: userlist_createdtime {
+    type: time
+    label: "Userlist Createdtime"
+    sql: ${TABLE}."Userlist Createdtime" ;;
+  }
+
+  dimension: is_partner_user_list {
+    type: string
+    label: "Is Partner UserList"
+    sql: ${TABLE}."Is Partner UserList" ;;
+  }
+
+  dimension: list_by_partner_id {
+    type: number
+    label: "List by Partner ID"
+    sql: ${TABLE}."List by Partner ID" ;;
+  }
+
+  dimension: user_list_id {
+    type: number
+    label: "User List ID"
+    sql: ${TABLE}."User List ID" ;;
+  }
+
+  dimension: user_list_name {
+    type: string
+    label: "User List Name"
+    sql: ${TABLE}."User List Name" ;;
+  }
+
   set: detail {
     fields: [
       vendor_campaign_id,
@@ -206,10 +280,15 @@ view: teammembers {
       vendor_campaign_type,
       vendor_cam_schedule_type,
       vendor_cam_created_time_time,
-      soc_id,
-      socialconn_name,
-      social_source,
-      social_user_id,
+      redistributed_campaign_id,
+      redistributed_campaign_name,
+      redistributed_cam_is_launched,
+      redistributed_cam_launch_time_time,
+      redistributed_cam_type,
+      redistributed_cam_schedule_type,
+      redistributed_camp_created_time_time,
+      partner_company_id,
+      partner_company_name,
       video_id,
       video_customer_id,
       video_title,
@@ -221,7 +300,12 @@ view: teammembers {
       teammember_lastname,
       teammember_status,
       teammember_created_time_time,
-      teammember_company_id
+      teammember_company_id,
+      userlist_createdtime_time,
+      is_partner_user_list,
+      list_by_partner_id,
+      user_list_id,
+      user_list_name
     ]
   }
 }
