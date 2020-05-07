@@ -1192,14 +1192,25 @@ dimension: category {
     measure: Vendor_Cam_Lauched{
       type: count_distinct
       sql: (case when ${vendor_cam_is_launched} then ${vendor_campaign_id} END);;
+      #html: <font size="20">{{ value }}</font> ;;
+      #html:   <font color="white">{{value}}</font>
+      # <title>HTML text bold</title>;;
       #(IF ${vendor_cam_is_launched}  THEN  ${vendor_campaign_id} END);;
       drill_fields: [vendor_campaign_type,vendor_campaign_name]
-     # link: {
+      # link: {
       #  label: "Detail Report"
-       # url: "{{https://stratappspartner.looker.com/looks/20}}"
-    #  }
+      # url: "{{https://stratappspartner.looker.com/looks/20}}"
+      #  }
+
+
 
     }
+
+ measure: dashboard{
+  type: count
+  html:
+    <p> Vendor Cam Launched </p>;;
+}
 
     measure: Deals  {
       type:count_distinct
@@ -2226,7 +2237,7 @@ view: vendor_nurtures {
                   LEFT JOIN xamplify_test.xa_campaign_user_userlist_d xa_campaign_user_userlist_d ON (xa_campaign_d.campaign_id = xa_campaign_user_userlist_d.campaign_id)
                   left JOIN (select * from xamplify_test.xa_drip_email_history_d where xa_drip_email_history_d.action_id>=22 and xa_drip_email_history_d.action_id<=36) xa_drip_email_history_d ON (xa_user_d.user_id = xa_drip_email_history_d.user_id)
                   full join (select * from xamplify_test.xa_action_type_d
-              where xa_action_type_d.action_id >= 22 and xa_action_type_d.action_id <= 36) a on (xa_drip_email_history_d.action_id=a.action_id)
+              where xa_action_type_d.action_id in (22,25,26,27,28,29,30,31,32,33,34,35,36)) a on (xa_drip_email_history_d.action_id=a.action_id)
                   left JOIN xamplify_test.xa_emailtemplates_d xa_emailtemplates_d ON (xa_drip_email_history_d.email_template_id = xa_emailtemplates_d.id)
                   left JOIN xamplify_test.xa_user_role_d xa_user_role_d ON (xa_user_d.user_id = xa_user_role_d.user_id)
  ;;
@@ -2448,8 +2459,6 @@ view: vendor_nurtures {
     sql:
      CASE
      when ${action_name_a}='vendor_welcome' THEN 'Welcome Nurtures'
-    when ${action_name_a}='vendor_csm_intro' THEN 'Welcome Nurtures'
-    when ${action_name_a}='vendor_kick_off' THEN 'Welcome Nurtures'
     when ${action_name_a}='vendor_complete_profile_success_nurture#1' THEN 'Company Profile Nurtures'
     when ${action_name_a}='vendor_incomplete_profile' THEN 'Company Profile Nurtures'
     when ${action_name_a}='vendor_inactive_support_nurture#1' THEN 'Company Profile Nurtures'
@@ -2538,6 +2547,8 @@ view: partner_nurtures {
                   xa_campaign_d1.launch_time AS launch_time_cam1,
                   xa_campaign_d1.parent_campaign_id AS parent_campaign_id_cam1,
                   xa_partnership.partner_id as partner_id,
+                  xa_partnership.partner_company_id as partner_company_id,
+                  xa_company_d3.company_name as company_name_d,
                   xa_user_d2.email_id as Email_id,
                   xa_user_d2.created_time as Created_Time,
                   xa_user_d2.datereg as Date_Reg,
@@ -2579,12 +2590,20 @@ view: partner_nurtures {
                FROM xamplify_test.xa_user_d xa_user_d
               left JOIN xamplify_test.xa_campaign_d xa_campaign_d ON (xa_user_d.user_id = xa_campaign_d.customer_id)
               left join xamplify_test.xa_partnership xa_partnership on (xa_user_d.user_id =xa_partnership.created_by)
-            left join (select distinct customer_id from xamplify_test.xa_campaign_d) xa_campaign_d2 ON (xa_partnership.partner_id = xa_campaign_d2.customer_id)
+           left join (select distinct company_id, company_name from xamplify_test.xa_company_d) xa_company_d3
+          on (xa_partnership.partner_company_id=xa_company_d3.company_id)
+           left join (select distinct customer_id from xamplify_test.xa_campaign_d) xa_campaign_d2 ON (xa_partnership.partner_id = xa_campaign_d2.customer_id)
                 left join (select d.user_id,d.sent_time,e.name,e.subject from xamplify_test.xa_drip_email_history_d d,xamplify_test.xa_emailtemplates_d e
  where d.email_template_id=e.id and d.action_id>=37 and d.action_id<=48) xa_drip_email_history_d1 ON (xa_partnership.partner_id = xa_drip_email_history_d1.user_id)
                 --left join xamplify_test.xa_emailtemplates_d xa_emailtemplates_d1 ON (xa_drip_email_history_d1.email_template_id = xa_emailtemplates_d1.id)
                 left join xamplify_test.xa_user_d xa_user_d2 on (xa_partnership.partner_id=xa_user_d2.user_id)
-                left JOIN xamplify_test.xa_campaign_d xa_campaign_d1 ON (xa_campaign_d.campaign_id = xa_campaign_d1.parent_campaign_id)
+                left JOIN (select * from (select campaign_id,customer_id,created_time,campaign_name,campaign_type,
+                      launch_time,parent_campaign_id,is_launched,RANK () OVER (
+    PARTITION BY customer_id
+    ORDER BY launch_time asc
+  ) rank
+    from xamplify_test.xa_campaign_d) a
+    where a.rank<=2  ) as xa_campaign_d1 ON (xa_campaign_d.campaign_id = xa_campaign_d1.parent_campaign_id)
                  LEFT JOIN (select c.company_id,c.company_name from xamplify_test.xa_company_d c, xamplify_test.xa_user_d  u,xamplify_test.xa_user_role_d r
                  where u.company_id=c.company_id
                  and u.user_id=r.user_id
@@ -2600,7 +2619,6 @@ view: partner_nurtures {
                 -- LEFT JOIN xamplify_test.xa_campaign_user_userlist_d xa_campaign_user_userlist_d ON (xa_campaign_d1.campaign_id = xa_campaign_user_userlist_d.campaign_id)
                  left JOIN xamplify_test.xa_user_role_d xa_user_role_d ON (xa_user_d.user_id = xa_user_role_d.user_id)
                   --where  xa_user_role_d.role_id in(2,13)
-
 
                  ;;
   }
@@ -2627,19 +2645,12 @@ view: partner_nurtures {
     type: count
     drill_fields: [detail*]
   }
-  measure: Name {
-    type: count_distinct
-    sql: ${name};;
-    drill_fields: [company_name_xa_company_d1,created_time_xa_user_d1_raw,datereg_xa_user_d1_raw,name,subject,sent_time_raw]
-  }
-
   measure: Partner_Nurture {
     type: count_distinct
     sql: ${action_id_a};;
     drill_fields: [action_name_a]
 
   }
-
   measure: Active_Nurture {
     type: count_distinct
     sql: ${name};;
@@ -2647,23 +2658,30 @@ view: partner_nurtures {
 
   }
 
-  measure: Inactive_partner {
+  measure: Total_Partners{
     type: count_distinct
     sql: ${partner_id_xa_partnership};;
-    drill_fields: [email_id_xa_user_d2,created_time_xa_user_d2_time,
+    drill_fields: [email_id_xa_user_d2,company_name_xa_company_d3,created_time_xa_user_d2_time,
+      datereg_xa_user_d2_time,status_xa_user_d2
+    ]
+
+  }
+
+
+
+
+
+  measure: partner_companies {
+    type: count_distinct
+    sql: ${partner_id_xa_partnership};;
+    drill_fields: [email_id_xa_user_d2,company_name_xa_company_d3,created_time_xa_user_d2_time,
                    datereg_xa_user_d2_time,status_xa_user_d2,name_xa_drip_email_history_d1,
                     subject_xa_drip_email_history_d1,sent_time_xa_drip_email_history_d1_time
                     ]
 
   }
-   # measure: InActive_Nurture {
-   #   type: number
-    #  sql: count( ${action_id_a}) over(PARTITION BY ${action_id_a}  order by ${action_id_a})-count(distinct ${name});;
 
-   # }
-
-
-  measure: Total_Partners{
+  measure: Active_Partners{
     type: count_distinct
     sql: ${user_id_xa_user_d1};;
     drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,created_time_xa_user_d1_date,datereg_xa_user_d1_date]
@@ -2681,6 +2699,13 @@ view: partner_nurtures {
     drill_fields:[company_name_xa_company_d1,email_id_xa_user_d1,firstname_xa_user_d1,lastname_xa_user_d1,created_time_xa_user_d1_date,datereg_xa_user_d1_date]
 
   }
+  measure: Name {
+    type: count_distinct
+    sql: ${name};;
+    drill_fields: [company_name_xa_company_d1,created_time_xa_user_d1_raw,datereg_xa_user_d1_raw,name,subject,sent_time_raw]
+  }
+
+
   measure: Partners_count{
     type: count_distinct
     sql: ${user_id_xa_user_d1};;
@@ -2720,11 +2745,21 @@ view: partner_nurtures {
     sql: ${TABLE}.company_id_c ;;
   }
 
+  dimension: partner_company_id_xa_partnership {
+    type: number
+    label: "partner_company_id"
+    sql: ${TABLE}.partner_company_id ;;
+  }
+
   dimension: company_name {
     type: string
     sql: ${TABLE}.company_name ;;
   }
-
+  dimension: company_name_xa_company_d3 {
+    type: string
+    label: "company_name_d"
+    sql: ${TABLE}.company_name_d ;;
+  }
 
 
   dimension: campaign_id_xa_campaign_d1 {
@@ -2899,6 +2934,26 @@ view: partner_nurtures {
     type: string
     label: "action_name_a"
     sql: ${TABLE}.action_name_a ;;
+
+    #link:{
+     # label:"{{value}} With Nurture Details"
+      #url: "https://stratappspartner.looker.com/looks/101?&f[partner_nurtures.action_name_a]={{ value | encode_uri }}"
+      #icon_url: "http://www.looker.com/favicon.ico"
+    #}
+    #Vendor%20Company%20Name={{ _filters['partner_nurtures.company_name'] | url_encode }}
+
+    link:{
+      label:"{{value}} With Nurture Details"
+      url: "https://stratappspartner.looker.com/looks/101?&f[partner_nurtures.company_name]={{ _filters['Vendor%20Company%20Name'] | url_encode }}
+      &f[partner_nurtures.action_name_a]={{ value | encode_uri }}"
+      icon_url: "http://www.looker.com/favicon.ico"
+    }
+
+      link:{
+        label:"{{value}} Without Nurture Details"
+        url: "https://stratappspartner.looker.com/looks/102?&f[partner_nurtures.action_name_a]=-{{ value | encode_uri }}"
+        icon_url: "http://www.looker.com/favicon.ico"
+      }
   }
   dimension: action_id_xa_drip_email_history_d {
     type: number
@@ -2913,6 +2968,8 @@ view: partner_nurtures {
       email_id_xa_user_d2,
       status_xa_user_d2,
       company_id,
+      partner_company_id_xa_partnership,
+      company_name_xa_company_d3,
       company_id_xa_company_d,
       company_name,
       campaign_id_xa_campaign_d1,
@@ -2954,61 +3011,65 @@ view: partner_nurtures {
   }
 }
 
-explore: team_members {}
+explore:  team_members{}
 view: team_members {
   derived_table: {
-    sql: select "Vendor Campaign".campaign_id as "Vendor Campaign ID",
-      "Vendor Campaign".campaign_name as "Vendor Campaign Name",
-      "Vendor Company".company_id as "Vendor Company ID",
-      "Vendor Company".company_name as "Vendor Company Name",
-      "Vendor Campaign".is_launched "Vendor Cam Is Launched",
-      "Vendor Campaign".launch_time "Vendor Cam Launch Time",
-      "Vendor Campaign".campaign_type "Vendor Campaign Type",
-      "Vendor Campaign".campaign_schedule_type "Vendor Cam Schedule Type",
-      "Vendor Campaign".created_time "Vendor Cam Created Time",
-     "Redistributed Campaign".campaign_id as "Redistributed Campaign ID",
-      "Redistributed Campaign".campaign_name as "Redistributed Campaign Name",
-      "Redistributed Campaign".is_launched "Redistributed Cam Is Launched",
-      "Redistributed Campaign".launch_time "Redistributed Cam Launch Time",
-      "Redistributed Campaign".campaign_type "Redistributed Cam Type",
-      "Redistributed Campaign".campaign_schedule_type "Redistributed Cam Schedule Type",
-      "Redistributed Campaign".created_time "Redistributed Camp Created Time",
-     "Partner Company".company_id "Partner Company ID",
-     "Partner Company".company_name "Partner Company Name",
-    "Videofiles".  id as "Video ID",
-    "Videofiles".customer_id as "Video Customer ID",
-    "Videofiles".title as "Video Title",
-    "Videofiles".created_time as "Video Created Time",
-    "Team Member".team_member_id as "Teammember ID",
-    "Team Member".id as "Team ID",
-    "Team Member".email_id as "Teammember email_id",
-    "Team Member".firstname as "Teammember Firstname",
-    "Team Member".lastname as "Teammember Lastname",
-    "Team Member".status as "Teammember status",
-    "Team Member".created_time as "Teammember Created Time",
-    "Team Member".company_id as "Teammember company_id",
-   -- "EmailTemplates". created_time as "Emailtemplate created time",
-    --"EmailTemplates".id as "Emailtemplate ID",
-    --"EmailTemplates" .name as "Emailtemplate name",
-    "Userlist".created_time as "Userlist Createdtime",
-    "Userlist".is_partner_userlist as "Is Partner UserList",
-    "Userlist".listby_partner_id as "List by Partner ID",
-    "Userlist".user_list_id as "User List ID",
-    "Userlist".user_list_name as "User List Name"
+    sql: select
+          "Vendor Users".datereg as "Teammember Datereg",
+          "Vendor Users".datelastlogin as "Teammember Lastlogin",
+          "Vendor Campaign".campaign_id as "Vendor Campaign ID",
+            "Vendor Campaign".campaign_name as "Vendor Campaign Name",
+            "Vendor Company".company_id as "Vendor Company ID",
+            "Vendor Company".company_name as "Vendor Company Name",
+            "Vendor Campaign".is_launched "Vendor Cam Is Launched",
+            "Vendor Campaign".launch_time "Vendor Cam Launch Time",
+            "Vendor Campaign".campaign_type "Vendor Campaign Type",
+            "Vendor Campaign".campaign_schedule_type "Vendor Cam Schedule Type",
+            "Vendor Campaign".created_time "Vendor Cam Created Time",
+           "Redistributed Campaign".campaign_id as "Redistributed Campaign ID",
+            "Redistributed Campaign".campaign_name as "Redistributed Campaign Name",
+            "Redistributed Campaign".is_launched "Redistributed Cam Is Launched",
+            "Redistributed Campaign".launch_time "Redistributed Cam Launch Time",
+            "Redistributed Campaign".campaign_type "Redistributed Cam Type",
+            "Redistributed Campaign".campaign_schedule_type "Redistributed Cam Schedule Type",
+            "Redistributed Campaign".created_time "Redistributed Camp Created Time",
+           "Partner Company".company_id "Partner Company ID",
+           "Partner Company".company_name as "Partner Company Name",
+          "Partner Users" .email_id as "Partner EmailID",
+          "Videofiles".  id as "Video ID",
+          "Videofiles".customer_id as "Video Customer ID",
+          "Videofiles".title as "Video Title",
+          "Videofiles".created_time as "Video Created Time",
+          "Team Member".team_member_id as "Teammember ID",
+          "Team Member".id as "Team ID",
+          "Team Member".email_id as "Teammember email_id",
+          "Team Member".firstname as "Teammember Firstname",
+          "Team Member".lastname as "Teammember Lastname",
+          "Team Member".status as "Teammember status",
+          "Team Member".created_time as "Teammember Created Time",
+          "Team Member".company_id as "Teammember company_id",
+          "Social Connection". id as "Social Connection ID",
+          "Social Connection".profile_name as "Social Connection Name",
+         "Social Connection" .source as "Social Connection Source",
+          "Userlist".created_time as "Userlist Createdtime",
+          "Userlist".is_partner_userlist as "Is Partner UserList",
+          "Userlist".listby_partner_id as "List by Partner ID",
+          "Userlist".user_list_id as "User List ID",
+          "Userlist".user_list_name as "User List Name"
 
 
-      from
-      xamplify_test.xa_team_member_d "Team Member"
-      --left JOIN xamplify_test.xa_user_d "Vendor Users" ON ("Team Member".team_member_id = "Vendor Users".user_id)
-      left JOIN xamplify_test.xa_company_d "Vendor Company" ON ("Team Member".company_id = "Vendor Company".company_id)
-      left JOIN xamplify_test.xa_user_list_d "Userlist" ON ("Userlist".customer_id = "Team Member".team_member_id)
-      left JOIN xamplify_test.xa_user_d "Partner Users" ON ("Userlist".listby_partner_id = "Partner Users".user_id)
-      left JOIN xamplify_test.xa_company_d "Partner Company" ON ("Partner Users".company_id = "Partner Company".company_id)
-     left  join xamplify_test.xa_campaign_d "Vendor Campaign" on ("Vendor Campaign".customer_id="Team Member".team_member_id)
-     left  join xamplify_test.xa_campaign_d "Redistributed Campaign" on ("Vendor Campaign".campaign_id="Redistributed Campaign".parent_campaign_id)
-     left join xamplify_test.xa_videofiles_d "Videofiles" on("Team Member".team_member_id="Videofiles".customer_id)
-     --left join xamplify_test.xa_emailtemplates_d "EmailTemplates" on("Team Member".team_member_id="EmailTemplates".user_id)
- ;;
+            from
+            xamplify_test.xa_team_member_d "Team Member"
+            left JOIN xamplify_test.xa_user_d "Vendor Users" ON ("Team Member".team_member_id = "Vendor Users".user_id)
+            left JOIN xamplify_test.xa_company_d "Vendor Company" ON ("Team Member".company_id = "Vendor Company".company_id)
+            left JOIN xamplify_test.xa_user_list_d "Userlist" ON ("Userlist".customer_id = "Team Member".team_member_id)
+            left JOIN xamplify_test.xa_user_d "Partner Users" ON ("Userlist".listby_partner_id = "Partner Users".user_id)
+            left JOIN xamplify_test.xa_company_d "Partner Company" ON ("Partner Users".company_id = "Partner Company".company_id)
+           left  join xamplify_test.xa_campaign_d "Vendor Campaign" on ("Vendor Campaign".customer_id="Team Member".team_member_id)
+           left  join xamplify_test.xa_campaign_d "Redistributed Campaign" on ("Vendor Campaign".campaign_id="Redistributed Campaign".parent_campaign_id)
+           left join xamplify_test.xa_videofiles_d "Videofiles" on("Team Member".team_member_id="Videofiles".customer_id)
+           left join xamplify_test.xa_socialconn_d "Social Connection" on("Team Member".team_member_id="Social Connection".user_id)
+       ;;
   }
 
   measure: count {
@@ -3016,21 +3077,62 @@ view: team_members {
     drill_fields: [detail*]
   }
 
+
   measure: Partners {
     type: count_distinct
     sql: case when ${is_partner_user_list}=true then ${list_by_partner_id} end ;;
+    drill_fields: [user_list_name,userlist_createdtime_time,partner_email_id,partner_company_name]
   }
 
   measure: Contacts {
     type: count_distinct
     sql: case when ${is_partner_user_list}=false then ${list_by_partner_id} end;;
+    drill_fields: [user_list_name,userlist_createdtime_date,partner_email_id]
+
+  }
+  measure: Social_Share {
+    type: count_distinct
+    sql: ${social_connection_id} ;;
+    drill_fields: [social_connection_source,social_connection_id,social_connection_name]
   }
 
+    measure: Campaigns {
+      type: count_distinct
+      sql: ${vendor_campaign_id} ;;
+      drill_fields: [vendor_campaign_id,vendor_campaign_name,vendor_campaign_type,vendor_cam_schedule_type]
+    }
+
+  measure: Video_files {
+    type:count_distinct
+    sql: ${video_id} ;;
+    drill_fields: [video_id,video_title,video_created_time_date]
+  }
+
+  measure: Team_members {
+    type: count_distinct
+    sql: ${team_id} ;;
+    drill_fields: [Team_member_name,teammember_email_id,teammember_datereg_date,
+      teammember_lastlogin_date,teammember_status]
+
+  }
 
   dimension: Team_member_name {
     type:  string
     label: "Team Member Name"
     sql: concat(${teammember_firstname} , ${teammember_lastname}) ;;
+    drill_fields: [partner_company_name,vendor_campaign_name]
+  }
+
+  dimension_group: teammember_datereg {
+    type: time
+    label: "Teammember Datereg"
+    sql: ${TABLE}."Teammember Datereg" ;;
+  }
+
+  dimension_group: teammember_lastlogin {
+    type: time
+    label: "Teammember Lastlogin"
+    sql: ${TABLE}."Teammember Lastlogin" ;;
   }
 
   dimension: vendor_campaign_id {
@@ -3141,6 +3243,12 @@ view: team_members {
     sql: ${TABLE}."Partner Company Name" ;;
   }
 
+  dimension: partner_email_id {
+    type: string
+    label: "Partner EmailID"
+    sql: ${TABLE}."Partner EmailID"  ;;
+  }
+
   dimension: video_id {
     type: number
     label: "Video ID"
@@ -3213,6 +3321,24 @@ view: team_members {
     sql: ${TABLE}."Teammember company_id" ;;
   }
 
+  dimension: social_connection_id {
+    type: number
+    label: "Social Connection ID"
+    sql: ${TABLE}."Social Connection ID" ;;
+  }
+
+  dimension: social_connection_name {
+    type: string
+    label: "Social Connection Name"
+    sql: ${TABLE}."Social Connection Name" ;;
+  }
+
+  dimension: social_connection_source {
+    type: string
+    label: "Social Connection Source"
+    sql: ${TABLE}."Social Connection Source" ;;
+  }
+
   dimension_group: userlist_createdtime {
     type: time
     label: "Userlist Createdtime"
@@ -3245,6 +3371,8 @@ view: team_members {
 
   set: detail {
     fields: [
+      teammember_datereg_time,
+      teammember_lastlogin_time,
       vendor_campaign_id,
       vendor_campaign_name,
       vendor_company_id,
@@ -3263,6 +3391,7 @@ view: team_members {
       redistributed_camp_created_time_time,
       partner_company_id,
       partner_company_name,
+      partner_email_id,
       video_id,
       video_customer_id,
       video_title,
@@ -3275,6 +3404,9 @@ view: team_members {
       teammember_status,
       teammember_created_time_time,
       teammember_company_id,
+      social_connection_id,
+      social_connection_name,
+      social_connection_source,
       userlist_createdtime_time,
       is_partner_user_list,
       list_by_partner_id,
@@ -3292,21 +3424,47 @@ view: email_templates {
       et. created_time as "Emailtemplate created time",
          et.id as "Emailtemplate ID",
          et .name as "Emailtemplate name",
+        et.type as "Emailtemplate Type",
+        et.subject as "Emailtemplate Subject",
          r.role_id as "User Role",
         r.description as "Role description",
         t.firstname as "Teammember FirstName",
-        t.lastname as "Teammember LastName"
+        t.lastname as "Teammember LastName",
+        c.company_id as "Vendor Company ID",
+        c.company_name as "Vendor Company Name",
+        u.user_id as "Vendor User ID"
 
       from xamplify_test.xa_team_member_d t
       inner join xamplify_test.xa_user_role_d up on(t.team_member_id=up.user_id)
       left join xamplify_test.xa_role_d r on(up.role_id=r.role_id)
       inner join xamplify_test.xa_emailtemplates_d et on (t.team_member_id=et.user_id)
- ;;
+      inner join xamplify_test.xa_company_d c on (t.company_id=c.company_id)
+      inner join xamplify_test.xa_user_d u on(t.team_member_id=u.user_id)
+
+  ;;
   }
 
   measure: count {
     type: count
     drill_fields: [detail*]
+  }
+
+  measure: email_templates {
+    type: count_distinct
+    sql: ${emailtemplate_id} ;;
+    drill_fields: [emailtemplate_name,emailtemplate_created_time_date]
+  }
+
+  dimension: emailtemplate_type {
+    type: string
+    label: "Emailtemplate Type"
+    sql: ${TABLE}."Emailtemplate Type" ;;
+  }
+
+  dimension: emailtemplate_subject {
+    type: string
+    label: "Emailtemplate Subject"
+    sql: ${TABLE}."Emailtemplate Subject" ;;
   }
 
   dimension: teammember_name {
@@ -3319,6 +3477,12 @@ view: email_templates {
     type: time
     label: "Emailtemplate created time"
     sql: ${TABLE}."Emailtemplate created time" ;;
+  }
+
+  dimension: vendor_user_id {
+    type: number
+    label: "Vendor User ID"
+    sql: ${TABLE}."Vendor User ID" ;;
   }
 
   dimension: emailtemplate_id {
@@ -3356,21 +3520,201 @@ view: email_templates {
     label: "Teammember LastName"
     sql: ${TABLE}."Teammember LastName" ;;
   }
+  dimension: vendor_company_id{
+    type: number
+    label: "Vendor Company ID"
+    sql: ${TABLE}."Vendor Company ID" ;;
+  }
+
+  dimension: vendor_company_name {
+    type: string
+    label: "Vendor Company Name"
+    sql: ${TABLE}."Vendor Company Name" ;;
+  }
+
 
   set: detail {
     fields: [
+
+      vendor_user_id,
       emailtemplate_created_time_time,
       emailtemplate_id,
       emailtemplate_name,
+      emailtemplate_type,
+      emailtemplate_subject,
       user_role,
       role_description,
       teammember_first_name,
-      teammember_last_name
+      teammember_last_name,
+      vendor_company_id,
+      vendor_company_name
     ]
   }
 }
 
 
+explore: partner_team_members  {}
+view: partner_team_members {
+  derived_table: {
+    sql: select vendor_company.company_id as "Vendor Company Id",
+       vendor_company.company_name as "Vendor Company Name",
+       partner_company.company_id as "Partner Company Id",
+       partner_company.company_name as "Partner Company Name",
+       tm1.team_member_id as "Team Member ID",
+      c.campaign_id as "Campaign Id"
+
+
+
+
+      from xamplify_test.xa_user_d ud left join xamplify_test.xa_company_d vendor_company on
+      ud.company_id=vendor_company.company_id
+      left join xamplify_test.xa_user_list_d ul on ud.user_id=ul.customer_id
+      left join xamplify_test.xa_user_d ud1 on ul.listby_partner_id=ud1.user_id
+      left join xamplify_test.xa_company_d partner_company on partner_company.company_id=ud1.company_id
+      left join xamplify_test.xa_user_d ud2 on(partner_company.company_id=ud2.company_id)
+      left join xamplify_test.xa_team_member_d tm1 on tm1.team_member_id=ud2.user_id
+      left join xamplify_test.xa_campaign_d c on(c.customer_id=tm1.team_member_id)
+      left join xamplify_test.xa_campaign_user_userlist_d cul on(cul.campaign_id=c.campaign_id)
+       ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+
+  dimension: vendor_company_id {
+    type: number
+    label: "Vendor Company Id"
+    sql: ${TABLE}."Vendor Company Id" ;;
+  }
+
+  dimension: vendor_company_name {
+    type: string
+    label: "Vendor Company Name"
+    sql: ${TABLE}."Vendor Company Name" ;;
+  }
+
+  dimension: partner_company_id {
+    type: number
+    label: "Partner Company Id"
+    sql: ${TABLE}."Partner Company Id" ;;
+  }
+
+  dimension: partner_company_name {
+    type: string
+    label: "Partner Company Name"
+    sql: ${TABLE}."Partner Company Name" ;;
+  }
+
+  dimension: team_member_id {
+    type: number
+    label: "Team Member ID"
+    sql: ${TABLE}."Team Member ID" ;;
+  }
+
+  dimension: campaign_id {
+    type: string
+    label: "Campaign Id"
+    sql: ${TABLE}. "Campaign Id" ;;
+  }
+
+  set: detail {
+    fields: [vendor_company_id, vendor_company_name, partner_company_id, partner_company_name, team_member_id,campaign_id]
+  }
+}
+
+explore: partner_team_member_contacts  {}
+view: partner_team_member_contacts {
+  derived_table: {
+    sql: select vendor_company.company_id as "vendor company id",
+          ul1.is_partner_userlist as "is partner userlist",
+          vendor_company.company_name as "vendor company name",
+          partner_company.company_id as "partner company id",
+          partner_company.company_name as "partner company name",
+          ul1.listby_partner_id as "listby partner id",
+          ul1.created_time as "list created time",
+          ul1.user_list_name as "user list name"
+
+
+
+      from xamplify_test.xa_user_d ud left join xamplify_test.xa_company_d vendor_company on
+      ud.company_id=vendor_company.company_id
+      left join xamplify_test.xa_user_list_d ul on ud.user_id=ul.customer_id
+      left join xamplify_test.xa_user_d ud1 on ul.listby_partner_id=ud1.user_id
+      left join xamplify_test.xa_company_d partner_company on partner_company.company_id=ud1.company_id
+      left join xamplify_test.xa_user_d ud2 on(partner_company.company_id=ud2.company_id)
+      left join xamplify_test.xa_team_member_d tm1 on tm1.team_member_id=ud2.user_id
+      left join xamplify_test.xa_user_list_d ul1 on(tm1.team_member_id=ul1.customer_id)
+       ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+
+  dimension: vendor_company_id {
+    type: number
+    label: "vendor company id"
+    sql: ${TABLE}."vendor company id" ;;
+  }
+
+  dimension: is_partner_userlist {
+    type: string
+    label: "is partner userlist"
+    sql: ${TABLE}."is partner userlist" ;;
+  }
+
+  dimension: vendor_company_name {
+    type: string
+    label: "vendor company name"
+    sql: ${TABLE}."vendor company name" ;;
+  }
+
+  dimension: partner_company_id {
+    type: number
+    label: "partner company id"
+    sql: ${TABLE}."partner company id" ;;
+  }
+
+  dimension: partner_company_name {
+    type: string
+    label: "partner company name"
+    sql: ${TABLE}."partner company name" ;;
+  }
+
+  dimension: listby_partner_id {
+    type: number
+    label: "listby partner id"
+    sql: ${TABLE}."listby partner id" ;;
+  }
+
+  dimension_group: list_created_time {
+    type: time
+    label: "list created time"
+    sql: ${TABLE}."list created time" ;;
+  }
+
+  dimension: user_list_name {
+    type: string
+    label: "user list name"
+    sql: ${TABLE}."user list name" ;;
+  }
+
+  set: detail {
+    fields: [
+      vendor_company_id,
+      is_partner_userlist,
+      vendor_company_name,
+      partner_company_id,
+      partner_company_name,
+      listby_partner_id,
+      list_created_time_time,
+      user_list_name
+    ]
+  }
+}
 
 
 
