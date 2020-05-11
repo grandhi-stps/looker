@@ -2968,19 +2968,17 @@ view: partner_nurtures {
 
 
 
-
     link:{
       label:"{{value}} With Nurture"
-      url: "https://stratappspartner.looker.com/dashboards/32?action_name_a={{ value |  encode_uri }} &fVendor%20Company%20Name={{ value | url_encode }}"
+      url: "https://stratappspartner.looker.com/dashboards/32?action_name_a={{ value |  encode_uri }}"
       icon_url: "http://www.looker.com/favicon.ico"
     }
 
     link:{
       label:"{{value}} Without Nurture"
-      url: "https://stratappspartner.looker.com/dashboards/33?action_name_a=-{{ value |  encode_uri }} &fVendor%20Company%20Name={{ value | url_encode }}"
+      url: "https://stratappspartner.looker.com/dashboards/33?action_name_a=-{{ value |  encode_uri }} "
       icon_url: "http://www.looker.com/favicon.ico"
     }
-
   }
   dimension: action_id_xa_drip_email_history_d {
     type: number
@@ -3407,7 +3405,9 @@ view: email_templates {
         t.lastname as "Teammember LastName",
         c.company_id as "Vendor Company ID",
         c.company_name as "Vendor Company Name",
-        u.user_id as "Vendor User ID"
+        u.user_id as "Vendor User ID",
+        cam.campaign_id as "Camapaign ID",
+        cam.campaign_name as "Campaign Name"
 
       from xamplify_test.xa_team_member_d t
       inner join xamplify_test.xa_user_role_d up on(t.team_member_id=up.user_id)
@@ -3415,6 +3415,7 @@ view: email_templates {
       inner join xamplify_test.xa_emailtemplates_d et on (t.team_member_id=et.user_id)
       inner join xamplify_test.xa_company_d c on (t.company_id=c.company_id)
       inner join xamplify_test.xa_user_d u on(t.team_member_id=u.user_id)
+      inner join xamplify_test.xa_campaign_d cam on(t.team_member_id=cam.customer_id)
 
   ;;
   }
@@ -3446,6 +3447,7 @@ view: email_templates {
     type: string
     label: "Teammember Name"
     sql: concat(${teammember_first_name},${teammember_last_name}) ;;
+    drill_fields: [campaign_id,campaign_name]
   }
 
   dimension_group: emailtemplate_created_time {
@@ -3506,6 +3508,17 @@ view: email_templates {
     label: "Vendor Company Name"
     sql: ${TABLE}."Vendor Company Name" ;;
   }
+  dimension: campaign_id {
+    type: number
+    label: "Campaign ID"
+    sql: ${TABLE}."Campaign ID" ;;
+  }
+  dimension: campaign_name {
+    type: string
+    label: "Campaign Name"
+    sql: ${TABLE}."Campaign Name" ;;
+
+  }
 
 
   set: detail {
@@ -3522,7 +3535,9 @@ view: email_templates {
       teammember_first_name,
       teammember_last_name,
       vendor_company_id,
-      vendor_company_name
+      vendor_company_name,
+      campaign_id,
+      campaign_name
     ]
   }
 }
@@ -3607,6 +3622,12 @@ view: partner_team_members {
       sql: ${team_member_id} ;;
       drill_fields: [team_member_id,Team_member_name,Team_Member_Status]
     }
+
+  measure: Views {
+    type: count_distinct
+    sql: ${emaillog_id} ;;
+
+  }
 
   dimension: vendor_company_id {
     type: number
@@ -3863,7 +3884,7 @@ view: partner_team_member_contacts {
   measure: Contacts {
     type: count_distinct
     sql: (case when ${is_partner_userlist}=false then ${listby_partner_id} end) ;;
-    drill_fields: [user_list_name,list_created_time_date]
+    drill_fields: [user_list_id,user_list_name,list_created_time_date,contact_email_id,listby_partner_id]
   }
 
   dimension: vendor_company_id {
