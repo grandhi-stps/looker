@@ -2219,19 +2219,13 @@ view: vendor_nurtures {
                   xa_drip_email_history_d.action_id as action_id_drip,
                  a.action_type as action_type_a,
                   a.action_id as action_id_a,
-                  a.action_name as action_name_a
+                  a.action_name as Nurture_Name
 
                 FROM xamplify_test.xa_user_d xa_user_d
-                  LEFT JOIN (select * from (select campaign_id,customer_id,created_time,campaign_name,campaign_type,
-                      launch_time,parent_campaign_id,is_launched,RANK () OVER (
-    PARTITION BY customer_id
-    ORDER BY launch_time asc
-  ) rank
-    from xamplify_test.xa_campaign_d) a
-    where a.rank<=5  ) as xa_campaign_d ON (xa_user_d.user_id =xa_campaign_d.customer_id)
+                  LEFT JOIN xamplify_test.xa_campaign_d as xa_campaign_d ON (xa_user_d.user_id =xa_campaign_d.customer_id)
                   LEFT JOIN (select * from xamplify_test.xa_company_d where xa_company_d.company_id not in(231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
                   380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)) xa_company_d ON (xa_user_d.company_id = xa_company_d.company_id)
-                  LEFT JOIN xamplify_test.xa_campaign_d xa_campaign_d1 ON (xa_campaign_d.campaign_id = xa_campaign_d1.parent_campaign_id)
+                  --LEFT JOIN xamplify_test.xa_campaign_d xa_campaign_d1 ON (xa_campaign_d.campaign_id = xa_campaign_d1.parent_campaign_id)
 
                   left JOIN (select * from xamplify_test.xa_drip_email_history_d where xa_drip_email_history_d.action_id>=22 and xa_drip_email_history_d.action_id<=36) xa_drip_email_history_d ON (xa_user_d.user_id = xa_drip_email_history_d.user_id)
                   full join (select * from xamplify_test.xa_action_type_d
@@ -2283,7 +2277,7 @@ view: vendor_nurtures {
   measure: Name {
     type: count_distinct
     sql: ${name};;
-    drill_fields: [company_name,created_time_raw,datereg_raw,name,subject,sent_time_raw]
+    drill_fields: [company_name,email_id,created_time_raw,datereg_raw,name,subject,sent_time_raw]
   }
 
   measure: Active_Nurtures{
@@ -2293,29 +2287,51 @@ view: vendor_nurtures {
     drill_fields: [action_name_a]
   }
 
-
+  measure: Pie_count{
+    type: count_distinct
+    sql: ${company_id_xa_company_d} ;;
+    drill_fields: [company_name,email_id,created_time_date,datereg_date,status]
+  }
 
   measure: Vendor_nurtures{
     type: count_distinct
-    sql: ${action_type_a} ;;
+    sql: ${action_name_a} ;;
     drill_fields: [action_name_a]
   }
 
   measure: Inactive_nurtures {
     type: count_distinct
-    sql: ${action_type_a} ;;
+    sql: ${action_name_a} ;;
     drill_fields: [action_name_a]
   }
 
   measure: Nurture_companies {
     type: count_distinct
-    sql: ${company_id_xa_company_d};;
-    drill_fields: [company_name,name,subject,sent_time_date]
+    sql:  case when (${action_id_a}>=21 and ${action_id_a}<=37) then ${company_id_xa_company_d} end;;
+    filters: {
+      field: name
+      value:  "-NULL"
+    }
+
+    drill_fields: [company_name,email_id,name,subject,sent_time_date]
   }
+
+  measure: Vendors_without_Nurtures{
+    type: count_distinct
+    sql: ${company_id_xa_company_d};;
+    filters: {
+      field: name
+      value:  "NULL"
+    }
+    drill_fields: [company_name,email_id,created_time_date,datereg_date,status]
+  }
+
+
    measure: Vendor_stats {
     type: count_distinct
     sql: case when (${role_id}=2 or ${role_id}=13) then ${company_id_xa_company_d} end;;
-    drill_fields: [company_name,created_time_date,datereg_date,name,subject,sent_time_date]
+
+    drill_fields: [company_id_xa_company_d,company_name,email_id,created_time_date,datereg_date]
 
     link:{
       label:"With Nurture Details"
@@ -2342,6 +2358,14 @@ view: vendor_nurtures {
     #}
   }
 
+
+  measure: Campaigns {
+    type: count_distinct
+    sql: ${campaign_id_xa_campaign_d} ;;
+   drill_fields: [company_name,email_id,campaign_name,created_time_date,launch_time_date]
+  }
+
+
   measure: Vendor_stats_1 {
     type: count_distinct
     sql: case when (${role_id}=2 or ${role_id}=13) then ${company_id_xa_company_d} end;;
@@ -2349,7 +2373,7 @@ view: vendor_nurtures {
       field: campaign_id_xa_campaign_d
       value:  "-NULL"
     }
-    drill_fields: [company_name,created_time_date,datereg_date,name,subject,sent_time_date]
+    drill_fields: [company_name,email_id,created_time_date,datereg_date,name,subject,sent_time_date]
     }
 
   measure: Vendor_stats_2 {
@@ -2359,13 +2383,9 @@ view: vendor_nurtures {
       field: campaign_id_xa_campaign_d
       value:  "NULL"
     }
-    drill_fields: [company_name,created_time_date,datereg_date,name,subject,sent_time_date]
+    drill_fields: [company_name,email_id,created_time_date,datereg_date,name,subject,sent_time_date]
   }
-  measure: Vendors_without_Nurtures{
-    type: count_distinct
-    sql: ${company_id_xa_company_d};;
-    drill_fields: [company_name,created_time_date,datereg_date,status]
-  }
+
 
   measure: launch_time {
     type: count_distinct
@@ -2504,19 +2524,10 @@ view: vendor_nurtures {
   }
   dimension: action_name_a {
     type: string
-    label: "action_name_a"
-    sql: ${TABLE}.action_name_a ;;
+    label: "Nurture_Name"
+    sql: ${TABLE}.Nurture_Name ;;
 
-    link:{
-      label:"{{value}} With Nurture Details"
-      url: "https://stratappspartner.looker.com/looks/97?&f[vendor_nurtures.action_name_a]={{ value | encode_uri }}"
-      icon_url: "http://www.looker.com/favicon.ico"
-    }
-    link:{
-      label:"{{value}} Without Nurture Details"
-      url: "https://stratappspartner.looker.com/looks/98?&f[ vendor_nurtures.Category_Selector]={{ value| encode_uri }}"
-      icon_url: "http://www.looker.com/favicon.ico"
-    }
+
   }
 
   dimension: user_id_xa_drip_email_history_d {
@@ -2667,7 +2678,7 @@ view: partner_nurtures {
                   xa_drip_email_history_d.sent_time as Nurture_Sent_Time,
 
                    a.action_id as action_id,
-                  a.action_name as action_name,
+                  a.action_name as Nuture_Name,
 
           xa_user_d1.email_id AS Partner_Email,
                   xa_user_d1.firstname AS firstname_p,
@@ -2815,10 +2826,10 @@ view: partner_nurtures {
 
   }
 
-  measure: Total_Partners{
+   measure: Total_Partners{
     type: count_distinct
     sql: ${partner_id_xa_partnership};;
-    drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
+    drill_fields: [partner_company_id_xa_partnership,company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
       datereg_xa_user_d1_time,status_xa_user_d1
     ]
   }
@@ -2918,7 +2929,7 @@ view: partner_nurtures {
   measure: Partners_count{
     type: count_distinct
     sql: ${partner_id_xa_partnership};;
-    drill_fields:[company_name_xa_company_d1,name_xa_drip_email_history_d,email_id_xa_user_d1,subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_date]
+    drill_fields:[company_name_xa_company_d1,Full_Name,email_id_xa_user_d1,name_xa_drip_email_history_d,subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_date]
 
   }
 
@@ -3058,8 +3069,8 @@ view: partner_nurtures {
   }
   dimension: action_name_a {
     type: string
-    label: "action_name"
-    sql: ${TABLE}.action_name ;;
+    label: "Nuture_Name"
+    sql: ${TABLE}.Nuture_Name ;;
   }
   dimension: email_id_xa_user_d1 {
     type: string
@@ -3613,7 +3624,6 @@ view: team_members {
   }
 }
 
-
 explore: email_templates {}
 view: email_templates {
   derived_table: {
@@ -3625,13 +3635,25 @@ view: email_templates {
         et.subject as "Emailtemplate Subject",
          r.role_id as "User Role",
         r.description as "Role description",
-        t.firstname as "Teammember FirstName",
-        t.lastname as "Teammember LastName",
+       t.team_member_id as "Teammember ID",
+          t.email_id as "Teammember email_id",
+          t.firstname as "Teammember Firstname",
+          t.lastname as "Teammember Lastname",
+          t.status as "Teammember status",
+          t.created_time as "Teammember Created Time",
+          t.company_id as "Teammember company_id",
         c.company_id as "Vendor Company ID",
         c.company_name as "Vendor Company Name",
         u.user_id as "Vendor User ID",
-        cam.campaign_id as "Camapaign ID",
-        cam.campaign_name as "Campaign Name"
+        cam.campaign_id as "Campaign ID",
+        cam.campaign_name as "Campaign Name",
+        c.email_id as "Email ID",
+        u.firstname as "First Name",
+        u.lastname as "Last Name",
+        u.datereg as "DateReg",
+        u.datelastlogin as "Date LastLogin",
+        c.country as "Country"
+
 
       from xamplify_test.xa_team_member_d t
       inner join xamplify_test.xa_user_role_d up on(t.team_member_id=up.user_id)
@@ -3640,8 +3662,7 @@ view: email_templates {
       inner join xamplify_test.xa_company_d c on (t.company_id=c.company_id)
       inner join xamplify_test.xa_user_d u on(t.team_member_id=u.user_id)
       inner join xamplify_test.xa_campaign_d cam on(t.team_member_id=cam.customer_id)
-
-  ;;
+ ;;
   }
 
   measure: count {
@@ -3655,35 +3676,29 @@ view: email_templates {
     drill_fields: [emailtemplate_name,emailtemplate_created_time_date]
   }
 
-  dimension: emailtemplate_type {
-    type: string
-    label: "Emailtemplate Type"
-    sql: ${TABLE}."Emailtemplate Type" ;;
-  }
-
-  dimension: emailtemplate_subject {
-    type: string
-    label: "Emailtemplate Subject"
-    sql: ${TABLE}."Emailtemplate Subject" ;;
-  }
-
   dimension: teammember_name {
     type: string
     label: "Teammember Name"
-    sql: concat(${teammember_first_name},${teammember_last_name}) ;;
+    sql: concat(${teammember_firstname},${teammember_lastname}) ;;
     drill_fields: [campaign_id,campaign_name]
+  }
+
+  measure: Org_Admins {
+    type: count_distinct
+    sql: ${vendor_user_id};;
+    drill_fields: [email_id,first_name,last_name,date_reg_date,date_last_login_date,country,Teammembers]
+  }
+
+  measure: Teammembers {
+    type: count_distinct
+    sql: ${teammember_id} ;;
+    drill_fields: [teammember_name,teammember_email_id,teammember_created_time_date,teammember_status]
   }
 
   dimension_group: emailtemplate_created_time {
     type: time
     label: "Emailtemplate created time"
     sql: ${TABLE}."Emailtemplate created time" ;;
-  }
-
-  dimension: vendor_user_id {
-    type: number
-    label: "Vendor User ID"
-    sql: ${TABLE}."Vendor User ID" ;;
   }
 
   dimension: emailtemplate_id {
@@ -3698,6 +3713,18 @@ view: email_templates {
     sql: ${TABLE}."Emailtemplate name" ;;
   }
 
+  dimension: emailtemplate_type {
+    type: string
+    label: "Emailtemplate Type"
+    sql: ${TABLE}."Emailtemplate Type" ;;
+  }
+
+  dimension: emailtemplate_subject {
+    type: string
+    label: "Emailtemplate Subject"
+    sql: ${TABLE}."Emailtemplate Subject" ;;
+  }
+
   dimension: user_role {
     type: number
     label: "User Role"
@@ -3710,18 +3737,49 @@ view: email_templates {
     sql: ${TABLE}."Role description" ;;
   }
 
-  dimension: teammember_first_name {
-    type: string
-    label: "Teammember FirstName"
-    sql: ${TABLE}."Teammember FirstName" ;;
+  dimension: teammember_id {
+    type: number
+    label: "Teammember ID"
+    sql: ${TABLE}."Teammember ID" ;;
   }
 
-  dimension: teammember_last_name {
+  dimension: teammember_email_id {
     type: string
-    label: "Teammember LastName"
-    sql: ${TABLE}."Teammember LastName" ;;
+    label: "Teammember email_id"
+    sql: ${TABLE}."Teammember email_id" ;;
   }
-  dimension: vendor_company_id{
+
+  dimension: teammember_firstname {
+    type: string
+    label: "Teammember Firstname"
+    sql: ${TABLE}."Teammember Firstname" ;;
+  }
+
+  dimension: teammember_lastname {
+    type: string
+    label: "Teammember Lastname"
+    sql: ${TABLE}."Teammember Lastname" ;;
+  }
+
+  dimension: teammember_status {
+    type: string
+    label: "Teammember status"
+    sql: ${TABLE}."Teammember status" ;;
+  }
+
+  dimension_group: teammember_created_time {
+    type: time
+    label: "Teammember Created Time"
+    sql: ${TABLE}."Teammember Created Time" ;;
+  }
+
+  dimension: teammember_company_id {
+    type: number
+    label: "Teammember company_id"
+    sql: ${TABLE}."Teammember company_id" ;;
+  }
+
+  dimension: vendor_company_id {
     type: number
     label: "Vendor Company ID"
     sql: ${TABLE}."Vendor Company ID" ;;
@@ -3732,23 +3790,61 @@ view: email_templates {
     label: "Vendor Company Name"
     sql: ${TABLE}."Vendor Company Name" ;;
   }
+
+  dimension: vendor_user_id {
+    type: number
+    label: "Vendor User ID"
+    sql: ${TABLE}."Vendor User ID" ;;
+  }
+
   dimension: campaign_id {
     type: number
     label: "Campaign ID"
     sql: ${TABLE}."Campaign ID" ;;
   }
+
   dimension: campaign_name {
     type: string
     label: "Campaign Name"
     sql: ${TABLE}."Campaign Name" ;;
-
   }
 
+  dimension: email_id {
+    type: string
+    label: "Email ID"
+    sql: ${TABLE}."Email ID" ;;
+  }
+
+  dimension: first_name {
+    type: string
+    label: "First Name"
+    sql: ${TABLE}."First Name" ;;
+  }
+
+  dimension: last_name {
+    type: string
+    label: "Last Name"
+    sql: ${TABLE}."Last Name" ;;
+  }
+
+  dimension_group: date_reg {
+    type: time
+    sql: ${TABLE}."DateReg" ;;
+  }
+
+  dimension_group: date_last_login {
+    type: time
+    label: "Date LastLogin"
+    sql: ${TABLE}."Date LastLogin" ;;
+  }
+
+  dimension: country {
+    type: string
+    sql: ${TABLE}."Country" ;;
+  }
 
   set: detail {
     fields: [
-
-      vendor_user_id,
       emailtemplate_created_time_time,
       emailtemplate_id,
       emailtemplate_name,
@@ -3756,15 +3852,30 @@ view: email_templates {
       emailtemplate_subject,
       user_role,
       role_description,
-      teammember_first_name,
-      teammember_last_name,
+      teammember_id,
+      teammember_email_id,
+      teammember_firstname,
+      teammember_lastname,
+      teammember_status,
+      teammember_created_time_time,
+      teammember_company_id,
       vendor_company_id,
       vendor_company_name,
+      vendor_user_id,
       campaign_id,
-      campaign_name
+      campaign_name,
+      email_id,
+      first_name,
+      last_name,
+      date_reg_time,
+      date_last_login_time,
+      country
     ]
   }
 }
+
+
+
 
 
 explore: partner_team_members  {}
@@ -3780,6 +3891,7 @@ view: partner_team_members {
       tm1.lastname as "Team Member Last Name",
       tm1.status as "Team Member Status",
       tm1.created_time as "Team Member Created Time",
+  ud2.user_id "partner",
       c.campaign_id as "Campaign Id",
       c.campaign_name as "Campaign Name",
       c.campaign_type as "Campaign Type",
@@ -3799,13 +3911,19 @@ view: partner_team_members {
       left join xamplify_test.xa_user_d ud1 on ul.listby_partner_id=ud1.user_id
       left join xamplify_test.xa_company_d partner_company on partner_company.company_id=ud1.company_id
       left join xamplify_test.xa_user_d ud2 on(partner_company.company_id=ud2.company_id)
-      left join xamplify_test.xa_team_member_d tm1 on tm1.team_member_id=ud2.user_id
+      left join ( select team_member_id,email_id ,
+      firstname,
+      lastname,
+      status,
+      created_time
+         from xamplify_test.xa_team_member_d where team_member_id not in (select distinct user_id from
+          xamplify_test.xa_user_role_d where role_id in (2)
+        )) as  tm1 on tm1.team_member_id=ud2.user_id
       left join xamplify_test.xa_campaign_d c on(c.customer_id=tm1.team_member_id)
       --left join xamplify_test.xa_campaign_user_userlist_d cul on(cul.campaign_id=c.campaign_id)
       left join xamplify_test.xa_user_role_d  ur on(ur.user_id=c.customer_id)
       left join xamplify_test.xa_emaillog_d el on(c.campaign_id=el.campaign_id)
       where ul.is_partner_userlist= true
-      --and tm1.team_member_id not in(12104,12177,16700,17666,19083)
        ;;
   }
 
@@ -3817,7 +3935,7 @@ view: partner_team_members {
 
   measure: Campaigns {
     type: count_distinct
-    sql: (case when ${team_member_id}  not in(12104,12177,16700,17666,19083) then ${campaign_id} end)
+    sql:  ${campaign_id}
       ;;
   }
 
@@ -4112,279 +4230,285 @@ explore:email_auto_responses{}
 view: email_auto_responses {
   derived_table: {
     sql: select distinct
-"Vendor Company Name","Partner Company Name", "Campaign Name", "Launch Time",
-"Total Recipients" "Total Recipients",
-"Active Recipients" "Active Recipients",
-"#Email Opened (Views)" "#Email Opened (Views)",
-"Subject"
-,"#Email Clicked" "#Email Clicked",
-"Clicked URL Names"
-,"#Email Auto Responses" "#Email Auto Responses"
-,"Reason"
-,"Reply In Days"
-,"Email Reply Time"
-,"#Email Auto Responses Opened" "#Email Auto Responses Opened"
-,"#Website Visit Auto Responses" "#Website Visit Auto Responses"
-,"Web Reason"
-,"Web Reply In Days"
-,"Web Reply Time"
-, "#Website Responses Email Opened" "#Website Responses Email Opened"
-,campaign_email_sent_id as "#Total Emails Sent"
-,campaign_email_sent_time as "Campaign Email Sent Time"
-,email_response_id as "#Email Auto Responses Sent"
-,email_response_sent_time as "Email Auto Responses Sent Time"
-,website_response_id as "#Web Auto Responses Sent"
-,website_response_sent_time "Web Auto Responses Sent Time"
-,"Email ID"
-,"First Name"
-,"Last Name"
-,"Company Name"
-,"Phone"
-,"Address"
-,"City"
-,"State"
-,"Country"
+      "Vendor Company Name","Partner Company Name", "Campaign Name", "Launch Time",
+      "Total Recipients" "Total Recipients",
+      "Active Recipients" "Active Recipients",
+      "#Email Opened (Views)" "#Email Opened (Views)",
+      "Subject"
+      ,"#Email Clicked" "#Email Clicked",
+      "Clicked URL Names"
+      ,"#Email Auto Responses" "#Email Auto Responses"
+      ,"Reason"
+      ,"Reply In Days"
+      ,"Email Reply Time"
+      ,"#Email Auto Responses Opened" "#Email Auto Responses Opened"
+      ,"#Website Visit Auto Responses" "#Website Visit Auto Responses"
+      ,"Web Reason"
+      ,"Web Reply In Days"
+      ,"Web Reply Time"
+      , "#Website Responses Email Opened" "#Website Responses Email Opened"
+      ,campaign_email_sent_id as "#Total Emails Sent"
+      ,campaign_email_sent_time as "Campaign Email Sent Time"
+      ,email_response_id as "#Email Auto Responses Sent"
+      ,email_response_sent_time as "Email Auto Responses Sent Time"
+      ,website_response_id as "#Web Auto Responses Sent"
+      ,website_response_sent_time "Web Auto Responses Sent Time"
+      ,"Email ID"
+      ,"First Name"
+      ,"Last Name"
+      ,"Company Name"
+      ,"Phone"
+      ,"Address"
+      ,"City"
+      ,"State"
+      ,"Country"
+      ,"Campaign ID"
 
-      from (
-      select
-      xa_company_d.company_name as "Vendor Company Name",
-      xt_company_profile1.company_name as "Partner Company Name",
-      xt_campaign1.campaign_name as "Campaign Name",
-      xt_campaign1.launch_time as "Launch Time",
-      xa_campaign_user_userlist_d.user_id as "Total Recipients",
-      up.email_id as "Email ID",
-      xt_email_log1.user_id "Active Recipients",
-      case when xt_email_log1.action_id = 13 and xt_email_log1.url_id is null and xt_email_log1.reply_id is null then date_trunc('minute',xt_email_log1.time) end "#Email Opened (Views)",
-      case when (xt_email_log1.action_id = 14 or xt_email_log1.action_id = 15) and xt_email_log1.url_id is null and xt_email_log1.reply_id is null then date_trunc('minute',xt_email_log1.time) end as "#Email Clicked"
-      ,null "#Email Auto Responses"
-      ,null "Reason"
-      ,null "Reply In Days"
-      ,null "#Email Auto Responses Opened"
-      ,null as "#Website Visit Auto Responses"
-      ,null as "Web Reason"
-      ,null as "Web Reply In Days"
-      ,null as "#Website Responses Email Opened"
-      ,null::integer as campaign_email_sent_id
-      ,null::timestamp as campaign_email_sent_time
-      ,null::integer as email_response_id
-      ,null::timestamp as email_response_sent_time
-      ,null::integer as website_response_id
-      ,null::timestamp as website_response_sent_time
-      ,uul.first_name as "First Name"
-      ,uul.last_name as "Last Name"
-      ,uul.contact_company as "Company Name"
-      ,uul.mobile_number as "Phone"
-      ,uul.address as "Address"
-      ,uul.city as "City"
-      ,uul.state as "State"
-      ,uul.country as "Country"
-      ,string_agg(distinct xt_email_log1.subject,' ,') as "Subject"
-      ,string_agg(distinct xt_email_log1.clicked_url,' ,') as "Clicked URL Names"
-      ,null::timestamp as "Email Reply Time"
-      ,null::timestamp as "Web Reply Time"
-      from
-      "xamplify_test"."xa_campaign_d" "xa_campaign_d"
-      LEFT JOIN "xamplify_test"."xa_user_d" "xa_user_d" ON ("xa_campaign_d"."customer_id" = "xa_user_d"."user_id")
-      LEFT JOIN "xamplify_test"."xa_company_d" "xa_company_d" ON ("xa_user_d"."company_id" = "xa_company_d"."company_id")
-      LEFT JOIN "xamplify_test"."xa_campaign_d" "xt_campaign1" ON ("xa_campaign_d"."campaign_id" = "xt_campaign1"."parent_campaign_id")
-      LEFT JOIN "xamplify_test"."xa_user_d" "xt_user_profile1" ON ("xt_campaign1"."customer_id" = "xt_user_profile1"."user_id")
-      LEFT JOIN "xamplify_test"."xa_company_d" "xt_company_profile1" ON ("xt_user_profile1"."company_id" = "xt_company_profile1"."company_id")
-      LEFT JOIN "xamplify_test"."xa_campaign_user_userlist_d" "xa_campaign_user_userlist_d" ON ("xt_campaign1"."campaign_id" = "xa_campaign_user_userlist_d"."campaign_id")
-      join "xamplify_test".xa_user_list_d uul on uul.user_list_id = "xa_campaign_user_userlist_d".user_list_id
-      and uul.listby_partner_id = "xa_campaign_user_userlist_d".user_id
-      join "xamplify_test".xa_user_d up on up.user_id = "xa_campaign_user_userlist_d".user_id
-      LEFT JOIN "xamplify_test"."xa_emaillog_d" "xt_email_log1" ON (("xt_campaign1"."campaign_id" = "xt_email_log1"."campaign_id") AND ("xa_campaign_user_userlist_d"."user_id" = "xt_email_log1"."user_id"))
-      group by 1,2,3,4,5,6,7,8,9,23,24,25,26,27,28,29,30,31
-      union all  --auto responses
-      select
-      xa_company_d.company_name as "Vendor Company Name",
-      xt_company_profile1.company_name as "Partner Company Name",
-      xt_campaign1.campaign_name as "Campaign Name",
-      xt_campaign1.launch_time as "Launch Time",
-      null as "total",
-      null as "Email ID",
-      null as active,
-      null as "#Email Opened (Views)",
-      null as "#Email Clicked",
-      xa_campaign_replies_d.id "#Email Auto Responses",
-      xa_campaign_replies_d.reply_action_id as "Reason",
-      xa_campaign_replies_d.reply_in_days as "Reply In Days",
-      case when xt_email_log2.action_id = 13 and xt_email_log2.reply_id is not null and xt_email_log2.url_id is null then xt_email_log2.id end as "#Email Auto Responses Opened",
-      xa_campaign_clicked_urls_d.id "#Website Visit Auto Responses",
-      xa_campaign_clicked_urls_d.action_id as "Web Reason",
-      xa_campaign_clicked_urls_d.reply_in_days as "Web Reply In Days",
-      case when xa_emaillog_d.action_id = 13 and xa_emaillog_d.url_id is not null and xa_emaillog_d.reply_id is null then xa_emaillog_d.id end "#Website Responses Email Opened"
-      ,null as campaign_email_sent_id
-      ,null as campaign_email_sent_time
-      ,null as email_response_id
-      ,null as email_response_sent_time
-      ,null as website_response_id
-      ,null as website_response_sent_time
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,xa_campaign_replies_d.reply_time as "Email Reply Time"
-      ,xa_campaign_clicked_urls_d.reply_time as "Web Reply Time"
-      from
-      "xamplify_test"."xa_campaign_d" "xa_campaign_d"
-      LEFT JOIN "xamplify_test"."xa_user_d" "xa_user_d" ON ("xa_campaign_d"."customer_id" = "xa_user_d"."user_id")
-      LEFT JOIN "xamplify_test"."xa_company_d" "xa_company_d" ON ("xa_user_d"."company_id" = "xa_company_d"."company_id")
-      LEFT JOIN "xamplify_test"."xa_campaign_d" "xt_campaign1" ON ("xa_campaign_d"."campaign_id" = "xt_campaign1"."parent_campaign_id")
-      LEFT JOIN "xamplify_test"."xa_user_d" "xt_user_profile1" ON ("xt_campaign1"."customer_id" = "xt_user_profile1"."user_id")
-      LEFT JOIN "xamplify_test"."xa_company_d" "xt_company_profile1" ON ("xt_user_profile1"."company_id" = "xt_company_profile1"."company_id")
-      --LEFT JOIN "xamplify_test"."xa_campaign_user_userlist_d" "xa_campaign_user_userlist_d" ON ("xt_campaign1"."campaign_id" = "xa_campaign_user_userlist_d"."campaign_id")
-      LEFT JOIN "xamplify_test"."xa_campaign_replies_d" "xa_campaign_replies_d" ON ("xt_campaign1"."campaign_id" = "xa_campaign_replies_d"."campaign_id")
-      LEFT JOIN "xamplify_test"."xa_campaign_clicked_urls_d" "xa_campaign_clicked_urls_d" ON ("xt_campaign1"."campaign_id" = "xa_campaign_clicked_urls_d"."campaign_id")
-      left JOIN "xamplify_test"."xa_emaillog_d" "xt_email_log2" ON ("xa_campaign_replies_d"."id" = "xt_email_log2"."reply_id") and xt_email_log2.campaign_id = xt_campaign1.campaign_id
-      LEFT JOIN "xamplify_test"."xa_emaillog_d" "xa_emaillog_d" ON ("xa_campaign_clicked_urls_d"."id" = "xa_emaillog_d"."url_id") and xa_emaillog_d.campaign_id = xt_campaign1.campaign_id
-      union all  --campaign emails
-      select
-      xa_company_d.company_name as "Vendor Company Name",
-      xt_company_profile1.company_name as "Partner Company Name",
-      xt_campaign1.campaign_name as "Campaign Name",
-      xt_campaign1.launch_time as "Launch Time"
-      ,null as total
-      ,"xt_user_profile2".email_id as "Email ID"
-      ,null as active
-      ,null as "#Email Opened (Views)"
-      ,null as "#Email Clicked"
-      ,null as "#Email Auto Responses"
-      ,null as "Reason"
-      ,null as "Reply In Days"
-      ,null as "#Email Auto Responses Opened"
-      ,null as "#Website Visit Auto Responses"
-      ,null as "Web Reason"
-      ,null as "Web Reply In Days"
-      ,null as "#Website Responses Email Opened"
-      ,eh.id as "campaign_email_sent_id"
-      ,eh.sent_time as campaign_email_sent_time
-      ,null as website_response_id
-      ,null as website_response_sent_time
-      ,null as website_response_id
-      ,null as website_response_sent_time
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null::timestamp as "Email Reply Time"
-      ,null::timestamp as "Web Reply Time"
-      from xt_campaign "xa_campaign_d"
-      LEFT JOIN "xamplify_test"."xa_user_d" "xa_user_d" ON ("xa_campaign_d"."customer_id" = "xa_user_d"."user_id")
-      LEFT JOIN "xamplify_test"."xa_company_d" "xa_company_d" ON ("xa_user_d"."company_id" = "xa_company_d"."company_id")
-      LEFT JOIN "xamplify_test"."xa_campaign_d" "xt_campaign1" ON ("xa_campaign_d"."campaign_id" = "xt_campaign1"."parent_campaign_id")
-      LEFT JOIN "xamplify_test"."xa_user_d" "xt_user_profile1" ON ("xt_campaign1"."customer_id" = "xt_user_profile1"."user_id")
-      LEFT JOIN "xamplify_test"."xa_company_d" "xt_company_profile1" ON ("xt_user_profile1"."company_id" = "xt_company_profile1"."company_id")
-      left join "xamplify_test".xa_campaign_emails_history_d eh on xt_campaign1.campaign_id = eh.campaign_id
-      left join  "xamplify_test"."xa_user_d" "xt_user_profile2" ON ("eh"."user_id" = "xt_user_profile2"."user_id")
-      -- where xt_company_profile.company_id = 399
-      union all  --email responses sent logs
-      select
-      xa_company_d.company_name as "Vendor Company Name",
-      xt_company_profile1.company_name as "Partner Company Name",
-      xt_campaign1.campaign_name as "Campaign Name",
-      xt_campaign1.launch_time as "Launch Time"
-      ,null as total
-      ,null as "Email ID"
-      ,null as active
-      ,null as "#Email Opened (Views)"
-      ,null as "#Email Clicked"
-      ,null as "#Email Auto Responses"
-      ,null as "Reason"
-      ,null as "Reply In Days"
-      ,null as "#Email Auto Responses Opened"
-      ,null as "#Website Visit Auto Responses"
-      ,null as "Web Reason"
-      ,null as "Web Reply In Days"
-      ,null as "#Website Responses Email Opened"
-      ,null as  "campaign_email_sent_id"
-      ,null as  campaign_email_sent_time
-      ,esl.id as email_response_id
-      ,esl.sent_time as email_response_sent_time
-      ,null as website_response_id
-      ,null as website_response_sent_time
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null::timestamp as "Email Reply Time"
-      ,null::timestamp as "Web Reply Time"
-      from xt_campaign "xa_campaign_d"
-      LEFT JOIN "xamplify_test"."xa_user_d" "xa_user_d" ON ("xa_campaign_d"."customer_id" = "xa_user_d"."user_id")
-      LEFT JOIN "xamplify_test"."xa_company_d" "xa_company_d" ON ("xa_user_d"."company_id" = "xa_company_d"."company_id")
-      LEFT JOIN "xamplify_test"."xa_campaign_d" "xt_campaign1" ON ("xa_campaign_d"."campaign_id" = "xt_campaign1"."parent_campaign_id")
-      LEFT JOIN "xamplify_test"."xa_user_d" "xt_user_profile1" ON ("xt_campaign1"."customer_id" = "xt_user_profile1"."user_id")
-      LEFT JOIN "xamplify_test"."xa_company_d" "xt_company_profile1" ON ("xt_user_profile1"."company_id" = "xt_company_profile1"."company_id")
-      LEFT JOIN "xamplify_test"."xa_campaign_replies_d" "xa_campaign_replies_d" ON ("xt_campaign1"."campaign_id" = "xa_campaign_replies_d"."campaign_id")
-      left join "xamplify_test".xa_campaign_email_sent_log_d esl on esl.reply_id = xa_campaign_replies_d.id
-      union all  --website responses sent logs
-      select
-      xa_company_d.company_name as "Vendor Company Name",
-      xt_company_profile1.company_name as "Partner Company Name",
-      xt_campaign1.campaign_name as "Campaign Name",
-      xt_campaign1.launch_time as "Launch Time"
-      ,null as total
-      ,null as "Email ID"
-      ,null as active
-      ,null as "#Email Opened (Views)"
-      ,null as "#Email Clicked"
-      ,null as "#Email Auto Responses"
-      ,null as "Reason"
-      ,null as "Reply In Days"
-      ,null as "#Email Auto Responses Opened"
-      ,null as "#Website Visit Auto Responses"
-      ,null as "Web Reason"
-      ,null as "Web Reply In Days"
-      ,null as "#Website Responses Email Opened"
-      ,null as  "campaign_email_sent_id"
-      ,null as   campaign_email_sent_time
-      ,null as email_response_id
-      ,null as email_response_sent_time
-      ,esl.id as website_response_id
-      ,esl.sent_time as website_response_sent_time
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null
-      ,null::timestamp as "Email Reply Time"
-      ,null::timestamp as "Web Reply Time"
-      from xt_campaign "xa_campaign_d"
-      LEFT JOIN "xamplify_test"."xa_user_d" "xa_user_d" ON ("xa_campaign_d"."customer_id" = "xa_user_d"."user_id")
-      LEFT JOIN "xamplify_test"."xa_company_d" "xa_company_d" ON ("xa_user_d"."company_id" = "xa_company_d"."company_id")
-      LEFT JOIN "xamplify_test"."xa_campaign_d" "xt_campaign1" ON ("xa_campaign_d"."campaign_id" = "xt_campaign1"."parent_campaign_id")
-      LEFT JOIN "xamplify_test"."xa_user_d" "xt_user_profile1" ON ("xt_campaign1"."customer_id" = "xt_user_profile1"."user_id")
-      LEFT JOIN "xamplify_test"."xa_company_d" "xt_company_profile1" ON ("xt_user_profile1"."company_id" = "xt_company_profile1"."company_id")
-      LEFT JOIN "xamplify_test"."xa_campaign_clicked_urls_d" "xa_campaign_clicked_urls_d" ON ("xt_campaign1"."campaign_id" = "xa_campaign_clicked_urls_d"."campaign_id")
-      left join xt_campaign_email_sent_log esl on esl.click_id = xa_campaign_clicked_urls_d.id
-           )a
-        -- where "Partner Company Name" is not null
-       --and "Partner Company Name" = '26 Connect'
+            from (
+            select
+            xa_company_d.company_name as "Vendor Company Name",
+            xt_company_profile1.company_name as "Partner Company Name",
+            xt_campaign1.campaign_name as "Campaign Name",
+            xt_campaign1.launch_time as "Launch Time",
+            xa_campaign_user_userlist_d.user_id as "Total Recipients",
+            up.email_id as "Email ID",
+            xt_email_log1.user_id "Active Recipients",
+            case when xt_email_log1.action_id = 13 and xt_email_log1.url_id is null and xt_email_log1.reply_id is null then date_trunc('minute',xt_email_log1.time) end "#Email Opened (Views)",
+            case when (xt_email_log1.action_id = 14 or xt_email_log1.action_id = 15) and xt_email_log1.url_id is null and xt_email_log1.reply_id is null then date_trunc('minute',xt_email_log1.time) end as "#Email Clicked"
+            ,null "#Email Auto Responses"
+            ,null "Reason"
+            ,null "Reply In Days"
+            ,null "#Email Auto Responses Opened"
+            ,null as "#Website Visit Auto Responses"
+            ,null as "Web Reason"
+            ,null as "Web Reply In Days"
+            ,null as "#Website Responses Email Opened"
+            ,null::integer as campaign_email_sent_id
+            ,null::timestamp as campaign_email_sent_time
+            ,null::integer as email_response_id
+            ,null::timestamp as email_response_sent_time
+            ,null::integer as website_response_id
+            ,null::timestamp as website_response_sent_time
+            ,uul.first_name as "First Name"
+            ,uul.last_name as "Last Name"
+            ,uul.contact_company as "Company Name"
+            ,uul.mobile_number as "Phone"
+            ,uul.address as "Address"
+            ,uul.city as "City"
+            ,uul.state as "State"
+            ,uul.country as "Country"
+            ,string_agg(distinct xt_email_log1.subject,' ,') as "Subject"
+            ,string_agg(distinct xt_email_log1.clicked_url,' ,') as "Clicked URL Names"
+            ,null::timestamp as "Email Reply Time"
+            ,null::timestamp as "Web Reply Time"
+            ,xt_campaign1.campaign_id as "Campaign ID"
+            from
+            "xamplify_test"."xa_campaign_d" "xa_campaign_d"
+            LEFT JOIN "xamplify_test"."xa_user_d" "xa_user_d" ON ("xa_campaign_d"."customer_id" = "xa_user_d"."user_id")
+            LEFT JOIN "xamplify_test"."xa_company_d" "xa_company_d" ON ("xa_user_d"."company_id" = "xa_company_d"."company_id")
+            LEFT JOIN "xamplify_test"."xa_campaign_d" "xt_campaign1" ON ("xa_campaign_d"."campaign_id" = "xt_campaign1"."parent_campaign_id")
+            LEFT JOIN "xamplify_test"."xa_user_d" "xt_user_profile1" ON ("xt_campaign1"."customer_id" = "xt_user_profile1"."user_id")
+            LEFT JOIN "xamplify_test"."xa_company_d" "xt_company_profile1" ON ("xt_user_profile1"."company_id" = "xt_company_profile1"."company_id")
+            LEFT JOIN "xamplify_test"."xa_campaign_user_userlist_d" "xa_campaign_user_userlist_d" ON ("xt_campaign1"."campaign_id" = "xa_campaign_user_userlist_d"."campaign_id")
+            join "xamplify_test".xa_user_list_d uul on uul.user_list_id = "xa_campaign_user_userlist_d".user_list_id
+            and uul.listby_partner_id = "xa_campaign_user_userlist_d".user_id
+            join "xamplify_test".xa_user_d up on up.user_id = "xa_campaign_user_userlist_d".user_id
+            LEFT JOIN "xamplify_test"."xa_emaillog_d" "xt_email_log1" ON (("xt_campaign1"."campaign_id" = "xt_email_log1"."campaign_id") AND ("xa_campaign_user_userlist_d"."user_id" = "xt_email_log1"."user_id"))
+            group by 1,2,3,4,5,6,7,8,9,23,24,25,26,27,28,29,30,31,36
+            union all  --auto responses
+            select
+            xa_company_d.company_name as "Vendor Company Name",
+            xt_company_profile1.company_name as "Partner Company Name",
+            xt_campaign1.campaign_name as "Campaign Name",
+            xt_campaign1.launch_time as "Launch Time",
+            null as "total",
+            null as "Email ID",
+            null as active,
+            null as "#Email Opened (Views)",
+            null as "#Email Clicked",
+            xa_campaign_replies_d.id "#Email Auto Responses",
+            xa_campaign_replies_d.reply_action_id as "Reason",
+            xa_campaign_replies_d.reply_in_days as "Reply In Days",
+            case when xt_email_log2.action_id = 13 and xt_email_log2.reply_id is not null and xt_email_log2.url_id is null then xt_email_log2.id end as "#Email Auto Responses Opened",
+            xa_campaign_clicked_urls_d.id "#Website Visit Auto Responses",
+            xa_campaign_clicked_urls_d.action_id as "Web Reason",
+            xa_campaign_clicked_urls_d.reply_in_days as "Web Reply In Days",
+            case when xa_emaillog_d.action_id = 13 and xa_emaillog_d.url_id is not null and xa_emaillog_d.reply_id is null then xa_emaillog_d.id end "#Website Responses Email Opened"
+            ,null as campaign_email_sent_id
+            ,null as campaign_email_sent_time
+            ,null as email_response_id
+            ,null as email_response_sent_time
+            ,null as website_response_id
+            ,null as website_response_sent_time
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,xa_campaign_replies_d.reply_time as "Email Reply Time"
+            ,xa_campaign_clicked_urls_d.reply_time as "Web Reply Time"
+            ,xt_campaign1.campaign_id as "Campaign ID"
+            from
+            "xamplify_test"."xa_campaign_d" "xa_campaign_d"
+            LEFT JOIN "xamplify_test"."xa_user_d" "xa_user_d" ON ("xa_campaign_d"."customer_id" = "xa_user_d"."user_id")
+            LEFT JOIN "xamplify_test"."xa_company_d" "xa_company_d" ON ("xa_user_d"."company_id" = "xa_company_d"."company_id")
+            LEFT JOIN "xamplify_test"."xa_campaign_d" "xt_campaign1" ON ("xa_campaign_d"."campaign_id" = "xt_campaign1"."parent_campaign_id")
+            LEFT JOIN "xamplify_test"."xa_user_d" "xt_user_profile1" ON ("xt_campaign1"."customer_id" = "xt_user_profile1"."user_id")
+            LEFT JOIN "xamplify_test"."xa_company_d" "xt_company_profile1" ON ("xt_user_profile1"."company_id" = "xt_company_profile1"."company_id")
+            --LEFT JOIN "xamplify_test"."xa_campaign_user_userlist_d" "xa_campaign_user_userlist_d" ON ("xt_campaign1"."campaign_id" = "xa_campaign_user_userlist_d"."campaign_id")
+            LEFT JOIN "xamplify_test"."xa_campaign_replies_d" "xa_campaign_replies_d" ON ("xt_campaign1"."campaign_id" = "xa_campaign_replies_d"."campaign_id")
+            LEFT JOIN "xamplify_test"."xa_campaign_clicked_urls_d" "xa_campaign_clicked_urls_d" ON ("xt_campaign1"."campaign_id" = "xa_campaign_clicked_urls_d"."campaign_id")
+            left JOIN "xamplify_test"."xa_emaillog_d" "xt_email_log2" ON ("xa_campaign_replies_d"."id" = "xt_email_log2"."reply_id") and xt_email_log2.campaign_id = xt_campaign1.campaign_id
+            LEFT JOIN "xamplify_test"."xa_emaillog_d" "xa_emaillog_d" ON ("xa_campaign_clicked_urls_d"."id" = "xa_emaillog_d"."url_id") and xa_emaillog_d.campaign_id = xt_campaign1.campaign_id
+            union all  --campaign emails
+            select
+            xa_company_d.company_name as "Vendor Company Name",
+            xt_company_profile1.company_name as "Partner Company Name",
+            xt_campaign1.campaign_name as "Campaign Name",
+            xt_campaign1.launch_time as "Launch Time"
+            ,null as total
+            ,"xt_user_profile2".email_id as "Email ID"
+            ,null as active
+            ,null as "#Email Opened (Views)"
+            ,null as "#Email Clicked"
+            ,null as "#Email Auto Responses"
+            ,null as "Reason"
+            ,null as "Reply In Days"
+            ,null as "#Email Auto Responses Opened"
+            ,null as "#Website Visit Auto Responses"
+            ,null as "Web Reason"
+            ,null as "Web Reply In Days"
+            ,null as "#Website Responses Email Opened"
+            ,eh.id as "campaign_email_sent_id"
+            ,eh.sent_time as campaign_email_sent_time
+            ,null as website_response_id
+            ,null as website_response_sent_time
+            ,null as website_response_id
+            ,null as website_response_sent_time
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null::timestamp as "Email Reply Time"
+            ,null::timestamp as "Web Reply Time"
+            ,xt_campaign1.campaign_id as "Campaign ID"
+            from xt_campaign "xa_campaign_d"
+            LEFT JOIN "xamplify_test"."xa_user_d" "xa_user_d" ON ("xa_campaign_d"."customer_id" = "xa_user_d"."user_id")
+            LEFT JOIN "xamplify_test"."xa_company_d" "xa_company_d" ON ("xa_user_d"."company_id" = "xa_company_d"."company_id")
+            LEFT JOIN "xamplify_test"."xa_campaign_d" "xt_campaign1" ON ("xa_campaign_d"."campaign_id" = "xt_campaign1"."parent_campaign_id")
+            LEFT JOIN "xamplify_test"."xa_user_d" "xt_user_profile1" ON ("xt_campaign1"."customer_id" = "xt_user_profile1"."user_id")
+            LEFT JOIN "xamplify_test"."xa_company_d" "xt_company_profile1" ON ("xt_user_profile1"."company_id" = "xt_company_profile1"."company_id")
+            left join "xamplify_test".xa_campaign_emails_history_d eh on xt_campaign1.campaign_id = eh.campaign_id
+            left join  "xamplify_test"."xa_user_d" "xt_user_profile2" ON ("eh"."user_id" = "xt_user_profile2"."user_id")
+            -- where xt_company_profile.company_id = 399
+            union all  --email responses sent logs
+            select
+            xa_company_d.company_name as "Vendor Company Name",
+            xt_company_profile1.company_name as "Partner Company Name",
+            xt_campaign1.campaign_name as "Campaign Name",
+            xt_campaign1.launch_time as "Launch Time"
+            ,null as total
+            ,null as "Email ID"
+            ,null as active
+            ,null as "#Email Opened (Views)"
+            ,null as "#Email Clicked"
+            ,null as "#Email Auto Responses"
+            ,null as "Reason"
+            ,null as "Reply In Days"
+            ,null as "#Email Auto Responses Opened"
+            ,null as "#Website Visit Auto Responses"
+            ,null as "Web Reason"
+            ,null as "Web Reply In Days"
+            ,null as "#Website Responses Email Opened"
+            ,null as  "campaign_email_sent_id"
+            ,null as  campaign_email_sent_time
+            ,esl.id as email_response_id
+            ,esl.sent_time as email_response_sent_time
+            ,null as website_response_id
+            ,null as website_response_sent_time
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null::timestamp as "Email Reply Time"
+            ,null::timestamp as "Web Reply Time"
+            ,xt_campaign1.campaign_id as "Campaign ID"
+            from xt_campaign "xa_campaign_d"
+            LEFT JOIN "xamplify_test"."xa_user_d" "xa_user_d" ON ("xa_campaign_d"."customer_id" = "xa_user_d"."user_id")
+            LEFT JOIN "xamplify_test"."xa_company_d" "xa_company_d" ON ("xa_user_d"."company_id" = "xa_company_d"."company_id")
+            LEFT JOIN "xamplify_test"."xa_campaign_d" "xt_campaign1" ON ("xa_campaign_d"."campaign_id" = "xt_campaign1"."parent_campaign_id")
+            LEFT JOIN "xamplify_test"."xa_user_d" "xt_user_profile1" ON ("xt_campaign1"."customer_id" = "xt_user_profile1"."user_id")
+            LEFT JOIN "xamplify_test"."xa_company_d" "xt_company_profile1" ON ("xt_user_profile1"."company_id" = "xt_company_profile1"."company_id")
+            LEFT JOIN "xamplify_test"."xa_campaign_replies_d" "xa_campaign_replies_d" ON ("xt_campaign1"."campaign_id" = "xa_campaign_replies_d"."campaign_id")
+            left join "xamplify_test".xa_campaign_email_sent_log_d esl on esl.reply_id = xa_campaign_replies_d.id
+            union all  --website responses sent logs
+            select
+            xa_company_d.company_name as "Vendor Company Name",
+            xt_company_profile1.company_name as "Partner Company Name",
+            xt_campaign1.campaign_name as "Campaign Name",
+            xt_campaign1.launch_time as "Launch Time"
+            ,null as total
+            ,null as "Email ID"
+            ,null as active
+            ,null as "#Email Opened (Views)"
+            ,null as "#Email Clicked"
+            ,null as "#Email Auto Responses"
+            ,null as "Reason"
+            ,null as "Reply In Days"
+            ,null as "#Email Auto Responses Opened"
+            ,null as "#Website Visit Auto Responses"
+            ,null as "Web Reason"
+            ,null as "Web Reply In Days"
+            ,null as "#Website Responses Email Opened"
+            ,null as  "campaign_email_sent_id"
+            ,null as   campaign_email_sent_time
+            ,null as email_response_id
+            ,null as email_response_sent_time
+            ,esl.id as website_response_id
+            ,esl.sent_time as website_response_sent_time
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null
+            ,null::timestamp as "Email Reply Time"
+            ,null::timestamp as "Web Reply Time"
+            ,xt_campaign1.campaign_id as "Campaign ID"
+            from xt_campaign "xa_campaign_d"
+            LEFT JOIN "xamplify_test"."xa_user_d" "xa_user_d" ON ("xa_campaign_d"."customer_id" = "xa_user_d"."user_id")
+            LEFT JOIN "xamplify_test"."xa_company_d" "xa_company_d" ON ("xa_user_d"."company_id" = "xa_company_d"."company_id")
+            LEFT JOIN "xamplify_test"."xa_campaign_d" "xt_campaign1" ON ("xa_campaign_d"."campaign_id" = "xt_campaign1"."parent_campaign_id")
+            LEFT JOIN "xamplify_test"."xa_user_d" "xt_user_profile1" ON ("xt_campaign1"."customer_id" = "xt_user_profile1"."user_id")
+            LEFT JOIN "xamplify_test"."xa_company_d" "xt_company_profile1" ON ("xt_user_profile1"."company_id" = "xt_company_profile1"."company_id")
+            LEFT JOIN "xamplify_test"."xa_campaign_clicked_urls_d" "xa_campaign_clicked_urls_d" ON ("xt_campaign1"."campaign_id" = "xa_campaign_clicked_urls_d"."campaign_id")
+            left join xt_campaign_email_sent_log esl on esl.click_id = xa_campaign_clicked_urls_d.id
+                 )a
+              -- where "Partner Company Name" is not null
+             --and "Partner Company Name" = '26 Connect'
 
-       ;;
+             ;;
   }
 
   measure: count {
@@ -4464,6 +4588,12 @@ view: email_auto_responses {
     value_format: "0\%"
   }
 
+  measure:Campaigns{
+    type: count_distinct
+    sql: ${campaign_id} ;;
+    drill_fields: [partner_company_name,campaign_name,launch_time_date,campaign_email_sent_time_date]
+  }
+
   dimension: Reason1 {
     type: string
     sql: case when ${reason}=0 then 'Email is Not Opened'
@@ -4482,250 +4612,255 @@ view: email_auto_responses {
 
     }
 
-  dimension: vendor_company_name {
-    type: string
-    label: "Vendor Company Name"
-    sql: ${TABLE}."Vendor Company Name" ;;
-  }
+    dimension: vendor_company_name {
+      type: string
+      label: "Vendor Company Name"
+      sql: ${TABLE}."Vendor Company Name" ;;
+    }
 
-  dimension: partner_company_name {
-    type: string
-    label: "Partner Company Name"
-    sql: ${TABLE}."Partner Company Name" ;;
-  }
+    dimension: partner_company_name {
+      type: string
+      label: "Partner Company Name"
+      sql: ${TABLE}."Partner Company Name" ;;
+    }
 
-  dimension: campaign_name {
-    type: string
-    label: "Campaign Name"
-    sql: ${TABLE}."Campaign Name" ;;
-  }
+    dimension: campaign_name {
+      type: string
+      label: "Campaign Name"
+      sql: ${TABLE}."Campaign Name" ;;
+    }
 
-  dimension_group: launch_time {
-    type: time
-    label: "Launch Time"
-    sql: ${TABLE}."Launch Time" ;;
-  }
+    dimension_group: launch_time {
+      type: time
+      label: "Launch Time"
+      sql: ${TABLE}."Launch Time" ;;
+    }
 
-  dimension: total_recipients {
-    type: number
-    label: "Total Recipients"
-    sql: ${TABLE}."Total Recipients" ;;
-  }
+    dimension: total_recipients {
+      type: number
+      label: "Total Recipients"
+      sql: ${TABLE}."Total Recipients" ;;
+    }
 
-  dimension: active_recipients {
-    type: number
-    label: "Active Recipients"
-    sql: ${TABLE}."Active Recipients" ;;
-  }
+    dimension: active_recipients {
+      type: number
+      label: "Active Recipients"
+      sql: ${TABLE}."Active Recipients" ;;
+    }
 
-  dimension: email_opened_views {
-    type: number
-    label: "#Email Opened (Views)"
-    sql: ${TABLE}."#Email Opened (Views)" ;;
-  }
+    dimension: email_opened_views {
+      type: number
+      label: "#Email Opened (Views)"
+      sql: ${TABLE}."#Email Opened (Views)" ;;
+    }
 
-  dimension: subject {
-    type: string
-    sql: ${TABLE}."Subject" ;;
-  }
+    dimension: subject {
+      type: string
+      sql: ${TABLE}."Subject" ;;
+    }
 
-  dimension: email_clicked {
-    type: number
-    label: "#Email Clicked"
-    sql: ${TABLE}."#Email Clicked" ;;
-  }
+    dimension: email_clicked {
+      type: number
+      label: "#Email Clicked"
+      sql: ${TABLE}."#Email Clicked" ;;
+    }
 
-  dimension: clicked_url_names {
-    type: string
-    label: "Clicked URL Names"
-    sql: ${TABLE}."Clicked URL Names" ;;
-  }
+    dimension: clicked_url_names {
+      type: string
+      label: "Clicked URL Names"
+      sql: ${TABLE}."Clicked URL Names" ;;
+    }
 
-  dimension: email_auto_responses {
-    type: number
-    label: "#Email Auto Responses"
-    sql: ${TABLE}."#Email Auto Responses" ;;
-  }
+    dimension: email_auto_responses {
+      type: number
+      label: "#Email Auto Responses"
+      sql: ${TABLE}."#Email Auto Responses" ;;
+    }
 
-  dimension: reason {
-    type: number
-    sql: ${TABLE}."Reason" ;;
-  }
+    dimension: reason {
+      type: number
+      sql: ${TABLE}."Reason" ;;
+    }
 
-  dimension: reply_in_days {
-    type: number
-    label: "Reply In Days"
-    sql: ${TABLE}."Reply In Days" ;;
-  }
+    dimension: reply_in_days {
+      type: number
+      label: "Reply In Days"
+      sql: ${TABLE}."Reply In Days" ;;
+    }
 
-  dimension_group: email_reply_time {
-    type: time
-    label: "Email Reply Time"
-    sql: ${TABLE}."Email Reply Time" ;;
-  }
+    dimension_group: email_reply_time {
+      type: time
+      label: "Email Reply Time"
+      sql: ${TABLE}."Email Reply Time" ;;
+    }
 
-  dimension: email_auto_responses_opened {
-    type: number
-    label: "#Email Auto Responses Opened"
-    sql: ${TABLE}."#Email Auto Responses Opened" ;;
-  }
+    dimension: email_auto_responses_opened {
+      type: number
+      label: "#Email Auto Responses Opened"
+      sql: ${TABLE}."#Email Auto Responses Opened" ;;
+    }
 
-  dimension: website_visit_auto_responses {
-    type: number
-    label: "#Website Visit Auto Responses"
-    sql: ${TABLE}."#Website Visit Auto Responses" ;;
-  }
+    dimension: website_visit_auto_responses {
+      type: number
+      label: "#Website Visit Auto Responses"
+      sql: ${TABLE}."#Website Visit Auto Responses" ;;
+    }
 
-  dimension: web_reason {
-    type: number
-    label: "Web Reason"
-    sql: ${TABLE}."Web Reason" ;;
-  }
+    dimension: web_reason {
+      type: number
+      label: "Web Reason"
+      sql: ${TABLE}."Web Reason" ;;
+    }
 
-  dimension: web_reply_in_days {
-    type: number
-    label: "Web Reply In Days"
-    sql: ${TABLE}."Web Reply In Days" ;;
-  }
+    dimension: web_reply_in_days {
+      type: number
+      label: "Web Reply In Days"
+      sql: ${TABLE}."Web Reply In Days" ;;
+    }
 
-  dimension_group: web_reply_time {
-    type: time
-    label: "Web Reply Time"
-    sql: ${TABLE}."Web Reply Time" ;;
-  }
+    dimension_group: web_reply_time {
+      type: time
+      label: "Web Reply Time"
+      sql: ${TABLE}."Web Reply Time" ;;
+    }
 
-  dimension: website_responses_email_opened {
-    type: number
-    label: "#Website Responses Email Opened"
-    sql: ${TABLE}."#Website Responses Email Opened" ;;
-  }
+    dimension: website_responses_email_opened {
+      type: number
+      label: "#Website Responses Email Opened"
+      sql: ${TABLE}."#Website Responses Email Opened" ;;
+    }
 
-  dimension: total_emails_sent {
-    type: number
-    label: "#Total Emails Sent"
-    sql: ${TABLE}."#Total Emails Sent";;
-  }
+    dimension: total_emails_sent {
+      type: number
+      label: "#Total Emails Sent"
+      sql: ${TABLE}."#Total Emails Sent";;
+    }
 
-  dimension_group: campaign_email_sent_time {
-    type: time
-    label: "Campaign Email Sent Time"
-    sql: ${TABLE}."Campaign Email Sent Time" ;;
-  }
+    dimension_group: campaign_email_sent_time {
+      type: time
+      label: "Campaign Email Sent Time"
+      sql: ${TABLE}."Campaign Email Sent Time" ;;
+    }
 
-  dimension: email_auto_responses_sent {
-    type: number
-    label: "#Email Auto Responses Sent"
-    sql: ${TABLE}."#Email Auto Responses Sent" ;;
-  }
+    dimension: email_auto_responses_sent {
+      type: number
+      label: "#Email Auto Responses Sent"
+      sql: ${TABLE}."#Email Auto Responses Sent" ;;
+    }
 
-  dimension_group: email_auto_responses_sent_time {
-    type: time
-    label: "Email Auto Responses Sent Time"
-    sql: ${TABLE}."Email Auto Responses Sent Time" ;;
-  }
+    dimension_group: email_auto_responses_sent_time {
+      type: time
+      label: "Email Auto Responses Sent Time"
+      sql: ${TABLE}."Email Auto Responses Sent Time" ;;
+    }
 
-  dimension: web_auto_responses_sent {
-    type: number
-    label: "#Web Auto Responses Sent"
-    sql: ${TABLE}."#Web Auto Responses Sent" ;;
-  }
+    dimension: web_auto_responses_sent {
+      type: number
+      label: "#Web Auto Responses Sent"
+      sql: ${TABLE}."#Web Auto Responses Sent" ;;
+    }
 
-  dimension_group: web_auto_responses_sent_time {
-    type: time
-    label: "Web Auto Responses Sent Time"
-    sql: ${TABLE}."Web Auto Responses Sent Time" ;;
-  }
+    dimension_group: web_auto_responses_sent_time {
+      type: time
+      label: "Web Auto Responses Sent Time"
+      sql: ${TABLE}."Web Auto Responses Sent Time" ;;
+    }
 
-  dimension: email_id {
-    type: string
-    label: "Email ID"
-    sql: ${TABLE}."Email ID" ;;
-  }
+    dimension: email_id {
+      type: string
+      label: "Email ID"
+      sql: ${TABLE}."Email ID" ;;
+    }
 
-  dimension: first_name {
-    type: string
-    label: "First Name"
-    sql: ${TABLE}."First Name" ;;
-  }
+    dimension: first_name {
+      type: string
+      label: "First Name"
+      sql: ${TABLE}."First Name" ;;
+    }
 
-  dimension: last_name {
-    type: string
-    label: "Last Name"
-    sql: ${TABLE}."Last Name" ;;
-  }
+    dimension: last_name {
+      type: string
+      label: "Last Name"
+      sql: ${TABLE}."Last Name" ;;
+    }
 
-  dimension: company_name {
-    type: string
-    label: "Company Name"
-    sql: ${TABLE}."Company Name" ;;
-  }
+    dimension: company_name {
+      type: string
+      label: "Company Name"
+      sql: ${TABLE}."Company Name" ;;
+    }
 
-  dimension: phone {
-    type: string
-    sql: ${TABLE}."Phone" ;;
-  }
+    dimension: phone {
+      type: string
+      sql: ${TABLE}."Phone" ;;
+    }
 
-  dimension: address {
-    type: string
-    sql: ${TABLE}."Address" ;;
-  }
+    dimension: address {
+      type: string
+      sql: ${TABLE}."Address" ;;
+    }
 
-  dimension: city {
-    type: string
-    sql: ${TABLE}."City" ;;
-  }
+    dimension: city {
+      type: string
+      sql: ${TABLE}."City" ;;
+    }
 
-  dimension: state {
-    type: string
-    sql: ${TABLE}."State" ;;
-  }
+    dimension: state {
+      type: string
+      sql: ${TABLE}."State" ;;
+    }
 
-  dimension: country {
-    type: string
-    sql: ${TABLE}."Country" ;;
-  }
+    dimension: country {
+      type: string
+      sql: ${TABLE}."Country" ;;
+    }
 
-  set: detail {
-    fields: [
-      vendor_company_name,
-      partner_company_name,
-      campaign_name,
-      launch_time_time,
-      total_recipients,
-      active_recipients,
-      email_opened_views,
-      subject,
-      email_clicked,
-      clicked_url_names,
-      email_auto_responses,
-      reason,
-      reply_in_days,
-      email_reply_time_time,
-      email_auto_responses_opened,
-      website_visit_auto_responses,
-      web_reason,
-      web_reply_in_days,
-      web_reply_time_time,
-      website_responses_email_opened,
-      total_emails_sent,
-      campaign_email_sent_time_time,
-      email_auto_responses_sent,
-      email_auto_responses_sent_time_time,
-      web_auto_responses_sent,
-      web_auto_responses_sent_time_time,
-      email_id,
-      first_name,
-      last_name,
-      company_name,
-      phone,
-      address,
-      city,
-      state,
-      country
-    ]
-  }
-}
+    dimension: campaign_id {
+      type: number
+      sql: ${TABLE}."Campaign ID" ;;
+    }
 
+    set: detail {
+      fields: [
+        vendor_company_name,
+        partner_company_name,
+        campaign_name,
+        launch_time_time,
+        total_recipients,
+        active_recipients,
+        email_opened_views,
+        subject,
+        email_clicked,
+        clicked_url_names,
+        email_auto_responses,
+        reason,
+        reply_in_days,
+        email_reply_time_time,
+        email_auto_responses_opened,
+        website_visit_auto_responses,
+        web_reason,
+        web_reply_in_days,
+        web_reply_time_time,
+        website_responses_email_opened,
+        total_emails_sent,
+        campaign_email_sent_time_time,
+        email_auto_responses_sent,
+        email_auto_responses_sent_time_time,
+        web_auto_responses_sent,
+        web_auto_responses_sent_time_time,
+        email_id,
+        first_name,
+        last_name,
+        company_name,
+        phone,
+        address,
+        city,
+        state,
+        country,
+        campaign_id
+      ]
+    }
+  }
 
 
 
