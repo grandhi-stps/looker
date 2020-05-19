@@ -2399,6 +2399,38 @@ view: vendor_nurtures {
 
   }
 
+  measure: Vendor_stats_do{
+    type: count_distinct
+    sql: case when (${role_id}=2 or ${role_id}=13) then ${company_id_xa_company_d} end;;
+    filters: {
+      field: company_id_xa_user_d
+      value:  "-NULL"
+    }
+
+    drill_fields: [company_id_xa_company_d,company_name,email_id,created_time_date,datereg_date]
+    link:{
+      label:"With Nurture Details"
+      url: "https://stratappspartner.looker.com/dashboards/46"
+
+    }
+
+    link:{
+      label:"Without Nurture Details"
+      url: "https://stratappspartner.looker.com/dashboards/47"
+
+    }
+    }
+
+  measure: Inactive_vendors_do{
+    type: count_distinct
+    sql: ${user_id} ;;
+    filters: {
+      field: company_id_xa_user_d
+      value:  "NULL"
+    }
+    drill_fields: [email_id,created_time_date,datereg_date,name,subject,sent_time_date]
+
+  }
 
   dimension: user_id {
     type: number
@@ -2450,7 +2482,7 @@ view: vendor_nurtures {
     sql: ${TABLE}.mobile_number ;;
   }
   dimension: company_id_xa_user_d {
-    type: number
+    type: string
     label: "User_Company_Id"
     sql: ${TABLE}.User_Company_Id ;;
   }
@@ -2829,7 +2861,7 @@ view: partner_nurtures {
    measure: Total_Partners{
     type: count_distinct
     sql: ${partner_id_xa_partnership};;
-    drill_fields: [partner_company_id_xa_partnership,company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
+    drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
       datereg_xa_user_d1_time,status_xa_user_d1
     ]
   }
@@ -2892,6 +2924,8 @@ view: partner_nurtures {
     ]
 
   }
+
+
 
   measure: Active_Partners{
     type: count_distinct
@@ -3313,18 +3347,18 @@ view: team_members {
           "Userlist".user_list_id as "User List ID",
           "Userlist".user_list_name as "User List Name"
 
-
             from
             xamplify_test.xa_team_member_d "Team Member"
-            left JOIN xamplify_test.xa_user_d "Vendor Users" ON ("Team Member".team_member_id = "Vendor Users".user_id)
+            left join xamplify_test.xa_user_d "Vendor Users" on("Team Member".company_id="Vendor Users".company_id)
+            inner join xamplify_test.xa_user_role_d ur on(ur.user_id="Vendor Users".user_id )
             left JOIN xamplify_test.xa_company_d "Vendor Company" ON ("Team Member".company_id = "Vendor Company".company_id)
             left JOIN xamplify_test.xa_user_list_d "Userlist" ON ("Userlist".customer_id = "Team Member".team_member_id)
             left JOIN xamplify_test.xa_user_d "Partner Users" ON ("Userlist".listby_partner_id = "Partner Users".user_id)
             left JOIN xamplify_test.xa_company_d "Partner Company" ON ("Partner Users".company_id = "Partner Company".company_id)
-           left  join xamplify_test.xa_campaign_d "Vendor Campaign" on ("Vendor Campaign".customer_id="Team Member".team_member_id)
-           --left  join xamplify_test.xa_campaign_d "Redistributed Campaign" on ("Vendor Campaign".campaign_id="Redistributed Campaign".parent_campaign_id)
-           left join xamplify_test.xa_videofiles_d "Videofiles" on("Team Member".team_member_id="Videofiles".customer_id)
-           left join xamplify_test.xa_socialconn_d "Social Connection" on("Team Member".team_member_id="Social Connection".user_id)
+            left  join xamplify_test.xa_campaign_d "Vendor Campaign" on ("Vendor Campaign".customer_id="Team Member".team_member_id)
+            left join xamplify_test.xa_videofiles_d "Videofiles" on("Team Member".team_member_id="Videofiles".customer_id)
+            left join xamplify_test.xa_socialconn_d "Social Connection" on("Team Member".team_member_id="Social Connection".user_id)
+            where ur.role_id in(2,13)
        ;;
   }
 
@@ -3376,7 +3410,7 @@ view: team_members {
     type:  string
     label: "Team Member Name"
     sql: concat(${teammember_firstname} , ${teammember_lastname}) ;;
-    drill_fields: [partner_company_name,vendor_campaign_name]
+
   }
 
   dimension_group: teammember_datereg {
@@ -3935,8 +3969,8 @@ view: partner_team_members {
 
   measure: Campaigns {
     type: count_distinct
-    sql:  ${campaign_id}
-      ;;
+    sql:  ${campaign_id};;
+    drill_fields: [campaign_id,campaign_name,campaign_type,campaign_schedule_type]
   }
 
     measure: Team_members {
