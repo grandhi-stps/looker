@@ -1799,7 +1799,10 @@ dimension: category {
       sql: date_trunc('week',${date_date} ;;
     }
 
-
+measure: total_leads_deals {
+  type: string
+  sql: concat(${Deals},${Leads}) ;;
+}
 
 
 
@@ -2307,7 +2310,7 @@ view: vendor_nurtures {
 
   measure: Nurture_companies {
     type: count_distinct
-    sql:  case when (${action_id_a}>=21 and ${action_id_a}<=37) then ${company_id_xa_company_d} end;;
+    sql:  case when (${action_id_a}>=21 and ${action_id_a}<=37) then ${user_id} end;;
     filters: {
       field: name
       value:  "-NULL"
@@ -2318,7 +2321,7 @@ view: vendor_nurtures {
 
   measure: Vendors_without_Nurtures{
     type: count_distinct
-    sql: ${company_id_xa_company_d};;
+    sql: ${user_id};;
     filters: {
       field: name
       value:  "NULL"
@@ -2329,7 +2332,7 @@ view: vendor_nurtures {
 
    measure: Vendor_stats {
     type: count_distinct
-    sql: case when (${role_id}=2 or ${role_id}=13) then ${company_id_xa_company_d} end;;
+    sql: case when (${role_id}=2 or ${role_id}=13) then ${user_id} end;;
 
     drill_fields: [company_id_xa_company_d,company_name,email_id,created_time_date,datereg_date]
 
@@ -2368,7 +2371,7 @@ view: vendor_nurtures {
 
   measure: Vendor_stats_1 {
     type: count_distinct
-    sql: case when (${role_id}=2 or ${role_id}=13) then ${company_id_xa_company_d} end;;
+    sql: case when (${role_id}=2 or ${role_id}=13) then ${user_id} end;;
     filters: {
       field: campaign_id_xa_campaign_d
       value:  "-NULL"
@@ -2378,7 +2381,7 @@ view: vendor_nurtures {
 
   measure: Vendor_stats_2 {
     type: count_distinct
-    sql: case when (${role_id}=2 or ${role_id}=13) then ${company_id_xa_company_d} end;;
+    sql: case when (${role_id}=2 or ${role_id}=13) then ${user_id} end;;
     filters: {
       field: campaign_id_xa_campaign_d
       value:  "NULL"
@@ -2401,7 +2404,15 @@ view: vendor_nurtures {
 
   measure: Vendor_stats_do{
     type: count_distinct
-    sql: case when (${role_id}=2 or ${role_id}=13) then ${company_id_xa_company_d} end;;
+    sql: case when (${role_id}=2 or ${role_id}=13) and ${company_id_xa_user_d} not in( 231,130,265,266,313,391,
+    280,281,303,307,311,357,
+    320,326,331,334,356,270,
+    368,370,369,372,376,380,
+    382,398,215,273,410,413,
+    415,374,389,322,332,333,
+    335,367,349,358,359,362,
+    371,378,379,381,385,386,
+    388,393,395,401,414,384,421,424)then ${user_id} end;;
     filters: {
       field: company_id_xa_user_d
       value:  "-NULL"
@@ -2851,6 +2862,12 @@ view: partner_nurtures {
     drill_fields: [action_name_a]
 
   }
+  measure: Nurture_Count{
+    type: count_distinct
+    sql: ${name_xa_drip_email_history_d1};;
+    drill_fields: [name_xa_drip_email_history_d1,subject_xa_drip_email_history_d1,sent_time_xa_drip_email_history_d1_date]
+
+  }
   measure: Active_Nurture {
     type: count_distinct
     sql: ${name_xa_drip_email_history_d};;
@@ -2955,9 +2972,10 @@ view: partner_nurtures {
   }
    measure: Name {
     type: count_distinct
-    sql: ${name_xa_drip_email_history_d1};;
+    sql: ${name_xa_drip_email_history_d};;
     drill_fields: [company_name_xa_company_d1,created_time_xa_user_d1_raw,datereg_xa_user_d1_raw,name_xa_drip_email_history_d,subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_raw]
   }
+
 
 
   measure: Partners_count{
@@ -2987,6 +3005,15 @@ view: partner_nurtures {
     sql: ${TABLE}.homepage_url;;
     html: <img src="https://www.google.com/search?q=transparent+horizontal+line+logos&" /> ;;
   }
+
+  dimension: Total_Partner{
+    type:string
+
+    sql:${TABLE}.partner_id ;;
+
+  }
+
+
 
 
 
@@ -3667,8 +3694,6 @@ view: email_templates {
          et .name as "Emailtemplate name",
         et.type as "Emailtemplate Type",
         et.subject as "Emailtemplate Subject",
-         r.role_id as "User Role",
-        r.description as "Role description",
        t.team_member_id as "Teammember ID",
           t.email_id as "Teammember email_id",
           t.firstname as "Teammember Firstname",
@@ -3679,23 +3704,29 @@ view: email_templates {
         c.company_id as "Vendor Company ID",
         c.company_name as "Vendor Company Name",
         u.user_id as "Vendor User ID",
-        cam.campaign_id as "Campaign ID",
-        cam.campaign_name as "Campaign Name",
         c.email_id as "Email ID",
         u.firstname as "First Name",
         u.lastname as "Last Name",
         u.datereg as "DateReg",
         u.datelastlogin as "Date LastLogin",
-        c.country as "Country"
+        c.country as "Country",
+        "Social Connection". id as "Social Connection ID",
+        "Social Connection".profile_name as "Social Connection Name",
+         "Social Connection" .source as "Social Connection Source",
+          "Videofiles".  id as "Video ID",
+          "Videofiles".customer_id as "Video Customer ID",
+          "Videofiles".title as "Video Title",
+          "Videofiles".created_time as "Video Created Time",
+          cam.campaign_id as "Campaign ID"
 
-
-      from xamplify_test.xa_team_member_d t
-      inner join xamplify_test.xa_user_role_d up on(t.team_member_id=up.user_id)
-      left join xamplify_test.xa_role_d r on(up.role_id=r.role_id)
-      inner join xamplify_test.xa_emailtemplates_d et on (t.team_member_id=et.user_id)
-      inner join xamplify_test.xa_company_d c on (t.company_id=c.company_id)
-      inner join xamplify_test.xa_user_d u on(t.team_member_id=u.user_id)
-      inner join xamplify_test.xa_campaign_d cam on(t.team_member_id=cam.customer_id)
+      from
+      xamplify_test.xa_team_member_d t
+      left join xamplify_test.xa_user_d u on(t.team_member_id=u.user_id)
+      left join xamplify_test.xa_company_d c on (t.company_id=c.company_id)
+      left join xamplify_test.xa_emailtemplates_d et on (t.team_member_id=et.user_id)
+      left join xamplify_test.xa_videofiles_d "Videofiles" on(t.team_member_id="Videofiles".customer_id)
+      left join xamplify_test.xa_socialconn_d "Social Connection" on(t.team_member_id="Social Connection".user_id)
+      left join xamplify_test.xa_campaign_d cam on(t.team_member_id=cam.customer_id)
  ;;
   }
 
@@ -3709,12 +3740,66 @@ view: email_templates {
     sql: ${emailtemplate_id} ;;
     drill_fields: [emailtemplate_name,emailtemplate_created_time_date]
   }
+  measure: Video_files {
+    type:count_distinct
+    sql: ${video_id} ;;
+    drill_fields: [video_id,video_title,video_created_time_date]
+  }
+
+  measure: Social_Share {
+    type: count_distinct
+    sql: ${social_connection_id} ;;
+    drill_fields: [social_connection_source,social_connection_id,social_connection_name]
+  }
+
+  dimension: video_id {
+    type: number
+    label: "Video ID"
+    sql: ${TABLE}."Video ID" ;;
+  }
+
+  dimension: video_customer_id {
+    type: number
+    label: "Video Customer ID"
+    sql: ${TABLE}."Video Customer ID" ;;
+  }
+
+  dimension: video_title {
+    type: string
+    label: "Video Title"
+    sql: ${TABLE}."Video Title" ;;
+  }
+
+  dimension_group: video_created_time {
+    type: time
+    label: "Video Created Time"
+    sql: ${TABLE}."Video Created Time" ;;
+  }
+
+  dimension: social_connection_id {
+    type: number
+    label: "Social Connection ID"
+    sql: ${TABLE}."Social Connection ID" ;;
+  }
+
+  dimension: social_connection_name {
+    type: string
+    label: "Social Connection Name"
+    sql: ${TABLE}."Social Connection Name" ;;
+  }
+
+  dimension: social_connection_source {
+    type: string
+    label: "Social Connection Source"
+    sql: ${TABLE}."Social Connection Source" ;;
+  }
+
+
 
   dimension: teammember_name {
     type: string
     label: "Teammember Name"
     sql: concat(${teammember_firstname},${teammember_lastname}) ;;
-    drill_fields: [campaign_id,campaign_name]
   }
 
   measure: Org_Admins {
@@ -3757,18 +3842,6 @@ view: email_templates {
     type: string
     label: "Emailtemplate Subject"
     sql: ${TABLE}."Emailtemplate Subject" ;;
-  }
-
-  dimension: user_role {
-    type: number
-    label: "User Role"
-    sql: ${TABLE}."User Role" ;;
-  }
-
-  dimension: role_description {
-    type: string
-    label: "Role description"
-    sql: ${TABLE}."Role description" ;;
   }
 
   dimension: teammember_id {
@@ -3831,17 +3904,6 @@ view: email_templates {
     sql: ${TABLE}."Vendor User ID" ;;
   }
 
-  dimension: campaign_id {
-    type: number
-    label: "Campaign ID"
-    sql: ${TABLE}."Campaign ID" ;;
-  }
-
-  dimension: campaign_name {
-    type: string
-    label: "Campaign Name"
-    sql: ${TABLE}."Campaign Name" ;;
-  }
 
   dimension: email_id {
     type: string
@@ -3876,6 +3938,11 @@ view: email_templates {
     type: string
     sql: ${TABLE}."Country" ;;
   }
+  dimension: campaign_id {
+    type: number
+    label: "Campaign ID"
+    sql: ${TABLE}."Campaign ID" ;;
+  }
 
   set: detail {
     fields: [
@@ -3884,8 +3951,6 @@ view: email_templates {
       emailtemplate_name,
       emailtemplate_type,
       emailtemplate_subject,
-      user_role,
-      role_description,
       teammember_id,
       teammember_email_id,
       teammember_firstname,
@@ -3896,14 +3961,20 @@ view: email_templates {
       vendor_company_id,
       vendor_company_name,
       vendor_user_id,
-      campaign_id,
-      campaign_name,
       email_id,
       first_name,
       last_name,
       date_reg_time,
       date_last_login_time,
-      country
+      country,
+      video_id,
+      video_customer_id,
+      video_title,
+      video_created_time_time,
+      social_connection_id,
+      social_connection_name,
+      social_connection_source,
+      campaign_id
     ]
   }
 }
