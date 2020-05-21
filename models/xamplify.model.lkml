@@ -2688,105 +2688,115 @@ view: vendor_nurtures {
   }
 
 
-
 explore:partner_nurtures  {}
 view: partner_nurtures {
   derived_table: {
     sql:SELECT        xa_user_d.user_id AS user_id,
 
-                  xa_company_d.company_id AS company_id,
-                  xa_company_d.company_name AS company_name,
+                        xa_company_d.company_id AS company_id,
+                        xa_company_d.company_name AS company_name,
 
-          xa_partnership.partner_id as partner_id,
-                  xa_partnership.partner_company_id as partner_company_id,
+                xa_partnership.partner_id as partner_id,
+                        xa_partnership.partner_company_id as partner_company_id,
 
-          xa_user_role_d.role_id AS role_id,
+                xa_user_role_d.role_id AS role_id,
 
-          xa_campaign_d.campaign_id AS campaign_id,
-                  xa_campaign_d.customer_id AS customer_id,
-                  xa_campaign_d.campaign_name AS Campaign_Name,
-                  xa_campaign_d.created_time AS created_time_Pc,
-                  xa_campaign_d.launch_time AS Launch_Time,
-                  xa_campaign_d.parent_campaign_id AS parent_campaign_id,
+                xa_campaign_d.campaign_id AS campaign_id,
+                        xa_campaign_d.customer_id AS customer_id,
+                        xa_campaign_d.campaign_name AS Campaign_Name,
+                        xa_campaign_d.created_time AS created_time_Pc,
+                        xa_campaign_d.launch_time AS Launch_Time,
+                        xa_campaign_d.parent_campaign_id AS parent_campaign_id,
 
-          xa_campaign_d1.campaign_id AS TM_campaign_id,
-                  xa_campaign_d1.customer_id AS TM_customer_id,
-                  xa_campaign_d1.campaign_name AS TM_Campaign_Name,
-                  xa_campaign_d1.created_time AS TM_Created_time_Tc,
-                  xa_campaign_d1.launch_time AS TM_Launch_Time,
-                  xa_campaign_d1.parent_campaign_id AS TM_parent_campaign_id,
+                xa_campaign_d1.campaign_id AS TM_campaign_id,
+                        xa_campaign_d1.customer_id AS TM_customer_id,
+                        xa_campaign_d1.campaign_name AS TM_Campaign_Name,
+                        xa_campaign_d1.created_time AS TM_Created_time_Tc,
+                        xa_campaign_d1.launch_time AS TM_Launch_Time,
+                        xa_campaign_d1.parent_campaign_id AS TM_parent_campaign_id,
 
-          xa_drip_email_history_d.name as Nurture_Name,
-                  xa_drip_email_history_d.subject as Nurture_Subject,
-                  xa_drip_email_history_d.sent_time as Nurture_Sent_Time,
+                xa_drip_email_history_d.name as Nurture_Name,
+                        xa_drip_email_history_d.subject as Nurture_Subject,
+                        xa_drip_email_history_d.sent_time as Nurture_Sent_Time,
 
-                   a.action_id as action_id,
-                  a.action_name as Nuture_Name,
+                         a.action_id as action_id,
+                        a.action_name as Nuture_Name,
 
-          xa_user_d1.email_id AS Partner_Email,
-                  xa_user_d1.firstname AS firstname_p,
-                  xa_user_d1.lastname AS lastname_p,
-                  xa_user_d1.datereg AS Datereg,
-                  xa_user_d1.datelastlogin AS Datelastlogin,
-                  xa_user_d1.created_time AS Created_Time,
-                  xa_user_d1.status as Status,
+                xa_user_d1.email_id AS Partner_Email,
+                        xa_user_d1.firstname AS firstname_p,
+                        xa_user_d1.lastname AS lastname_p,
+                        xa_user_d1.datereg AS Datereg,
+                        xa_user_d1.datelastlogin AS Datelastlogin,
+                        xa_user_d1.created_time AS Created_Time,
+                        xa_user_d1.status as Status,
 
-          xa_company_d1.company_id AS company_id_P,
-                  xa_company_d1.company_name AS Partner_Company_Name,
+                xa_company_d1.company_id AS company_id_P,
+                        xa_company_d1.company_name AS Partner_Company_Name,
 
-          t.team_member_id as team_member_id,
-          t.email_id as Email_id,
-                  t.created_time as TM_Created_Time,
-                  t.firstname as TM_firstname,
-                  t.lastname as TM_lastname,
-          t.status as TM_Status,
+                t.team_member_id as team_member_id,
+                t.email_id as Email_id,
+                        t.created_time as TM_Created_Time,
+                        t.firstname as TM_firstname,
+                        t.lastname as TM_lastname,
+                t.status as TM_Status,
 
-          xa_drip_email_history_d1.name as TM_Nurture_Name,
-                  xa_drip_email_history_d1.subject as TM_Nurture_Subject,
-                  xa_drip_email_history_d1.sent_time as TM_Nurture_Sent_Time,
+                xa_drip_email_history_d1.name as TM_Nurture_Name,
+                        xa_drip_email_history_d1.subject as TM_Nurture_Subject,
+                        xa_drip_email_history_d1.sent_time as TM_Nurture_Sent_Time,
 
-                  a1.action_id as TM_action_id,
-                  a1.action_name as TM_action_name
+                        a1.action_id as TM_action_id,
+                        a1.action_name as TM_action_name,
 
-               FROM xamplify_test.xa_user_d xa_user_d
-
-    LEFT JOIN (select c.company_id,c.company_name from xamplify_test.xa_company_d c, xamplify_test.xa_user_d  u,xamplify_test.xa_user_role_d r
-                 where u.company_id=c.company_id
-                 and u.user_id=r.user_id
-                 and r.role_id in(2,13) and c.company_id not in(231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
-                 380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)
-                 ) xa_company_d ON (xa_user_d.company_id = xa_company_d.company_id)
-     left join xamplify_test.xa_partnership_d xa_partnership on (xa_user_d.user_id =xa_partnership.created_by)
-     left JOIN xamplify_test.xa_user_role_d xa_user_role_d ON (xa_user_d.user_id = xa_user_role_d.user_id)
-
-    left join xamplify_test.xa_campaign_d xa_campaign_d ON (xa_partnership.partner_id = xa_campaign_d.customer_id)
-
-    left join (select d.user_id,d.sent_time,d.action_id,e.name,e.subject from xamplify_test.xa_drip_email_history_d d,xamplify_test.xa_emailtemplates_d e
-        where d.email_template_id=e.id and d.action_id>=37 and d.action_id<=48) xa_drip_email_history_d ON (xa_partnership.partner_id = xa_drip_email_history_d.user_id)
-        full join (select * from xamplify_test.xa_action_type_d
-               where xa_action_type_d.action_id >= 37 and xa_action_type_d.action_id <= 48) a on (xa_drip_email_history_d.action_id=a.action_id)
-
-        left join xamplify_test.xa_user_d xa_user_d1 on (xa_partnership.partner_id=xa_user_d1.user_id)
-
-      left join (select distinct company_id, company_name from xamplify_test.xa_company_d) xa_company_d1
-                 on (xa_partnership.partner_company_id=xa_company_d1.company_id)
-
-    left join  xamplify_test.xa_team_member_d t on (t.org_admin_id=xa_partnership.partner_id)
-    left join   xamplify_test.xa_campaign_d xa_campaign_d1 ON (t.team_member_id = xa_campaign_d1.customer_id)
-
-    left join (select d.user_id,d.sent_time,d.action_id,e.name,e.subject from xamplify_test.xa_drip_email_history_d d,xamplify_test.xa_emailtemplates_d e
-                 where d.email_template_id=e.id and d.action_id>=37 and d.action_id<=48) xa_drip_email_history_d1 ON (t.team_member_id = xa_drip_email_history_d1.user_id)
-         full join (select * from xamplify_test.xa_action_type_d
-               where xa_action_type_d.action_id >= 37 and xa_action_type_d.action_id <= 48) a1 on (xa_drip_email_history_d1.action_id=a1.action_id)
+                        count(distinct case when
+                       xa_partnership.partner_id  is not null and
+                        xa_partnership.partner_company_id is not null then xa_partnership.partner_id end) as Totalpartners
 
 
 
 
 
+                     FROM xamplify_test.xa_user_d xa_user_d
+
+          LEFT JOIN (select c.company_id,c.company_name from xamplify_test.xa_company_d c, xamplify_test.xa_user_d  u,xamplify_test.xa_user_role_d r
+                       where u.company_id=c.company_id
+                       and u.user_id=r.user_id
+                       and r.role_id in(2,13) and c.company_id not in(231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
+                       380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)
+                       ) xa_company_d ON (xa_user_d.company_id = xa_company_d.company_id)
+           left join xamplify_test.xa_partnership_d xa_partnership on (xa_user_d.user_id =xa_partnership.created_by)
+           left JOIN xamplify_test.xa_user_role_d xa_user_role_d ON (xa_user_d.user_id = xa_user_role_d.user_id)
+
+          left join xamplify_test.xa_campaign_d xa_campaign_d ON (xa_partnership.partner_id = xa_campaign_d.customer_id)
+
+          left join (select d.user_id,d.sent_time,d.action_id,e.name,e.subject from xamplify_test.xa_drip_email_history_d d,xamplify_test.xa_emailtemplates_d e
+              where d.email_template_id=e.id and d.action_id>=37 and d.action_id<=48) xa_drip_email_history_d ON (xa_partnership.partner_id = xa_drip_email_history_d.user_id)
+              full join (select * from xamplify_test.xa_action_type_d
+                     where xa_action_type_d.action_id >= 37 and xa_action_type_d.action_id <= 48) a on (xa_drip_email_history_d.action_id=a.action_id)
+
+              left join xamplify_test.xa_user_d xa_user_d1 on (xa_partnership.partner_id=xa_user_d1.user_id)
+
+            left join (select distinct company_id, company_name from xamplify_test.xa_company_d) xa_company_d1
+                       on (xa_partnership.partner_company_id=xa_company_d1.company_id)
+
+          left join  xamplify_test.xa_team_member_d t on (t.org_admin_id=xa_partnership.partner_id)
+          left join   xamplify_test.xa_campaign_d xa_campaign_d1 ON (t.team_member_id = xa_campaign_d1.customer_id)
+
+          left join (select d.user_id,d.sent_time,d.action_id,e.name,e.subject from xamplify_test.xa_drip_email_history_d d,xamplify_test.xa_emailtemplates_d e
+                       where d.email_template_id=e.id and d.action_id>=37 and d.action_id<=48) xa_drip_email_history_d1 ON (t.team_member_id = xa_drip_email_history_d1.user_id)
+               full join (select * from xamplify_test.xa_action_type_d
+                     where xa_action_type_d.action_id >= 37 and xa_action_type_d.action_id <= 48) a1 on (xa_drip_email_history_d1.action_id=a1.action_id)
+
+                    group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,
+               26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43
 
 
 
-                 ;;
+
+
+
+
+
+                       ;;
   }
 
   parameter: Category_Selector {
@@ -2836,527 +2846,535 @@ view: partner_nurtures {
     end
     ;;
 
-  }
-  measure:Active_partners_without_Nurtures {
-    type: number
-    sql: ${partner_companies_d}-${Active_partners_with_Nurtures} ;;
-    drill_fields: [partner_id_xa_partnership]
-    link: {
-      label: "Active partners without nurture Details"
-      url: "https://stratappspartner.looker.com/dashboards/38?
-      &f[partner_nurtures.Company_Name]={{ _filters['partner_nurtures.Company_Name'] | url_encode }}
-      &f[partner_nurtures.Category_Selector]={{ _filters['partner_nurtures.Category_Selector'] | url_encode }}"
-
     }
+    measure:Active_partners_without_Nurtures {
+      type: number
+      sql: ${partner_companies_d}-${Active_partners_with_Nurtures} ;;
+      drill_fields: [partner_id_xa_partnership]
+      link: {
+        label: "Active partners without nurture Details"
+        url: "https://stratappspartner.looker.com/dashboards/38?
+        &f[partner_nurtures.Company_Name]={{ _filters['partner_nurtures.Company_Name'] | url_encode }}
+        &f[partner_nurtures.Category_Selector]={{ _filters['partner_nurtures.Category_Selector'] | url_encode }}"
 
-  }
-
-
-  measure: count {
-    type: count
-    drill_fields: [detail*]
-  }
-  measure: Partner_Nurture {
-    type: count_distinct
-    sql: ${action_id_a};;
-    drill_fields: [action_name_a]
-
-  }
-  measure: Nurture_Count{
-    type: count_distinct
-    sql: ${name_xa_drip_email_history_d1};;
-    drill_fields: [name_xa_drip_email_history_d1,subject_xa_drip_email_history_d1,sent_time_xa_drip_email_history_d1_date]
-
-  }
-  measure: Active_Nurture {
-    type: count_distinct
-    sql: ${name_xa_drip_email_history_d};;
-    drill_fields: [name_xa_drip_email_history_d,subject_xa_drip_email_history_d]
-
-  }
-
-   measure: Total_Partners{
-    type: count_distinct
-    sql: ${partner_id_xa_partnership};;
-    drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
-      datereg_xa_user_d1_time,status_xa_user_d1
-    ]
-  }
-
-  measure: partner_companies {
-    type: count_distinct
-    sql:case when  ${partner_company_id_xa_partnership} is not null then   ${partner_id_xa_partnership} end;;
-
-    filters:[customer_id_xa_campaign_d: "-NULL"]
-
-    drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
-      datereg_xa_user_d1_time,status_xa_user_d1,name_xa_drip_email_history_d,
-      subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_time
-    ]
-
-    }
-
-  measure: partner_companies_1 {
-    type: count_distinct
-    sql:case when  ${partner_company_id_xa_partnership} is not null then   ${partner_id_xa_partnership} end;;
-
-    filters:[customer_id_xa_campaign_d: "NULL"]
-
-    drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
-      datereg_xa_user_d1_time,status_xa_user_d1,name_xa_drip_email_history_d,
-      subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_time
-    ]
-
-  }
-
-  measure: partner_companies_d {
-    type: count_distinct
-    sql:case when  ${partner_company_id_xa_partnership} is not null then   ${partner_id_xa_partnership} end;;
-    drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
-                   datereg_xa_user_d1_time,status_xa_user_d1,name_xa_drip_email_history_d,
-                    subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_time
-                    ]
-    link:{
-      label:"With Nurture Details"
-      url: "https://stratappspartner.looker.com/dashboards/32?Company%20Name={{_filters['partner_nurtures.company_name'] | url_encode }}"
+      }
 
     }
 
 
-    link: {
-      label: "Without Nurture Details"
-      url: "https://stratappspartner.looker.com/dashboards/38?Company%20Name={{ _filters['partner_nurtures.company_name'] | url_encode }}
-      &f[partner_nurtures.Category_Selector]={{ _filters['partner_nurtures.Category_Selector'] | url_encode }}"
+    measure: count {
+      type: count
+      drill_fields: [detail*]
+    }
+    measure: Partner_Nurture {
+      type: count_distinct
+      sql: ${action_id_a};;
+      drill_fields: [action_name_a]
+
+    }
+    measure: Nurture_Count{
+      type: count_distinct
+      sql: ${name_xa_drip_email_history_d1};;
+      drill_fields: [name_xa_drip_email_history_d1,subject_xa_drip_email_history_d1,sent_time_xa_drip_email_history_d1_date]
+
+    }
+    measure: Active_Nurture {
+      type: count_distinct
+      sql: ${name_xa_drip_email_history_d};;
+      drill_fields: [name_xa_drip_email_history_d,subject_xa_drip_email_history_d]
+
+    }
+
+    measure: Total_Partners{
+      type: count_distinct
+      sql: ${partner_id_xa_partnership};;
+      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
+        datereg_xa_user_d1_time,status_xa_user_d1
+      ]
+    }
+
+    measure: partner_companies {
+      type: count_distinct
+      sql:case when  ${partner_company_id_xa_partnership} is not null then   ${partner_id_xa_partnership} end;;
+
+      filters:[customer_id_xa_campaign_d: "-NULL"]
+
+      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
+        datereg_xa_user_d1_time,status_xa_user_d1,name_xa_drip_email_history_d,
+        subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_time
+      ]
+
+    }
+
+    measure: partner_companies_1 {
+      type: count_distinct
+      sql:case when  ${partner_company_id_xa_partnership} is not null then   ${partner_id_xa_partnership} end;;
+
+      filters:[customer_id_xa_campaign_d: "NULL"]
+
+      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
+        datereg_xa_user_d1_time,status_xa_user_d1,name_xa_drip_email_history_d,
+        subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_time
+      ]
+
+    }
+
+    measure: partner_companies_d {
+      type: count_distinct
+      sql:case when  ${partner_company_id_xa_partnership} is not null then   ${partner_id_xa_partnership} end;;
+      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
+        datereg_xa_user_d1_time,status_xa_user_d1,name_xa_drip_email_history_d,
+        subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_time
+      ]
+      link:{
+        label:"With Nurture Details"
+        url: "https://stratappspartner.looker.com/dashboards/32?Company%20Name={{_filters['partner_nurtures.company_name'] | url_encode }}"
+
+      }
+
+
+      link: {
+        label: "Without Nurture Details"
+        url: "https://stratappspartner.looker.com/dashboards/38?Company%20Name={{ _filters['partner_nurtures.company_name'] | url_encode }}
+        &f[partner_nurtures.Category_Selector]={{ _filters['partner_nurtures.Category_Selector'] | url_encode }}"
+
+      }
+
+
+    }
+    measure: partner_without_companies {
+      type: count_distinct
+      sql:case when  ${partner_company_id_xa_partnership} is  null then   ${partner_id_xa_partnership} end;;
+      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
+        datereg_xa_user_d1_time,status_xa_user_d1,name_xa_drip_email_history_d,
+        subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_time
+      ]
 
     }
 
 
-  }
-  measure: partner_without_companies {
-    type: count_distinct
-    sql:case when  ${partner_company_id_xa_partnership} is  null then   ${partner_id_xa_partnership} end;;
-    drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
-      datereg_xa_user_d1_time,status_xa_user_d1,name_xa_drip_email_history_d,
-      subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_time
-    ]
 
-  }
+    measure: Active_Partners{
+      type: count_distinct
+      sql: ${partner_id_xa_partnership};;
+      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,created_time_xa_user_d1_date,datereg_xa_user_d1_date]
 
-
-
-  measure: Active_Partners{
-    type: count_distinct
-    sql: ${partner_id_xa_partnership};;
-    drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,created_time_xa_user_d1_date,datereg_xa_user_d1_date]
-
-  }
- measure: Partners_with_nurture{
-  type: count_distinct
-  sql: case when ${name_xa_drip_email_history_d} is not null and ${partner_company_id_xa_partnership} is not null then ${partner_id_xa_partnership} end;;
-  filters: {
-    field: name_xa_drip_email_history_d
-    value:  "-NULL"
-  }
-  drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_date,datereg_xa_user_d1_date,status_xa_user_d1]
-
-}
-  measure: Partners_without_nurture{
-    type: count_distinct
-    sql: case when ${name_xa_drip_email_history_d} is null and ${partner_company_id_xa_partnership} is not null then ${partner_id_xa_partnership} end;;
-    filters: {
-      field: name_xa_drip_email_history_d
-      value:  "NULL"
     }
-    drill_fields:[company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_date,datereg_xa_user_d1_date,datelastlogin_xa_user_d1_date,status_xa_user_d1]
+    measure: Partners_with_nurture{
+      type: count_distinct
+      sql: case when ${name_xa_drip_email_history_d} is not null and ${partner_company_id_xa_partnership} is not null then ${partner_id_xa_partnership} end;;
+      filters: {
+        field: name_xa_drip_email_history_d
+        value:  "-NULL"
+      }
+      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_date,datereg_xa_user_d1_date,status_xa_user_d1]
 
-  }
-   measure: Name {
-    type: count_distinct
-    sql: ${name_xa_drip_email_history_d};;
-    drill_fields: [company_name_xa_company_d1,created_time_xa_user_d1_raw,datereg_xa_user_d1_raw,name_xa_drip_email_history_d,subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_raw]
-  }
-
-
-
-  measure: Partners_count{
-    type: count_distinct
-    sql: ${partner_id_xa_partnership};;
-    drill_fields:[company_name_xa_company_d1,Full_Name,email_id_xa_user_d1,name_xa_drip_email_history_d,subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_date]
-
-  }
-
-  measure: Campaigns {
-    type: count_distinct
-    sql: ${campaign_id_xa_campaign_d} ;;
-    drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,campaign_name_xa_campaign_d,created_time_xa_campaign_d_date
-      ,launch_time_xa_campaign_d_date]
-  }
-
-  measure: Team_members{
-    type: count_distinct
-    sql: ${team_member_id} ;;
-    drill_fields: [TM_Full_Name,email_id_t,created_time_t_date,status_t,name_xa_drip_email_history_d1,
-      subject_xa_drip_email_history_d1,sent_time_xa_drip_email_history_d1_date]
-  }
-
-
-  dimension: looker_image {
-    type: string
-    sql: ${TABLE}.homepage_url;;
-    html: <img src="https://www.google.com/search?q=transparent+horizontal+line+logos&" /> ;;
-  }
-
-  dimension: Total_Partner{
-    type:string
-
-    sql:${TABLE}.partner_id ;;
-
-  }
-
-
-
-
-
-  dimension: user_id {
-    type: number
-    sql: ${TABLE}.user_id ;;
-  }
-  dimension: company_id {
-    type: number
-    sql: ${TABLE}.company_id ;;
     }
-  dimension: company_name {
-    type: string
-    sql: ${TABLE}.company_name ;;
-  }
+    measure: Partners_without_nurture{
+      type: count_distinct
+      sql: case when ${name_xa_drip_email_history_d} is null and ${partner_company_id_xa_partnership} is not null then ${partner_id_xa_partnership} end;;
+      filters: {
+        field: name_xa_drip_email_history_d
+        value:  "NULL"
+      }
+      drill_fields:[company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_date,datereg_xa_user_d1_date,datelastlogin_xa_user_d1_date,status_xa_user_d1]
 
-  dimension: partner_id_xa_partnership {
-    type: number
-    sql: ${TABLE}.partner_id ;;
-  }
+    }
+    measure: Name {
+      type: count_distinct
+      sql: ${name_xa_drip_email_history_d};;
+      drill_fields: [company_name_xa_company_d1,created_time_xa_user_d1_raw,datereg_xa_user_d1_raw,name_xa_drip_email_history_d,subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_raw]
+    }
 
-  dimension: partner_company_id_xa_partnership {
-    type: number
-    label: "partner_company_id"
-    sql: ${TABLE}.partner_company_id ;;
-  }
-  dimension: role_id {
-    type: number
-    sql: ${TABLE}.role_id ;;
-  }
-  dimension: campaign_id_xa_campaign_d {
-    type: number
-    label: "campaign_id"
-    sql: ${TABLE}.campaign_id ;;
-  }
 
-  dimension: customer_id_xa_campaign_d {
-    type: string
-    label: "customer_id"
-    sql: ${TABLE}.customer_id ;;
-  }
 
-  dimension: campaign_name_xa_campaign_d {
-    type: string
-    label: "Campaign_Name"
-    sql: ${TABLE}.Campaign_Name ;;
-  }
-  dimension_group: created_time_xa_campaign_d {
-    type: time
-    label: "created_time_Pc"
-    sql: ${TABLE}.created_time_Pc ;;
-  }
-  dimension_group: launch_time_xa_campaign_d {
-    type: time
-    label: "Launch_Time"
-    sql: ${TABLE}.Launch_Time ;;
-  }
-  dimension: parent_campaign_id_xa_campaign_d {
-    type: number
-    label: "parent_campaign_id"
-    sql: ${TABLE}.parent_campaign_id ;;
-  }
-  dimension: campaign_id_xa_campaign_d1 {
-    type: number
-    label: "TM_campaign_id"
-    sql: ${TABLE}.TM_campaign_id ;;
-  }
+    measure: Partners_count{
+      type: count_distinct
+      sql: ${partner_id_xa_partnership};;
+      drill_fields:[company_name_xa_company_d1,Full_Name,email_id_xa_user_d1,name_xa_drip_email_history_d,subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_date]
 
-  dimension: customer_id_xa_campaign_d1 {
-    type: number
-    label: "TM_customer_id"
-    sql: ${TABLE}.TM_customer_id ;;
-  }
+    }
 
-  dimension: campaign_name_xa_campaign_d1 {
-    type: string
-    label: "TM_Campaign_Name"
-    sql: ${TABLE}.TM_Campaign_Name ;;
-  }
-  dimension_group: created_time_xa_campaign_d1 {
-    type: time
-    label: "TM_Created_time_Tc"
-    sql: ${TABLE}.TM_Created_time_Tc ;;
-  }
-  dimension_group: launch_time_xa_campaign_d1 {
-    type: time
-    label: "TM_Launch_Time"
-    sql: ${TABLE}.TM_Launch_Time ;;
-  }
-  dimension: parent_campaign_id_xa_campaign_d1 {
-    type: number
-    label: "TM_parent_campaign_id_cam1"
-    sql: ${TABLE}.TM_parent_campaign_id_cam1 ;;
-  }
-  dimension: name_xa_drip_email_history_d {
-    type: string
-    label: "Nurture_Name"
-    sql: ${TABLE}.Nurture_Name ;;
-  }
-  dimension: subject_xa_drip_email_history_d{
-    type: string
-    label: "Nurture_Subject"
-    sql: ${TABLE}.Nurture_Subject ;;
-  }
-  dimension_group: sent_time_xa_drip_email_history_d {
-    type: time
-    label: "Nurture_Sent_Time"
-    sql: ${TABLE}.Nurture_Sent_Time ;;
-  }
-  dimension: action_id_a {
-    type: number
-    label: "action_id"
-    sql: ${TABLE}.action_id ;;
-  }
-  dimension: action_name_a {
-    type: string
-    label: "Nuture_Name"
-    sql: ${TABLE}.Nuture_Name ;;
-  }
-  dimension: email_id_xa_user_d1 {
-    type: string
-    label: "Partner_Email"
-    sql: ${TABLE}.Partner_Email ;;
-  }
-  dimension: firstname_xa_user_d1 {
-    type: string
-    label: "firstname_p"
-    sql: ${TABLE}.firstname_p ;;
-  }
+    measure: Campaigns {
+      type: count_distinct
+      sql: ${campaign_id_xa_campaign_d} ;;
+      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,campaign_name_xa_campaign_d,created_time_xa_campaign_d_date
+        ,launch_time_xa_campaign_d_date]
+    }
 
-  dimension: lastname_xa_user_d1 {
-    type: string
-    label: "lastname_p"
-    sql: ${TABLE}.lastname_p ;;
-  }
-  dimension_group: datereg_xa_user_d1 {
-    type: time
-    label: "Datereg"
-    sql: ${TABLE}.Datereg ;;
-  }
-  dimension_group: datelastlogin_xa_user_d1 {
-    type: time
-    label: "Datelastlogin"
-    sql: ${TABLE}.Datelastlogin ;;
-  }
-  dimension_group: created_time_xa_user_d1 {
-    type: time
-    label: "Created_Time"
-    sql: ${TABLE}.Created_Time ;;
-  }
-  dimension: status_xa_user_d1 {
-    type: string
-    label: "Status"
-    sql: ${TABLE}.Status ;;
-  }
-  dimension: company_id_xa_company_d1 {
-    type: number
-    label: "company_id_P"
-    sql: ${TABLE}.company_id_P ;;
-  }
-  dimension: company_name_xa_company_d1 {
-    type: string
-    label: "Partner_Company_Name"
-    sql: ${TABLE}.Partner_Company_Name ;;
-  }
-  dimension: team_member_id {
-    type: number
-    sql: ${TABLE}.team_member_id ;;
-  }
-  dimension: email_id_t {
-    type: string
-    label: "Email_id"
-    sql: ${TABLE}.Email_id ;;
-  }
-  dimension_group: created_time_t {
-    type: time
-    label: "TM_Created_Time"
-    sql: ${TABLE}.TM_Created_Time ;;
-  }
-  dimension: firstname_t {
-    type: string
-    label: "TM_firstname"
-    sql: ${TABLE}.TM_firstname ;;
-  }
+    measure: Team_members{
+      type: count_distinct
+      sql: ${team_member_id} ;;
+      drill_fields: [TM_Full_Name,email_id_t,created_time_t_date,status_t,name_xa_drip_email_history_d1,
+        subject_xa_drip_email_history_d1,sent_time_xa_drip_email_history_d1_date]
+    }
 
-  dimension: lastname_t {
-    type: string
-    label: "TM_lastname"
-    sql: ${TABLE}.TM_lastname ;;
-  }
-  dimension: status_t {
-    type: string
-    label: "TM_Status"
-    sql: ${TABLE}.TM_Status ;;
-  }
-  dimension: name_xa_drip_email_history_d1 {
-    type: string
-    label: "TM_Nurture_Name"
-    sql: ${TABLE}.TM_Nurture_Name ;;
-  }
-  dimension: subject_xa_drip_email_history_d1{
-    type: string
-    label: "TM_Nurture_Subject"
-    sql: ${TABLE}.TM_Nurture_Subject ;;
-  }
-  dimension_group: sent_time_xa_drip_email_history_d1 {
-    type: time
-    label: "TM_Nurture_Sent_Time"
-    sql: ${TABLE}.TM_Nurture_Sent_Time ;;
-  }
+
+    dimension: looker_image {
+      type: string
+      sql: ${TABLE}.homepage_url;;
+      html: <img src="https://www.google.com/search?q=transparent+horizontal+line+logos&" /> ;;
+    }
+
+
+
+    measure: Total_Partners_do{
+
+      type: string
+
+      sql:CAST( ${Total_Partners} as Character Varying );;
+
+    }
+
+
+
+    dimension: user_id {
+      type: number
+      sql: ${TABLE}.user_id ;;
+    }
+    dimension: company_id {
+      type: number
+      sql: ${TABLE}.company_id ;;
+    }
+    dimension: company_name {
+      type: string
+      sql: ${TABLE}.company_name ;;
+    }
+
+    dimension: partner_id_xa_partnership {
+      type: number
+      sql: ${TABLE}.partner_id ;;
+    }
+
+    dimension: partner_company_id_xa_partnership {
+      type: number
+      label: "partner_company_id"
+      sql: ${TABLE}.partner_company_id ;;
+    }
+    dimension: role_id {
+      type: number
+      sql: ${TABLE}.role_id ;;
+    }
+    dimension: campaign_id_xa_campaign_d {
+      type: number
+      label: "campaign_id"
+      sql: ${TABLE}.campaign_id ;;
+    }
+
+    dimension: customer_id_xa_campaign_d {
+      type: string
+      label: "customer_id"
+      sql: ${TABLE}.customer_id ;;
+    }
+
+    dimension: campaign_name_xa_campaign_d {
+      type: string
+      label: "Campaign_Name"
+      sql: ${TABLE}.Campaign_Name ;;
+    }
+    dimension_group: created_time_xa_campaign_d {
+      type: time
+      label: "created_time_Pc"
+      sql: ${TABLE}.created_time_Pc ;;
+    }
+    dimension_group: launch_time_xa_campaign_d {
+      type: time
+      label: "Launch_Time"
+      sql: ${TABLE}.Launch_Time ;;
+    }
+    dimension: parent_campaign_id_xa_campaign_d {
+      type: number
+      label: "parent_campaign_id"
+      sql: ${TABLE}.parent_campaign_id ;;
+    }
+    dimension: campaign_id_xa_campaign_d1 {
+      type: number
+      label: "TM_campaign_id"
+      sql: ${TABLE}.TM_campaign_id ;;
+    }
+
+    dimension: customer_id_xa_campaign_d1 {
+      type: number
+      label: "TM_customer_id"
+      sql: ${TABLE}.TM_customer_id ;;
+    }
+
+    dimension: campaign_name_xa_campaign_d1 {
+      type: string
+      label: "TM_Campaign_Name"
+      sql: ${TABLE}.TM_Campaign_Name ;;
+    }
+    dimension_group: created_time_xa_campaign_d1 {
+      type: time
+      label: "TM_Created_time_Tc"
+      sql: ${TABLE}.TM_Created_time_Tc ;;
+    }
+    dimension_group: launch_time_xa_campaign_d1 {
+      type: time
+      label: "TM_Launch_Time"
+      sql: ${TABLE}.TM_Launch_Time ;;
+    }
+    dimension: parent_campaign_id_xa_campaign_d1 {
+      type: number
+      label: "TM_parent_campaign_id_cam1"
+      sql: ${TABLE}.TM_parent_campaign_id_cam1 ;;
+    }
+    dimension: name_xa_drip_email_history_d {
+      type: string
+      label: "Nurture_Name"
+      sql: ${TABLE}.Nurture_Name ;;
+    }
+    dimension: subject_xa_drip_email_history_d{
+      type: string
+      label: "Nurture_Subject"
+      sql: ${TABLE}.Nurture_Subject ;;
+    }
+    dimension_group: sent_time_xa_drip_email_history_d {
+      type: time
+      label: "Nurture_Sent_Time"
+      sql: ${TABLE}.Nurture_Sent_Time ;;
+    }
+    dimension: action_id_a {
+      type: number
+      label: "action_id"
+      sql: ${TABLE}.action_id ;;
+    }
+    dimension: action_name_a {
+      type: string
+      label: "Nuture_Name"
+      sql: ${TABLE}.Nuture_Name ;;
+    }
+    dimension: email_id_xa_user_d1 {
+      type: string
+      label: "Partner_Email"
+      sql: ${TABLE}.Partner_Email ;;
+    }
+    dimension: firstname_xa_user_d1 {
+      type: string
+      label: "firstname_p"
+      sql: ${TABLE}.firstname_p ;;
+    }
+
+    dimension: lastname_xa_user_d1 {
+      type: string
+      label: "lastname_p"
+      sql: ${TABLE}.lastname_p ;;
+    }
+    dimension_group: datereg_xa_user_d1 {
+      type: time
+      label: "Datereg"
+      sql: ${TABLE}.Datereg ;;
+    }
+    dimension_group: datelastlogin_xa_user_d1 {
+      type: time
+      label: "Datelastlogin"
+      sql: ${TABLE}.Datelastlogin ;;
+    }
+    dimension_group: created_time_xa_user_d1 {
+      type: time
+      label: "Created_Time"
+      sql: ${TABLE}.Created_Time ;;
+    }
+    dimension: status_xa_user_d1 {
+      type: string
+      label: "Status"
+      sql: ${TABLE}.Status ;;
+    }
+    dimension: company_id_xa_company_d1 {
+      type: number
+      label: "company_id_P"
+      sql: ${TABLE}.company_id_P ;;
+    }
+    dimension: company_name_xa_company_d1 {
+      type: string
+      label: "Partner_Company_Name"
+      sql: ${TABLE}.Partner_Company_Name ;;
+    }
+    dimension: team_member_id {
+      type: number
+      sql: ${TABLE}.team_member_id ;;
+    }
+    dimension: email_id_t {
+      type: string
+      label: "Email_id"
+      sql: ${TABLE}.Email_id ;;
+    }
+    dimension_group: created_time_t {
+      type: time
+      label: "TM_Created_Time"
+      sql: ${TABLE}.TM_Created_Time ;;
+    }
+    dimension: firstname_t {
+      type: string
+      label: "TM_firstname"
+      sql: ${TABLE}.TM_firstname ;;
+    }
+
+    dimension: lastname_t {
+      type: string
+      label: "TM_lastname"
+      sql: ${TABLE}.TM_lastname ;;
+    }
+    dimension: status_t {
+      type: string
+      label: "TM_Status"
+      sql: ${TABLE}.TM_Status ;;
+    }
+    dimension: name_xa_drip_email_history_d1 {
+      type: string
+      label: "TM_Nurture_Name"
+      sql: ${TABLE}.TM_Nurture_Name ;;
+    }
+    dimension: subject_xa_drip_email_history_d1{
+      type: string
+      label: "TM_Nurture_Subject"
+      sql: ${TABLE}.TM_Nurture_Subject ;;
+    }
+    dimension_group: sent_time_xa_drip_email_history_d1 {
+      type: time
+      label: "TM_Nurture_Sent_Time"
+      sql: ${TABLE}.TM_Nurture_Sent_Time ;;
+    }
 
     dimension: action_id_a1 {
-    type: number
-    label: "TM_action_id"
-    sql: ${TABLE}.TM_action_id ;;
-  }
-  dimension: action_name_a1 {
-    type: string
-    label: "TM_action_name"
-    sql: ${TABLE}.TM_action_name ;;
-  }
+      type: number
+      label: "TM_action_id"
+      sql: ${TABLE}.TM_action_id ;;
+    }
+    dimension: action_name_a1 {
+      type: string
+      label: "TM_action_name"
+      sql: ${TABLE}.TM_action_name ;;
+    }
 
 
-  dimension: Full_Name {
-    type: string
-    label: "Full Name"
-    sql: concat(${firstname_xa_user_d1},' ',${lastname_xa_user_d1}) ;;
-  }
+    dimension: Full_Name {
+      type: string
+      label: "Full Name"
+      sql: concat(${firstname_xa_user_d1},' ',${lastname_xa_user_d1}) ;;
+    }
 
-  dimension: TM_Full_Name {
-    type: string
-    label: "TM_Full Name"
-    sql: concat(${firstname_t},' ',${lastname_t}) ;;
-  }
+    dimension: TM_Full_Name {
+      type: string
+      label: "TM_Full Name"
+      sql: concat(${firstname_t},' ',${lastname_t}) ;;
+    }
+
+    dimension: Total_Partners1 {
+      type: number
+      sql: ${TABLE}.Totalpartners ;;
+    }
 
 
 
-   # link:{
+    # link:{
     #  label:"{{value}} With Nurture Details"
-     # url: "https://stratappspartner.looker.com/looks/101?&f[partner_nurtures.company_name]={{ _filters['Vendor%20Company%20Name'] | url_encode }}
-      #&f[partner_nurtures.action_name_a]={{ value | encode_uri }}"
-      #icon_url: "http://www.looker.com/favicon.ico"
-  #  }
+    # url: "https://stratappspartner.looker.com/looks/101?&f[partner_nurtures.company_name]={{ _filters['Vendor%20Company%20Name'] | url_encode }}
+    #&f[partner_nurtures.action_name_a]={{ value | encode_uri }}"
+    #icon_url: "http://www.looker.com/favicon.ico"
+    #  }
 
-  #    link:{
-   #     label:"{{value}} Without Nurture Details"
+    #    link:{
+    #     label:"{{value}} Without Nurture Details"
     #    url: "https://stratappspartner.looker.com/looks/102?&f[partner_nurtures.action_name_a]=-{{ value | encode_uri }}"
-     #   icon_url: "http://www.looker.com/favicon.ico"
-      #}
+    #   icon_url: "http://www.looker.com/favicon.ico"
+    #}
 
 
 
-   # link:{
+    # link:{
     #  label:"{{value}} With Nurture"
-     # url: "https://stratappspartner.looker.com/dashboards/32?action_name_a={{ value |  encode_uri }}"
-     # icon_url: "http://www.looker.com/favicon.ico"
+    # url: "https://stratappspartner.looker.com/dashboards/32?action_name_a={{ value |  encode_uri }}"
+    # icon_url: "http://www.looker.com/favicon.ico"
     #}
 
     #link:{
-      #label:"{{value}} Without Nurture"
-     # url: "https://stratappspartner.looker.com/dashboards/33?action_name_a=-{{ value |  encode_uri }} "
-     # icon_url: "http://www.looker.com/favicon.ico"
+    #label:"{{value}} Without Nurture"
+    # url: "https://stratappspartner.looker.com/dashboards/33?action_name_a=-{{ value |  encode_uri }} "
+    # icon_url: "http://www.looker.com/favicon.ico"
     #}
 
 
 
 
-  set: detail {
-    fields: [
-      user_id,
-      company_id,
-      company_name,
-      partner_id_xa_partnership,
-      partner_company_id_xa_partnership,
-      role_id,
-      campaign_id_xa_campaign_d,
-      customer_id_xa_campaign_d,
-      campaign_name_xa_campaign_d,
-      created_time_xa_campaign_d_time,
-      launch_time_xa_campaign_d_time,
-      parent_campaign_id_xa_campaign_d,
-      campaign_id_xa_campaign_d1,
-      customer_id_xa_campaign_d1,
-      campaign_name_xa_campaign_d1,
-      created_time_xa_campaign_d1_time,
-      launch_time_xa_campaign_d1_time,
-      parent_campaign_id_xa_campaign_d1,
-      name_xa_drip_email_history_d,
-      subject_xa_drip_email_history_d,
-      sent_time_xa_drip_email_history_d_time,
-      action_id_a,
-      action_name_a,
-      email_id_xa_user_d1,
-      firstname_xa_user_d1,
-      lastname_xa_user_d1,
-      datereg_xa_user_d1_time,
-      datelastlogin_xa_user_d1_time,
-      created_time_xa_user_d1_time,
-      status_xa_user_d1,
-      company_id_xa_company_d1,
-      company_name_xa_company_d1,
-      team_member_id,
-      email_id_t,
-      created_time_t_time,
-      firstname_t,
-      lastname_t,
-      Full_Name,
-      TM_Full_Name,
-      status_t,
-      name_xa_drip_email_history_d1,
-      subject_xa_drip_email_history_d1,
-      sent_time_xa_drip_email_history_d1_time,
-      action_id_a1,
-      action_name_a1
 
-    ]
+
+    set: detail {
+      fields: [
+        user_id,
+        company_id,
+        company_name,
+        partner_id_xa_partnership,
+        partner_company_id_xa_partnership,
+        role_id,
+        campaign_id_xa_campaign_d,
+        customer_id_xa_campaign_d,
+        campaign_name_xa_campaign_d,
+        created_time_xa_campaign_d_time,
+        launch_time_xa_campaign_d_time,
+        parent_campaign_id_xa_campaign_d,
+        campaign_id_xa_campaign_d1,
+        customer_id_xa_campaign_d1,
+        campaign_name_xa_campaign_d1,
+        created_time_xa_campaign_d1_time,
+        launch_time_xa_campaign_d1_time,
+        parent_campaign_id_xa_campaign_d1,
+        name_xa_drip_email_history_d,
+        subject_xa_drip_email_history_d,
+        sent_time_xa_drip_email_history_d_time,
+        action_id_a,
+        action_name_a,
+        email_id_xa_user_d1,
+        firstname_xa_user_d1,
+        lastname_xa_user_d1,
+        datereg_xa_user_d1_time,
+        datelastlogin_xa_user_d1_time,
+        created_time_xa_user_d1_time,
+        status_xa_user_d1,
+        company_id_xa_company_d1,
+        company_name_xa_company_d1,
+        team_member_id,
+        email_id_t,
+        created_time_t_time,
+        firstname_t,
+        lastname_t,
+        Full_Name,
+        TM_Full_Name,
+        status_t,
+        name_xa_drip_email_history_d1,
+        subject_xa_drip_email_history_d1,
+        sent_time_xa_drip_email_history_d1_time,
+        action_id_a1,
+        action_name_a1,
+        Total_Partners1
+
+      ]
+    }
   }
-}
 
 
 
-explore:  team_members{}
+explore:team_members  {}
 view: team_members {
   derived_table: {
     sql: select
           "Vendor Users".datereg as "Teammember Datereg",
           "Vendor Users".datelastlogin as "Teammember Lastlogin",
           "Vendor Campaign".campaign_id as "Vendor Campaign ID",
-            "Vendor Campaign".campaign_name as "Vendor Campaign Name",
-            "Vendor Company".company_id as "Vendor Company ID",
-            "Vendor Company".company_name as "Vendor Company Name",
-            "Vendor Campaign".is_launched "Vendor Cam Is Launched",
-            "Vendor Campaign".launch_time "Vendor Cam Launch Time",
-            "Vendor Campaign".campaign_type "Vendor Campaign Type",
-            "Vendor Campaign".campaign_schedule_type "Vendor Cam Schedule Type",
-            "Vendor Campaign".created_time "Vendor Cam Created Time",
-           "Partner Company".company_id "Partner Company ID",
-           "Partner Company".company_name as "Partner Company Name",
+          "Vendor Campaign".campaign_name as "Vendor Campaign Name",
+          "Vendor Company".company_id as "Vendor Company ID",
+          "Vendor Company".company_name as "Vendor Company Name",
+          "Vendor Campaign".is_launched "Vendor Cam Is Launched",
+          "Vendor Campaign".launch_time "Vendor Cam Launch Time",
+          "Vendor Campaign".campaign_type "Vendor Campaign Type",
+          "Vendor Campaign".campaign_schedule_type "Vendor Cam Schedule Type",
+          "Vendor Campaign".created_time "Vendor Cam Created Time",
+          "Partner Company".company_id "Partner Company ID",
+          "Partner Company".company_name as "Partner Company Name",
           "Partner Users" .email_id as "Partner EmailID",
-          "Videofiles".  id as "Video ID",
-          "Videofiles".customer_id as "Video Customer ID",
-          "Videofiles".title as "Video Title",
-          "Videofiles".created_time as "Video Created Time",
+          "Partner Users" .email_id as "Contact EmailID",
+          "Partner Users".firstname as "Partner FirstName",
+          "Partner Users".lastname as "Partner LastName",
           "Team Member".team_member_id as "Teammember ID",
           "Team Member".id as "Team ID",
           "Team Member".email_id as "Teammember email_id",
@@ -3365,9 +3383,6 @@ view: team_members {
           "Team Member".status as "Teammember status",
           "Team Member".created_time as "Teammember Created Time",
           "Team Member".company_id as "Teammember company_id",
-          "Social Connection". id as "Social Connection ID",
-          "Social Connection".profile_name as "Social Connection Name",
-         "Social Connection" .source as "Social Connection Source",
           "Userlist".created_time as "Userlist Createdtime",
           "Userlist".is_partner_userlist as "Is Partner UserList",
           "Userlist".listby_partner_id as "List by Partner ID",
@@ -3383,10 +3398,8 @@ view: team_members {
             left JOIN xamplify_test.xa_user_d "Partner Users" ON ("Userlist".listby_partner_id = "Partner Users".user_id)
             left JOIN xamplify_test.xa_company_d "Partner Company" ON ("Partner Users".company_id = "Partner Company".company_id)
             left  join xamplify_test.xa_campaign_d "Vendor Campaign" on ("Vendor Campaign".customer_id="Team Member".team_member_id)
-            left join xamplify_test.xa_videofiles_d "Videofiles" on("Team Member".team_member_id="Videofiles".customer_id)
-            left join xamplify_test.xa_socialconn_d "Social Connection" on("Team Member".team_member_id="Social Connection".user_id)
             where ur.role_id in(2,13)
-       ;;
+ ;;
   }
 
   measure: count {
@@ -3398,37 +3411,41 @@ view: team_members {
   measure: Partners {
     type: count_distinct
     sql: case when ${is_partner_user_list}=true then ${list_by_partner_id} end ;;
-    drill_fields: [user_list_name,userlist_createdtime_time,partner_email_id,partner_company_name]
+    drill_fields: [user_list_name,userlist_createdtime_time,partner_email_id,partner_company_name,Partner_Name]
   }
 
   measure: Contacts {
     type: count_distinct
     sql: case when ${is_partner_user_list}=false then ${list_by_partner_id} end;;
-    drill_fields: [user_list_name,userlist_createdtime_date,partner_email_id]
+    drill_fields: [user_list_name,userlist_createdtime_date,contact_email_id]
 
   }
-  measure: Social_Share {
+
+  measure: Partners_KPI {
     type: count_distinct
-    sql: ${social_connection_id} ;;
-    drill_fields: [social_connection_source,social_connection_id,social_connection_name]
+    sql: case when ${is_partner_user_list}=true then ${list_by_partner_id} end;;
+    drill_fields: [partner_company_name,partner_email_id,Partner_Name]
   }
 
-    measure: Campaigns {
-      type: count_distinct
-      sql: ${vendor_campaign_id} ;;
-      drill_fields: [vendor_campaign_id,vendor_campaign_name,vendor_campaign_type,vendor_cam_schedule_type]
-    }
-
-  measure: Video_files {
-    type:count_distinct
-    sql: ${video_id} ;;
-    drill_fields: [video_id,video_title,video_created_time_date]
+  measure: Contacts_KPI {
+    type: count_distinct
+    sql: case when ${is_partner_user_list}=false then ${list_by_partner_id} end;;
+    drill_fields: [Team_member_name,user_list_name,contact_email_id,Contact_Name]
   }
+
+
+  measure: Campaigns {
+    type: count_distinct
+    sql: ${vendor_campaign_id} ;;
+    drill_fields: [vendor_campaign_id,vendor_campaign_name,vendor_campaign_type,vendor_cam_schedule_type]
+  }
+
+
 
   measure: Team_members {
     type: count_distinct
     sql: ${team_id} ;;
-    drill_fields: [Team_member_name,teammember_email_id,teammember_datereg_date,
+    drill_fields: [vendor_company_name,Team_member_name,teammember_email_id,teammember_datereg_date,
       teammember_lastlogin_date,teammember_status]
 
   }
@@ -3439,6 +3456,19 @@ view: team_members {
     sql: concat(${teammember_firstname} , ${teammember_lastname}) ;;
 
   }
+
+  dimension: Partner_Name{
+    type: string
+    label: "Partner Name"
+    sql: case when ${is_partner_user_list}=true then concat(${partner_first_name}, ${partner_last_name}) end ;;
+  }
+
+  dimension: Contact_Name{
+    type: string
+    label: "Partner Name"
+    sql:concat(${partner_first_name}, ${partner_last_name});;
+  }
+
 
   dimension_group: teammember_datereg {
     type: time
@@ -3506,7 +3536,6 @@ view: team_members {
     sql: ${TABLE}."Vendor Cam Created Time" ;;
   }
 
-
   dimension: partner_company_id {
     type: number
     label: "Partner Company ID"
@@ -3522,31 +3551,25 @@ view: team_members {
   dimension: partner_email_id {
     type: string
     label: "Partner EmailID"
-    sql: ${TABLE}."Partner EmailID"  ;;
+    sql: ${TABLE}."Partner EmailID" ;;
   }
 
-  dimension: video_id {
-    type: number
-    label: "Video ID"
-    sql: ${TABLE}."Video ID" ;;
-  }
-
-  dimension: video_customer_id {
-    type: number
-    label: "Video Customer ID"
-    sql: ${TABLE}."Video Customer ID" ;;
-  }
-
-  dimension: video_title {
+  dimension: contact_email_id {
     type: string
-    label: "Video Title"
-    sql: ${TABLE}."Video Title" ;;
+    label: "Contact EmailID"
+    sql: ${TABLE}."Contact EmailID" ;;
   }
 
-  dimension_group: video_created_time {
-    type: time
-    label: "Video Created Time"
-    sql: ${TABLE}."Video Created Time" ;;
+  dimension: partner_first_name {
+    type: string
+    label: "Partner FirstName"
+    sql: ${TABLE}."Partner FirstName" ;;
+  }
+
+  dimension: partner_last_name {
+    type: string
+    label: "Partner LastName"
+    sql: ${TABLE}."Partner LastName" ;;
   }
 
   dimension: teammember_id {
@@ -3597,24 +3620,6 @@ view: team_members {
     sql: ${TABLE}."Teammember company_id" ;;
   }
 
-  dimension: social_connection_id {
-    type: number
-    label: "Social Connection ID"
-    sql: ${TABLE}."Social Connection ID" ;;
-  }
-
-  dimension: social_connection_name {
-    type: string
-    label: "Social Connection Name"
-    sql: ${TABLE}."Social Connection Name" ;;
-  }
-
-  dimension: social_connection_source {
-    type: string
-    label: "Social Connection Source"
-    sql: ${TABLE}."Social Connection Source" ;;
-  }
-
   dimension_group: userlist_createdtime {
     type: time
     label: "Userlist Createdtime"
@@ -3661,10 +3666,9 @@ view: team_members {
       partner_company_id,
       partner_company_name,
       partner_email_id,
-      video_id,
-      video_customer_id,
-      video_title,
-      video_created_time_time,
+      contact_email_id,
+      partner_first_name,
+      partner_last_name,
       teammember_id,
       team_id,
       teammember_email_id,
@@ -3673,9 +3677,6 @@ view: team_members {
       teammember_status,
       teammember_created_time_time,
       teammember_company_id,
-      social_connection_id,
-      social_connection_name,
-      social_connection_source,
       userlist_createdtime_time,
       is_partner_user_list,
       list_by_partner_id,
@@ -3717,7 +3718,8 @@ view: email_templates {
           "Videofiles".customer_id as "Video Customer ID",
           "Videofiles".title as "Video Title",
           "Videofiles".created_time as "Video Created Time",
-          cam.campaign_id as "Campaign ID"
+          cam.campaign_id as "Campaign ID",
+          cam.campaign_name as "Campaign Name"
 
       from
       xamplify_test.xa_team_member_d t
@@ -3750,6 +3752,24 @@ view: email_templates {
     type: count_distinct
     sql: ${social_connection_id} ;;
     drill_fields: [social_connection_source,social_connection_id,social_connection_name]
+  }
+
+  measure: Campaigns {
+    type: count_distinct
+    sql: ${campaign_id} ;;
+    drill_fields: [campaign_id,campaign_name]
+  }
+
+  measure: Org_Admins {
+    type: count_distinct
+    sql: ${vendor_user_id};;
+    drill_fields: [email_id,first_name,last_name,date_reg_date,date_last_login_date,country,Teammembers]
+  }
+
+  measure: Teammembers {
+    type: count_distinct
+    sql: ${teammember_id} ;;
+    drill_fields: [teammember_name,teammember_email_id,teammember_created_time_date,teammember_status]
   }
 
   dimension: video_id {
@@ -3802,17 +3822,6 @@ view: email_templates {
     sql: concat(${teammember_firstname},${teammember_lastname}) ;;
   }
 
-  measure: Org_Admins {
-    type: count_distinct
-    sql: ${vendor_user_id};;
-    drill_fields: [email_id,first_name,last_name,date_reg_date,date_last_login_date,country,Teammembers]
-  }
-
-  measure: Teammembers {
-    type: count_distinct
-    sql: ${teammember_id} ;;
-    drill_fields: [teammember_name,teammember_email_id,teammember_created_time_date,teammember_status]
-  }
 
   dimension_group: emailtemplate_created_time {
     type: time
@@ -3944,6 +3953,12 @@ view: email_templates {
     sql: ${TABLE}."Campaign ID" ;;
   }
 
+  dimension: campaign_name {
+    type: string
+    label: "Campaign Name"
+    sql: ${TABLE}."Campaign Name" ;;
+  }
+
   set: detail {
     fields: [
       emailtemplate_created_time_time,
@@ -3974,10 +3989,12 @@ view: email_templates {
       social_connection_id,
       social_connection_name,
       social_connection_source,
-      campaign_id
+      campaign_id,
+      campaign_name
     ]
   }
 }
+
 
 
 
