@@ -1099,6 +1099,7 @@ dimension: category {
 
   explore: vendors {
     persist_for: "30 minutes"
+
   }
   view:vendors {
    derived_table: {
@@ -3783,7 +3784,9 @@ view: email_templates {
        cam.campaign_name as "Campaign Name",
        cam.campaign_type as "Campaign Type",
        cam.campaign_schedule_type as "Campaign Schedule Type",
-       cam.launch_time as "Campaign Launch Time"
+       cam.launch_time as "Campaign Launch Time",
+      cam1.campaign_id as "Email Template Campaign",
+      cam1.campaign_name as "Email Template Campaign Name"
 
       from
       xamplify_test.xa_team_member_d t
@@ -3794,6 +3797,7 @@ view: email_templates {
       left join xamplify_test.xa_videofiles_d "Videofiles" on(t.team_member_id="Videofiles".customer_id)
       left join xamplify_test.xa_socialconn_d "Social Connection" on(t.team_member_id="Social Connection".user_id)
       left join xamplify_test.xa_campaign_d cam on(t.team_member_id=cam.customer_id)
+      left join xamplify_test.xa_campaign_d cam1 on (cam1.email_template_id=et.id)
       where ur.role_id in(2,13)
  ;;
   }
@@ -3806,7 +3810,7 @@ view: email_templates {
   measure: email_templates {
     type: count_distinct
     sql: ${emailtemplate_id} ;;
-    drill_fields: [teammember_name,emailtemplate_name,emailtemplate_created_time_date,campaign_name,Campaigns]
+    drill_fields: [teammember_name,emailtemplate_name,emailtemplate_created_time_date,campaign_email_template]
   }
   measure: Video_files {
     type:count_distinct
@@ -3823,7 +3827,7 @@ view: email_templates {
   measure: Campaigns {
     type: count_distinct
     sql: ${campaign_id} ;;
-    drill_fields: [campaign_id,campaign_name,campaign_type,campaign_schedule_type,campaign_launch_time_date,email_templates]
+    drill_fields: [campaign_id,campaign_name,campaign_type,campaign_schedule_type,campaign_launch_time_date,campaign_email_template]
   }
 
   measure: Teammembers {
@@ -3831,6 +3835,14 @@ view: email_templates {
     sql: ${teammember_id} ;;
     drill_fields: [teammember_name,teammember_email_id,teammember_created_time_date,teammember_status]
   }
+
+  measure: campaign_email_template {
+    type: count_distinct
+    sql: ${campaign_template} ;;
+    drill_fields: [campaign_templateName]
+  }
+
+
 
   dimension: video_id {
     type: number
@@ -4037,6 +4049,18 @@ view: email_templates {
     sql: ${TABLE}."Campaign Launch Time" ;;
   }
 
+  dimension: campaign_template {
+    type: string
+    label: "Email Template Campaign"
+    sql: ${TABLE}. "Email Template Campaign" ;;
+  }
+
+  dimension: campaign_templateName {
+    type: string
+    label: "Email Template Campaign Name"
+    sql: ${TABLE}."Email Template Campaign Name" ;;
+  }
+
   set: detail {
     fields: [
       emailtemplate_created_time_time,
@@ -4071,11 +4095,12 @@ view: email_templates {
       campaign_name,
       campaign_type,
       campaign_schedule_type,
-      campaign_launch_time_date
+      campaign_launch_time_date,
+      campaign_template,
+      campaign_templateName
     ]
   }
 }
-
 
 
 
@@ -4457,52 +4482,59 @@ view: email_auto_respones {
 
   measure: Email_Opened {
     type: count_distinct
-    sql: ${email_opened_views_date} ;;
-    drill_fields: [subject,email_opened_views_minute]
+    sql: ${email_opened_views_minute} ;;
+    drill_fields: [campaign_name,subject,email_opened_views_minute]
   }
 
   measure: Email_Clicked{
     type: count_distinct
-    sql: ${email_clicked_date} ;;
-    drill_fields: [clicked_url_names]
+    sql: ${email_clicked_minute} ;;
+    drill_fields: [campaign_name,clicked_url_names,email_opened_views_minute]
   }
   measure: Email_Autoresponses {
     type: count_distinct
     sql: ${email_auto_responses} ;;
+    drill_fields: [campaign_name,Reason,email_response_reply_in_days,
+      email_response_reply_time_raw]
 
   }
 
   measure: Email_AutoResponses_Opened{
     type: count_distinct
     sql: ${email_auto_responses_opened} ;;
-    drill_fields:[Reason,email_response_reply_in_days,email_response_reply_time_date,email_auto_responses_opened_time_minute,
+    drill_fields:[campaign_name,Reason,email_response_reply_in_days,
+      email_response_reply_time_date,email_auto_responses_opened_time_raw,
       Email_AutoResponses_Opened]
   }
 
   measure: Website_Visit_Autoresponses{
     type: count_distinct
     sql: ${website_auto_responses} ;;
+    drill_fields: [campaign_name,When_To_Send_Email,website_response_reply_in_days,
+      website_response_reply_time_raw]
 
   }
 
   measure: Website_Responses_EmailOpened {
     type: count_distinct
     sql: ${website_auto_responses_opened} ;;
-    drill_fields: [When_To_Send_Email,website_response_reply_in_days,website_response_reply_time_date,website_auto_responses_opened_time_minute,
+    drill_fields: [campaign_name,When_To_Send_Email,website_response_reply_in_days,
+      website_response_reply_time_date,website_auto_responses_opened_time_raw,
       Website_Responses_EmailOpened]
   }
 
   measure: Campaign_Email_Sent {
     type: count_distinct
     sql: ${campaign_email_sent_id} ;;
-    drill_fields: [campaign_email_sent_time_date]
+    drill_fields: [campaign_name,campaign_email_sent_time_raw]
 
   }
 
   measure: Email_Autoresponses_Sent {
     type: count_distinct
     sql: ${email_response_sent_time_id} ;;
-    drill_fields: [Reason,email_response_reply_in_days,email_response_sent_time_time,
+    drill_fields: [campaign_name,Reason,email_response_reply_in_days,
+      email_response_sent_time_time,
       Email_Autoresponses_Sent]
   }
 
@@ -4510,7 +4542,8 @@ view: email_auto_respones {
   measure: Web_Autoresponses_Sent{
     type: count_distinct
     sql: ${website_response_sent_time_id} ;;
-    drill_fields: [When_To_Send_Email,website_response_reply_in_days,website_response_reply_time_time,website_response_sent_time_date]
+    drill_fields: [campaign_name,When_To_Send_Email,website_response_reply_in_days,
+      website_response_reply_time_time,website_response_sent_time_time]
 
   }
 
@@ -4535,14 +4568,17 @@ view: email_auto_respones {
   measure:Campaigns{
     type: count_distinct
     sql: ${campaign_id} ;;
-    drill_fields: [partner_company_name,campaign_name,launch_time_date,campaign_email_sent_time_date]
+    drill_fields: [partner_company_name,campaign_name,launch_time_date,
+      campaign_email_sent_time_time]
   }
 
   dimension: Reason{
     type: string
     sql: case when ${email_response_reason}=0 then 'Email is Not Opened'
               when ${email_response_reason}=13 then 'Email is Opened'
-              when ${email_response_reason}=16 then 'Send immediately after email is opened ' end
+              when ${email_response_reason}=16 then 'Send immediately after email is opened'
+
+              end
               ;;
   }
 
@@ -4844,6 +4880,7 @@ view: auto_responses_summary {
     type: count_distinct
     sql: ${total_recipients} ;;
   }
+
 
   measure: Active_Recipients {
     type: count_distinct
@@ -5253,3 +5290,166 @@ view: auto_responses_summary {
       sql_on: ${xa_user_list_d1.listby_partner_id}=${xa_user_d.user_id} ;;
     }
   }
+
+
+explore: xa_user_d {
+  conditionally_filter: {
+    filters: [company_id: "399" ]
+    unless: [xa_campaign_d.launch_date]
+  }
+  join: xa_campaign_d {
+    relationship: many_to_one
+    sql_on:  ${xa_user_d.user_id}=${xa_campaign_d.customer_id} ;;
+  }
+}
+
+
+explore:dimensions  {}
+view: dimensions {
+  derived_table: {
+    sql: WITH auto_responses_summary AS (select * from xamplify_test.v_responses
+       )
+      SELECT
+        auto_responses_summary."Partner Company Name"  AS "auto_responses_summary.partner_company_name",
+        auto_responses_summary."Campaign Name"  AS "auto_responses_summary.campaign_name",
+        COUNT(DISTINCT (auto_responses_summary."#Total Recipients"
+      ) ) AS "auto_responses_summary.Total_Recipients",
+        COUNT(DISTINCT (auto_responses_summary."#Active Recipients"
+      ) ) AS "auto_responses_summary.Active_Recipients",
+        Round(100.00* (COUNT(DISTINCT (auto_responses_summary."#Active Recipients"
+      ) )
+      )/NULLIF ((COUNT(DISTINCT (auto_responses_summary."#Total Recipients"
+      ) )
+      ),0))  AS "auto_responses_summary.Active_Recipients_Percent",
+        COUNT(DISTINCT (auto_responses_summary."#Campaign Email Sent Id"
+      ) ) AS "auto_responses_summary.Campaign_Email_Sent",
+        COUNT(DISTINCT (auto_responses_summary."#Email Opened (Views)"
+      ) ) AS "auto_responses_summary.Email_Opened",
+        COUNT(DISTINCT (auto_responses_summary."#Email Clicked"
+      ) ) AS "auto_responses_summary.Email_Clicked",
+        (COUNT(DISTINCT (auto_responses_summary."#Total Recipients"
+      ) )
+      )-(COUNT(DISTINCT (auto_responses_summary."#Active Recipients"
+      ) )
+      )  AS "auto_responses_summary.Email_Not_Opened",
+        COUNT(DISTINCT (auto_responses_summary."#Email Auto Responses"
+      ) ) AS "auto_responses_summary.Email_Auto_Responses",
+        COUNT(DISTINCT (auto_responses_summary."#Email Response Sent Time ID"
+      ) ) AS "auto_responses_summary.Email_Auto_Respoonses_Sent",
+        COUNT(DISTINCT (auto_responses_summary."#Email Auto Responses Opened"
+      ) ) AS "auto_responses_summary.Email_Auto_Responses_Opened",
+        COUNT(DISTINCT (auto_responses_summary."#Website Auto Responses"
+      ) ) AS "auto_responses_summary.Website_Auto_Responses",
+        COUNT(DISTINCT (auto_responses_summary."#Website Response Sent Time ID"
+      ) ) AS "auto_responses_summary.Website_Auto_Responses_Sent",
+        COUNT(DISTINCT (auto_responses_summary."#Website Auto Responses Opened"
+      ) ) AS "auto_responses_summary.Website_Auto_Responses_Opened"
+      FROM auto_responses_summary
+
+      --WHERE (((auto_responses_summary."Vendor Company Name") = 'Nextiva, Inc.')) AND (((auto_responses_summary."Partner Company Name") = '26 Connect'))
+      GROUP BY 1,2
+      ORDER BY 3 DESC
+
+       ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+
+  dimension: auto_responses_summary_partner_company_name {
+    type: string
+    sql: ${TABLE}."auto_responses_summary.partner_company_name" ;;
+  }
+
+  dimension: auto_responses_summary_campaign_name {
+    type: string
+    sql: ${TABLE}."auto_responses_summary.campaign_name" ;;
+  }
+
+  dimension: auto_responses_summary_total_recipients {
+    type: number
+    sql: ${TABLE}."auto_responses_summary.Total_Recipients" ;;
+  }
+
+  dimension: auto_responses_summary_active_recipients {
+    type: number
+    sql: ${TABLE}."auto_responses_summary.Active_Recipients" ;;
+  }
+
+  dimension: auto_responses_summary_active_recipients_percent {
+    type: number
+    sql: ${TABLE}."auto_responses_summary.Active_Recipients_Percent" ;;
+  }
+
+  dimension: auto_responses_summary_campaign_email_sent {
+    type: number
+    sql: ${TABLE}."auto_responses_summary.Campaign_Email_Sent" ;;
+  }
+
+  dimension: auto_responses_summary_email_opened {
+    type: number
+    sql: ${TABLE}."auto_responses_summary.Email_Opened" ;;
+  }
+
+  dimension: auto_responses_summary_email_clicked {
+    type: number
+    sql: ${TABLE}."auto_responses_summary.Email_Clicked" ;;
+  }
+
+  dimension: auto_responses_summary_email_not_opened {
+    type: number
+    sql: ${TABLE}."auto_responses_summary.Email_Not_Opened" ;;
+  }
+
+  dimension: auto_responses_summary_email_auto_responses {
+    type: number
+    sql: ${TABLE}."auto_responses_summary.Email_Auto_Responses" ;;
+  }
+
+  dimension: auto_responses_summary_email_auto_respoonses_sent {
+    type: number
+    sql: ${TABLE}."auto_responses_summary.Email_Auto_Respoonses_Sent" ;;
+  }
+
+  dimension: auto_responses_summary_email_auto_responses_opened {
+    type: number
+    sql: ${TABLE}."auto_responses_summary.Email_Auto_Responses_Opened" ;;
+  }
+
+  dimension: auto_responses_summary_website_auto_responses {
+    type: number
+    sql: ${TABLE}."auto_responses_summary.Website_Auto_Responses" ;;
+  }
+
+  dimension: auto_responses_summary_website_auto_responses_sent {
+    type: number
+    sql: ${TABLE}."auto_responses_summary.Website_Auto_Responses_Sent" ;;
+  }
+
+  dimension: auto_responses_summary_website_auto_responses_opened {
+    type: number
+    sql: ${TABLE}."auto_responses_summary.Website_Auto_Responses_Opened" ;;
+  }
+
+  set: detail {
+    fields: [
+      auto_responses_summary_partner_company_name,
+      auto_responses_summary_campaign_name,
+      auto_responses_summary_total_recipients,
+      auto_responses_summary_active_recipients,
+      auto_responses_summary_active_recipients_percent,
+      auto_responses_summary_campaign_email_sent,
+      auto_responses_summary_email_opened,
+      auto_responses_summary_email_clicked,
+      auto_responses_summary_email_not_opened,
+      auto_responses_summary_email_auto_responses,
+      auto_responses_summary_email_auto_respoonses_sent,
+      auto_responses_summary_email_auto_responses_opened,
+      auto_responses_summary_website_auto_responses,
+      auto_responses_summary_website_auto_responses_sent,
+      auto_responses_summary_website_auto_responses_opened
+    ]
+  }
+}
