@@ -4463,6 +4463,16 @@ view: email_auto_respones {
        ;;
   }
 
+  parameter: Parameter_Selector {
+    label: "Parameter_Selector"
+
+    allowed_value: { value: "Total_Recipients"}
+    allowed_value: { value: "Active_Recipients" }
+    allowed_value: {value:"Email_NotOpened"}
+
+
+  }
+
   measure: count {
     type: count
     drill_fields: [detail*]
@@ -4475,6 +4485,7 @@ view: email_auto_respones {
     sql: ${total_recipients} ;;
   }
 
+
   measure: Active_Recipients {
     type: count_distinct
     sql: ${active_recipients} ;;
@@ -4485,6 +4496,19 @@ view: email_auto_respones {
     sql: ${email_opened_views_minute} ;;
     drill_fields: [campaign_name,subject,email_opened_views_minute]
   }
+
+  measure: param {
+    type:number
+    sql: case when {% parameter Parameter_Selector  %}='Total_Recipients'
+             then ${Total_Recipients}
+             when {% parameter Parameter_Selector  %}='Active_Recipients'
+            then  ${Active_Recipients}
+            when {% parameter Parameter_Selector %}='Email_NotOpened'
+            then ${Email_NotOpened}
+            end
+            ;;
+  }
+
 
   measure: Email_Clicked{
     type: count_distinct
@@ -4631,6 +4655,8 @@ view: email_auto_respones {
     sql: ${TABLE}."#Total Recipients" ;;
   }
 
+
+
   dimension: email_id {
     type: string
     label: "Email ID"
@@ -4687,11 +4713,14 @@ view: email_auto_respones {
     sql: ${TABLE}."#Active Recipients" ;;
   }
 
+
   dimension_group: email_opened_views {
     type: time
     label: "#Email Opened (Views)"
     sql: ${TABLE}."#Email Opened (Views)" ;;
   }
+
+
 
   dimension_group: email_clicked {
     type: time
