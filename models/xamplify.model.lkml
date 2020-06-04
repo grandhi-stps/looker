@@ -2717,121 +2717,121 @@ explore:partner_nurtures  {}
 view: partner_nurtures {
   derived_table: {
     sql:
-select * from (SELECT     xa_user_d.user_id AS user_id,
+    select * from (SELECT     xa_user_d.user_id AS user_id,
 
-                        xa_company_d.company_id AS company_id,
-                        xa_company_d.company_name AS company_name,
+                            xa_company_d.company_id AS company_id,
+                            xa_company_d.company_name AS company_name,
 
-                xa_partnership.partner_id as partner_id,
-                        xa_partnership.partner_company_id as partner_company_id,
+                    xa_partnership.partner_id as partner_id,
+                            xa_partnership.partner_company_id as partner_company_id,
 
-                xa_user_role_d.role_id AS role_id,
+                    xa_user_role_d.role_id AS role_id,
 
-                xa_campaign_d.campaign_id AS campaign_id,
-                        xa_campaign_d.customer_id AS customer_id,
-                        xa_campaign_d.campaign_name AS Campaign_Name,
-                        xa_campaign_d.created_time AS created_time_Pc,
-                        xa_campaign_d.launch_time AS Launch_Time,
-                        xa_campaign_d.parent_campaign_id AS parent_campaign_id,
+                    xa_campaign_d.campaign_id AS campaign_id,
+                            xa_campaign_d.customer_id AS customer_id,
+                            xa_campaign_d.campaign_name AS Campaign_Name,
+                            xa_campaign_d.created_time AS created_time_Pc,
+                            xa_campaign_d.launch_time AS Launch_Time,
+                            xa_campaign_d.parent_campaign_id AS parent_campaign_id,
 
-               -- xa_campaign_d1.campaign_id AS TM_campaign_id,
-                        xa_campaign_d1.customer_id AS TM_customer_id,
-                        --xa_campaign_d1.campaign_name AS TM_Campaign_Name,
-                       -- xa_campaign_d1.created_time AS TM_Created_time_Tc,
-                       -- xa_campaign_d1.launch_time AS TM_Launch_Time,
-                       -- xa_campaign_d1.parent_campaign_id AS TM_parent_campaign_id,
+                   -- xa_campaign_d1.campaign_id AS TM_campaign_id,
+                            xa_campaign_d1.customer_id AS TM_customer_id,
+                            --xa_campaign_d1.campaign_name AS TM_Campaign_Name,
+                           -- xa_campaign_d1.created_time AS TM_Created_time_Tc,
+                           -- xa_campaign_d1.launch_time AS TM_Launch_Time,
+                           -- xa_campaign_d1.parent_campaign_id AS TM_parent_campaign_id,
 
-                xa_drip_email_history_d.name as Nurture_Name,
-                        xa_drip_email_history_d.subject as Nurture_Subject,
-                        xa_drip_email_history_d.sent_time as Nurture_Sent_Time,
+                    xa_drip_email_history_d.name as Nurture_Name,
+                            xa_drip_email_history_d.subject as Nurture_Subject,
+                            xa_drip_email_history_d.sent_time as Nurture_Sent_Time,
 
-                         a.action_id as action_id,
-                        a.action_name as Nuture_Name,
+                             a.action_id as action_id,
+                            a.action_name as Nuture_Name,
 
-                xa_user_d1.email_id AS Partner_Email,
-                        xa_user_d1.firstname AS firstname_p,
-                        xa_user_d1.lastname AS lastname_p,
-                        xa_user_d1.datereg AS Datereg,
-                        xa_user_d1.datelastlogin AS Datelastlogin,
-                        xa_user_d1.created_time AS Created_Time,
-                        xa_user_d1.status as Status,
+                    xa_user_d1.email_id AS Partner_Email,
+                            xa_user_d1.firstname AS firstname_p,
+                            xa_user_d1.lastname AS lastname_p,
+                            xa_user_d1.datereg AS Datereg,
+                            xa_user_d1.datelastlogin AS Datelastlogin,
+                            xa_user_d1.created_time AS Created_Time,
+                            xa_user_d1.status as Status,
 
-                xa_company_d1.company_id AS company_id_P,
-                        xa_company_d1.company_name AS Partner_Company_Name,
+                    xa_company_d1.company_id AS company_id_P,
+                            xa_company_d1.company_name AS Partner_Company_Name,
 
-                t.team_member_id as team_member_id,
-                t.email_id as Email_id,
-                        t.created_time as TM_Created_Time,
-                        t.firstname as TM_firstname,
-                        t.lastname as TM_lastname,
-                t.status as TM_Status,
+                    t.team_member_id as team_member_id,
+                    t.email_id as Email_id,
+                            t.created_time as TM_Created_Time,
+                            t.firstname as TM_firstname,
+                            t.lastname as TM_lastname,
+                    t.status as TM_Status,
 
-                xa_drip_email_history_d1.name as TM_Nurture_Name,
-                        xa_drip_email_history_d1.subject as TM_Nurture_Subject,
-                        xa_drip_email_history_d1.sent_time as TM_Nurture_Sent_Time,
+                    xa_drip_email_history_d1.name as TM_Nurture_Name,
+                            xa_drip_email_history_d1.subject as TM_Nurture_Subject,
+                            xa_drip_email_history_d1.sent_time as TM_Nurture_Sent_Time,
 
-                        a1.action_id as TM_action_id,
-                        a1.action_name as TM_action_name,
-            cast(round(avg(totalPartner1) over(partition by xa_company_d.company_id )) as character varying) as totalPartner1,
-      cast(round(avg(totalPartner2) over(partition by xa_company_d.company_id )) as character varying) as totalPartner2
-
-
-
-
-
-                     FROM xamplify_test.xa_user_d xa_user_d
-
-          LEFT JOIN (select c.company_id,c.company_name from xamplify_test.xa_company_d c, xamplify_test.xa_user_d  u,xamplify_test.xa_user_role_d r
-                       where u.company_id=c.company_id
-                       and u.user_id=r.user_id
-                       and r.role_id in(2,13) and c.company_id not in(231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
-                       380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)
-                       ) xa_company_d ON (xa_user_d.company_id = xa_company_d.company_id)
-           left join xamplify_test.xa_partnership_d xa_partnership on (xa_user_d.user_id =xa_partnership.created_by)
-           left JOIN xamplify_test.xa_user_role_d xa_user_role_d ON (xa_user_d.user_id = xa_user_role_d.user_id)
-
-          left join xamplify_test.xa_campaign_d xa_campaign_d ON (xa_partnership.partner_id = xa_campaign_d.customer_id)
-
-          left join (select d.user_id,d.sent_time,d.action_id,e.name,e.subject from xamplify_test.xa_drip_email_history_d d,xamplify_test.xa_emailtemplates_d e
-              where d.email_template_id=e.id and d.action_id>=37 and d.action_id<=48) xa_drip_email_history_d ON (xa_partnership.partner_id = xa_drip_email_history_d.user_id)
-              full join (select * from xamplify_test.xa_action_type_d
-                     where xa_action_type_d.action_id >= 37 and xa_action_type_d.action_id <= 48) a on (xa_drip_email_history_d.action_id=a.action_id)
-
-              left join xamplify_test.xa_user_d xa_user_d1 on (xa_partnership.partner_id=xa_user_d1.user_id)
-
-            left join (select distinct company_id, company_name from xamplify_test.xa_company_d) xa_company_d1
-                       on (xa_partnership.partner_company_id=xa_company_d1.company_id)
-      left join  (select vendor_company_id, count(distinct   partner_id ) as totalPartner1
-from xamplify_test.xa_partnership_d
-where vendor_company_id not in (231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
-                       380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)
-group by 1) e on (e.vendor_company_id=xa_company_d.company_id)
-     left join
-(select vendor_company_id, count(distinct   partner_id ) as totalPartner2
-from xamplify_test.xa_partnership_d
-where partner_id  is not null and
-                        partner_company_id is not null
-    and vendor_company_id not in (231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
-                       380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)
-
-group by 1)f  on (f.vendor_company_id=xa_company_d.company_id)
-
-          left join  xamplify_test.xa_team_member_d t on (t.org_admin_id=xa_partnership.partner_id)
-          left join  (select distinct customer_id from xamplify_test.xa_campaign_d) xa_campaign_d1 ON (t.team_member_id = xa_campaign_d1.customer_id)
-
-          left join (select d.user_id,d.sent_time,d.action_id,e.name,e.subject from xamplify_test.xa_drip_email_history_d d,xamplify_test.xa_emailtemplates_d e
-                       where d.email_template_id=e.id and d.action_id>=37 and d.action_id<=48) xa_drip_email_history_d1 ON (t.team_member_id = xa_drip_email_history_d1.user_id)
-               full join (select * from xamplify_test.xa_action_type_d
-                     where xa_action_type_d.action_id >= 37 and xa_action_type_d.action_id <= 48) a1 on (xa_drip_email_history_d1.action_id=a1.action_id)
-
-
-
-                             )a
+                            a1.action_id as TM_action_id,
+                            a1.action_name as TM_action_name,
+                cast(round(avg(totalPartner1) over(partition by xa_company_d.company_id )) as character varying) as totalPartner1,
+          cast(round(avg(totalPartner2) over(partition by xa_company_d.company_id )) as character varying) as totalPartner2
 
 
 
 
-                             ;;
+
+                         FROM xamplify_test.xa_user_d xa_user_d
+
+              LEFT JOIN (select c.company_id,c.company_name from xamplify_test.xa_company_d c, xamplify_test.xa_user_d  u,xamplify_test.xa_user_role_d r
+                           where u.company_id=c.company_id
+                           and u.user_id=r.user_id
+                           and r.role_id in(2,13) and c.company_id not in(231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
+                           380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)
+                           ) xa_company_d ON (xa_user_d.company_id = xa_company_d.company_id)
+               left join xamplify_test.xa_partnership_d xa_partnership on (xa_user_d.user_id =xa_partnership.created_by)
+               left JOIN xamplify_test.xa_user_role_d xa_user_role_d ON (xa_user_d.user_id = xa_user_role_d.user_id)
+
+              left join xamplify_test.xa_campaign_d xa_campaign_d ON (xa_partnership.partner_id = xa_campaign_d.customer_id)
+
+              left join (select d.user_id,d.sent_time,d.action_id,e.name,e.subject from xamplify_test.xa_drip_email_history_d d,xamplify_test.xa_emailtemplates_d e
+                  where d.email_template_id=e.id and d.action_id>=37 and d.action_id<=48) xa_drip_email_history_d ON (xa_partnership.partner_id = xa_drip_email_history_d.user_id)
+                  full join (select * from xamplify_test.xa_action_type_d
+                         where xa_action_type_d.action_id >= 37 and xa_action_type_d.action_id <= 48) a on (xa_drip_email_history_d.action_id=a.action_id)
+
+                  left join xamplify_test.xa_user_d xa_user_d1 on (xa_partnership.partner_id=xa_user_d1.user_id)
+
+                left join (select distinct company_id, company_name from xamplify_test.xa_company_d) xa_company_d1
+                           on (xa_partnership.partner_company_id=xa_company_d1.company_id)
+          left join  (select vendor_company_id, count(distinct   partner_id ) as totalPartner1
+    from xamplify_test.xa_partnership_d
+    where vendor_company_id not in (231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
+                           380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)
+    group by 1) e on (e.vendor_company_id=xa_company_d.company_id)
+         left join
+    (select vendor_company_id, count(distinct   partner_id ) as totalPartner2
+    from xamplify_test.xa_partnership_d
+    where partner_id  is not null and
+                            partner_company_id is not null
+        and vendor_company_id not in (231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
+                           380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)
+
+    group by 1)f  on (f.vendor_company_id=xa_company_d.company_id)
+
+              left join  xamplify_test.xa_team_member_d t on (t.org_admin_id=xa_partnership.partner_id)
+              left join  (select distinct customer_id from xamplify_test.xa_campaign_d) xa_campaign_d1 ON (t.team_member_id = xa_campaign_d1.customer_id)
+
+              left join (select d.user_id,d.sent_time,d.action_id,e.name,e.subject from xamplify_test.xa_drip_email_history_d d,xamplify_test.xa_emailtemplates_d e
+                           where d.email_template_id=e.id and d.action_id>=37 and d.action_id<=48) xa_drip_email_history_d1 ON (t.team_member_id = xa_drip_email_history_d1.user_id)
+                   full join (select * from xamplify_test.xa_action_type_d
+                         where xa_action_type_d.action_id >= 37 and xa_action_type_d.action_id <= 48) a1 on (xa_drip_email_history_d1.action_id=a1.action_id)
+
+
+
+                                 )a
+
+
+
+
+                                 ;;
   }
 
   parameter: Category_Selector {
@@ -2852,23 +2852,6 @@ group by 1)f  on (f.vendor_company_id=xa_company_d.company_id)
 
   }
 
-  # parameter: Total_Nurture_count {
-  #  label: "Total Nurture Count"
-  # allowed_value: {value:"Nurtures"}
-  #}
-
-  #measure: Nurture_count {
-  # type: count_distinct
-  #  sql:
-  # case when {% parameter Total_Nurture_count %} = 'Nurtures'
-  #  then ${action_id_a}
-  # end ;;
-  #}
-
-#  measure: inactive_nurtures {
-  #   label: "inactive_nurtures"
-  #  sql: ${Nurture_count}-${Active_Nurture} ;;
-  #}
 
   measure: Active_partners_with_Nurtures {
     type: count_distinct
@@ -2882,19 +2865,17 @@ group by 1)f  on (f.vendor_company_id=xa_company_d.company_id)
     ;;
 
     }
-    measure:Active_partners_without_Nurtures {
-      type: number
-      sql: ${partner_companies_d}-${Active_partners_with_Nurtures} ;;
-      drill_fields: [partner_id_xa_partnership]
-      link: {
-        label: "Active partners without nurture Details"
-        url: "https://stratappspartner.looker.com/dashboards/38?
-        &f[partner_nurtures.Company_Name]={{ _filters['partner_nurtures.Company_Name'] | url_encode }}
-        &f[partner_nurtures.Category_Selector]={{ _filters['partner_nurtures.Category_Selector'] | url_encode }}"
-
-      }
-
+  measure:Active_partners_without_Nurtures {
+    type: number
+    sql: ${partner_companies_d}-${Active_partners_with_Nurtures} ;;
+    drill_fields: [partner_id_xa_partnership]
+    link: {
+      label: "Active partners without nurture Details"
+      url: "https://stratappspartner.looker.com/dashboards/38?
+      &f[partner_nurtures.Company_Name]={{ _filter['partner_nurtures.Company_Name'] | url_encode }}
+      &f[partner_nurtures.Category_Selector]={{ _filter['partner_nurtures.Category_Selector'] | url_encode }}"
     }
+  }
 
 
     measure: count {
@@ -2963,14 +2944,16 @@ group by 1)f  on (f.vendor_company_id=xa_company_d.company_id)
       ]
       link:{
         label:"With Nurture Details"
-        url: "https://stratappspartner.looker.com/dashboards/32?Company%20Name={{_filters['partner_nurtures.company_name'] | url_encode }}"
+        url: "https://stratappspartner.looker.com/dashboards/32?Company%20Name={{_filters['partner_nurtures.company_name']
+            | url_encode }}"
 
       }
 
 
       link: {
         label: "Without Nurture Details"
-        url: "https://stratappspartner.looker.com/dashboards/38?Company%20Name={{ _filters['partner_nurtures.company_name'] | url_encode }}
+        url: "https://stratappspartner.looker.com/dashboards/38?Company%20Name={{ _filters['partner_nurtures.company_name'] |
+            url_encode }}
         &f[partner_nurtures.Category_Selector]={{ _filters['partner_nurtures.Category_Selector'] | url_encode }}"
 
       }
@@ -3299,10 +3282,10 @@ group by 1)f  on (f.vendor_company_id=xa_company_d.company_id)
       type: number
       sql: ${TABLE}.totalPartner1 ;;
     }
-  dimension: totalPartner2 {
-    type: number
-    sql: ${TABLE}.totalPartner2 ;;
-  }
+    dimension: totalPartner2 {
+      type: number
+      sql: ${TABLE}.totalPartner2 ;;
+    }
 
 
 
@@ -4495,6 +4478,7 @@ view: email_auto_respones {
     type: count_distinct
     sql: ${email_opened_views_minute} ;;
     drill_fields: [campaign_name,subject,email_opened_views_minute]
+    filters: [email_opened_views_minute: "-NULL"]
   }
 
   measure: param {
@@ -4513,13 +4497,15 @@ view: email_auto_respones {
   measure: Email_Clicked{
     type: count_distinct
     sql: ${email_clicked_minute} ;;
-    drill_fields: [campaign_name,clicked_url_names,email_opened_views_minute]
+    drill_fields: [campaign_name,clicked_url_names,email_clicked_minute]
+    filters: [email_clicked_minute:  "-NULL"]
   }
   measure: Email_Autoresponses {
     type: count_distinct
     sql: ${email_auto_responses} ;;
     drill_fields: [campaign_name,Reason,email_response_reply_in_days,
-      email_response_reply_time_raw]
+     email_response_reply_time_time]
+  filters: [email_response_reply_time_time: "-NULL"]
 
   }
 
@@ -4527,15 +4513,17 @@ view: email_auto_respones {
     type: count_distinct
     sql: ${email_auto_responses_opened} ;;
     drill_fields:[campaign_name,Reason,email_response_reply_in_days,
-      email_response_reply_time_date,email_auto_responses_opened_time_raw,
+      email_response_reply_time_time,email_auto_responses_opened_time_time,
       Email_AutoResponses_Opened]
+    filters: [email_auto_responses_opened_time_time: "-NULL"]
   }
 
   measure: Website_Visit_Autoresponses{
     type: count_distinct
     sql: ${website_auto_responses} ;;
     drill_fields: [campaign_name,When_To_Send_Email,website_response_reply_in_days,
-      website_response_reply_time_raw]
+      website_response_reply_time_time]
+    filters: [website_response_reply_time_time: "-NULL"]
 
   }
 
@@ -4543,14 +4531,16 @@ view: email_auto_respones {
     type: count_distinct
     sql: ${website_auto_responses_opened} ;;
     drill_fields: [campaign_name,When_To_Send_Email,website_response_reply_in_days,
-      website_response_reply_time_date,website_auto_responses_opened_time_raw,
+      website_response_reply_time_time,website_auto_responses_opened_time_time,
       Website_Responses_EmailOpened]
+    filters: [website_auto_responses_opened_time_time: "-NULL"]
   }
 
   measure: Campaign_Email_Sent {
     type: count_distinct
     sql: ${campaign_email_sent_id} ;;
-    drill_fields: [campaign_name,campaign_email_sent_time_raw]
+    drill_fields: [campaign_name,campaign_email_sent_time_time]
+    filters: [campaign_email_sent_time_time: "-NULL"]
 
   }
 
@@ -4560,6 +4550,7 @@ view: email_auto_respones {
     drill_fields: [campaign_name,Reason,email_response_reply_in_days,
       email_response_sent_time_time,
       Email_Autoresponses_Sent]
+    filters: [email_response_sent_time_time: "-NULL"]
   }
 
 
@@ -4568,6 +4559,7 @@ view: email_auto_respones {
     sql: ${website_response_sent_time_id} ;;
     drill_fields: [campaign_name,When_To_Send_Email,website_response_reply_in_days,
       website_response_reply_time_time,website_response_sent_time_time]
+    filters: [website_response_sent_time_time: "-NULL"]
 
   }
 
@@ -5207,178 +5199,104 @@ view: auto_responses_summary {
   }
 }
 
-
-
-
-
-
-
-
-  explore: user_profile  {
-    label: "1 Vendor dashboard"
-    view_name: xa_user_profile_f
-
-    join: xa_campaign_d {
-      type: left_outer
-      relationship: many_to_one
-      sql_on: ${xa_user_profile_f.campaign_id}=${xa_campaign_d.campaign_id} ;;
-    }
-    join: xa_company_d {
-      type: left_outer
-      relationship: many_to_one
-      sql_on: ${xa_user_profile_f.company_id}=${xa_company_d.company_id} ;;
-    }
-    join: xa_role_d {
-      type: inner
-      relationship: many_to_one
-      sql_on: ${xa_user_profile_f.role_id}=${xa_role_d.role_id} ;;
-    }
-    join: xa_user_d {
-      type: inner
-      relationship: many_to_one
-      sql_on: ${xa_user_profile_f.user_id}=${xa_user_d.user_id} ;;
-    }
-    join: xa_team_member_d {
-      type: inner
-      relationship:many_to_one
-      sql_on: ${xa_user_profile_f.company_id}=${xa_team_member_d.company_id} ;;
-    }
-    join: xa_campaign_user_userlist_d {
-      type: left_outer
-      relationship: one_to_many
-      sql_on: ${xa_campaign_d.campaign_id}=${xa_campaign_user_userlist_d.campaign_id} ;;
-    }
-    join: xa_emaillog_d {
-      type: left_outer
-      relationship: one_to_many
-      sql_on: ${xa_campaign_d.campaign_id}=${xa_emaillog_d.campaign_id} ;;
-    }
-    join: xa_xtremandlog_d {
-      type: left_outer
-      relationship: one_to_many
-      sql_on: ${xa_campaign_d.campaign_id}=${xa_xtremandlog_d.campaign_id} ;;
-    }
-    join:xa_user_list_d {
-      type: left_outer
-      relationship: one_to_many
-      sql_on:${xa_user_d.user_id}=${xa_user_list_d.customer_id};;
-    }
-    join: xa_emailtemplates_d {
-      type: inner
-      relationship: one_to_many
-      sql_on:${xa_user_d.user_id}=${xa_emailtemplates_d.user_id} ;;
-    }
-    join: xa_campaign_deal_registration_d {
-      type: left_outer
-      relationship: one_to_many
-      sql_on: ${xa_campaign_d.campaign_id}=${xa_campaign_deal_registration_d.campaign_id} ;;
-
-    }
-  }
-
-
-
-############# 2 Partners Dashboard ##############
-
-  explore: xa_user_list_d {
-    label: "2 Partner dashboard"
-    view_name: xa_user_list_d
-
-    join: xa_user_d {
-      type: inner
-      relationship: many_to_one
-      sql_on: ${xa_user_list_d.customer_id}=${xa_user_d.user_id} ;;
-    }
-    join: xa_user_d_partner {
-      from: xa_user_d
-      type: inner
-      relationship: many_to_one
-      sql_on: ${xa_user_list_d.listby_partner_id}=${xa_user_d_partner.user_id} ;;
-    }
-    join:xa_user_list_d1  {
-      from:xa_user_list_d
-      type:left_outer
-      relationship: many_to_many
-      sql_on: ${xa_user_list_d.listby_partner_id}=${xa_user_list_d1.customer_id} ;;
-    }
-    join: xa_company_d {
-      type: left_outer
-      relationship: many_to_one
-      sql_on: ${xa_user_d.company_id}=${xa_company_d.company_id} ;;
-    }
-    join: xa_company_d_partner {
-      from: xa_company_d
-      type: left_outer
-      relationship: many_to_one
-      sql_on: ${xa_user_d.company_id}=${xa_company_d.company_id} ;;
-    }
-    join:xa_user_d_contact {
-      from: xa_user_d
-      type: left_outer
-      relationship: many_to_one
-      sql_on: ${xa_user_list_d1.listby_partner_id}=${xa_user_d.user_id} ;;
-    }
-  }
-
-
-explore: xa_user_d {
-  conditionally_filter: {
-    filters: [company_id: "399" ]
-    unless: [xa_campaign_d.launch_date]
-  }
-  join: xa_campaign_d {
-    relationship: many_to_one
-    sql_on:  ${xa_user_d.user_id}=${xa_campaign_d.customer_id} ;;
-  }
-}
-
-
-explore:dimensions  {}
-view: dimensions {
+explore: partner_analytics {}
+view: partner_analytics {
   derived_table: {
-    sql: WITH auto_responses_summary AS (select * from xamplify_test.v_responses
-       )
-      SELECT
-        auto_responses_summary."Partner Company Name"  AS "auto_responses_summary.partner_company_name",
-        auto_responses_summary."Campaign Name"  AS "auto_responses_summary.campaign_name",
-        COUNT(DISTINCT (auto_responses_summary."#Total Recipients"
-      ) ) AS "auto_responses_summary.Total_Recipients",
-        COUNT(DISTINCT (auto_responses_summary."#Active Recipients"
-      ) ) AS "auto_responses_summary.Active_Recipients",
-        Round(100.00* (COUNT(DISTINCT (auto_responses_summary."#Active Recipients"
-      ) )
-      )/NULLIF ((COUNT(DISTINCT (auto_responses_summary."#Total Recipients"
-      ) )
-      ),0))  AS "auto_responses_summary.Active_Recipients_Percent",
-        COUNT(DISTINCT (auto_responses_summary."#Campaign Email Sent Id"
-      ) ) AS "auto_responses_summary.Campaign_Email_Sent",
-        COUNT(DISTINCT (auto_responses_summary."#Email Opened (Views)"
-      ) ) AS "auto_responses_summary.Email_Opened",
-        COUNT(DISTINCT (auto_responses_summary."#Email Clicked"
-      ) ) AS "auto_responses_summary.Email_Clicked",
-        (COUNT(DISTINCT (auto_responses_summary."#Total Recipients"
-      ) )
-      )-(COUNT(DISTINCT (auto_responses_summary."#Active Recipients"
-      ) )
-      )  AS "auto_responses_summary.Email_Not_Opened",
-        COUNT(DISTINCT (auto_responses_summary."#Email Auto Responses"
-      ) ) AS "auto_responses_summary.Email_Auto_Responses",
-        COUNT(DISTINCT (auto_responses_summary."#Email Response Sent Time ID"
-      ) ) AS "auto_responses_summary.Email_Auto_Respoonses_Sent",
-        COUNT(DISTINCT (auto_responses_summary."#Email Auto Responses Opened"
-      ) ) AS "auto_responses_summary.Email_Auto_Responses_Opened",
-        COUNT(DISTINCT (auto_responses_summary."#Website Auto Responses"
-      ) ) AS "auto_responses_summary.Website_Auto_Responses",
-        COUNT(DISTINCT (auto_responses_summary."#Website Response Sent Time ID"
-      ) ) AS "auto_responses_summary.Website_Auto_Responses_Sent",
-        COUNT(DISTINCT (auto_responses_summary."#Website Auto Responses Opened"
-      ) ) AS "auto_responses_summary.Website_Auto_Responses_Opened"
-      FROM auto_responses_summary
-
-      --WHERE (((auto_responses_summary."Vendor Company Name") = 'Nextiva, Inc.')) AND (((auto_responses_summary."Partner Company Name") = '26 Connect'))
-      GROUP BY 1,2
-      ORDER BY 3 DESC
-
+    sql: with a as (
+      select * from (
+      select * from (
+      with pc1 as (
+      select  v_com,customer_id,company_id,p_com,email_id,firstname,lastname,datereg,datelastlogin
+      ,campaign_name as first_campaign_name,launch_time as first_campaign_launch_time from (
+      select distinct xcp.company_name as v_com ,xc1.customer_id,xup1.email_id,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
+      ,xup1.company_id,xcp1.company_name as p_com,xc1.campaign_name,xc1.launch_time
+      ,row_number()over(partition by xup1.company_id order by xc1.launch_time) rn
+      from public."xt_campaign" xc
+      LEFT JOIN public."xt_user_profile" "xup" ON (xc."customer_id" = "xup"."user_id")
+      LEFT JOIN public."xt_company_profile" "xcp" ON ("xup"."company_id" = "xcp"."company_id")
+      LEFT JOIN public."xt_campaign" "xc1" ON ("xc"."campaign_id" = "xc1"."parent_campaign_id")
+      left JOIN public."xt_user_profile" "xup1" ON ("xc1"."customer_id" = "xup1"."user_id")
+      LEFT JOIN public."xt_company_profile" "xcp1" ON ("xup1"."company_id" = "xcp1"."company_id")
+      ) fc where rn = 1),
+      pc2 as (
+      select  v_com,customer_id,company_id,p_com,email_id,firstname,lastname,datereg,datelastlogin
+      ,campaign_name as second_campaign_name,launch_time as second_campaign_launch_time from (
+      select distinct xcp.company_name as v_com ,xc1.customer_id,xup1.email_id,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
+      ,xup1.company_id,xcp1.company_name as p_com,xc1.campaign_name,xc1.launch_time
+      ,row_number()over(partition by xup1.company_id order by xc1.launch_time) rn
+      from public."xt_campaign" xc
+      LEFT JOIN public."xt_user_profile" "xup" ON (xc."customer_id" = "xup"."user_id")
+      LEFT JOIN public."xt_company_profile" "xcp" ON ("xup"."company_id" = "xcp"."company_id")
+      LEFT JOIN public."xt_campaign" "xc1" ON ("xc"."campaign_id" = "xc1"."parent_campaign_id")
+      left JOIN public."xt_user_profile" "xup1" ON ("xc1"."customer_id" = "xup1"."user_id")
+      LEFT JOIN public."xt_company_profile" "xcp1" ON ("xup1"."company_id" = "xcp1"."company_id")
+      ) sc where rn = 2
+      order by p_com),
+      pc3 as (
+      select v_com,customer_id,company_id,p_com,email_id,firstname,lastname,datereg,datelastlogin
+      ,campaign_name as recent_campaign_name,launch_time as recent_campaign_launch_time from (
+      select distinct xcp.company_name as v_com ,xc1.customer_id,xup1.email_id,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
+      ,xup1.company_id,xcp1.company_name as p_com,xc1.campaign_name,xc1.launch_time
+      ,row_number()over(partition by xup1.company_id order by xc1.launch_time desc) rn
+      from public."xt_campaign" xc
+      LEFT JOIN public."xt_user_profile" "xup" ON (xc."customer_id" = "xup"."user_id")
+      LEFT JOIN public."xt_company_profile" "xcp" ON ("xup"."company_id" = "xcp"."company_id")
+      LEFT JOIN public."xt_campaign" "xc1" ON ("xc"."campaign_id" = "xc1"."parent_campaign_id")
+      left JOIN public."xt_user_profile" "xup1" ON ("xc1"."customer_id" = "xup1"."user_id")
+      LEFT JOIN public."xt_company_profile" "xcp1" ON ("xup1"."company_id" = "xcp1"."company_id")
+      ) rc where rn = 1
+      order by p_com)
+      select distinct pc1.v_com as "Vendor Company Name",pc1.company_id,pc1.p_com as "Partner Company Name",pc1.email_id as "Email ID"
+      ,pc1.firstname as "First Name",pc1.lastname "Last Name",pc1.datereg as "Registered Date",pc1.datelastlogin as "Last Login Date"
+      ,pc1.first_campaign_name as "First Campaign Name",pc1.first_campaign_launch_time as "First Campaign Launch Time"
+      ,pc2.second_campaign_name as "Second Campaign Name",pc2.second_campaign_launch_time as "Second Campaign Launch Time"
+      ,pc3.recent_campaign_name as "Recent Campaign Name",pc3.recent_campaign_launch_time as "Recent Campaign Launch Time"
+      from pc1 left join pc2 on pc1.company_id = pc2.company_id
+      left join pc3 on pc3.company_id = pc2.company_id
+      order by pc1.v_com,pc1.p_com) total
+      union all
+      select * from (
+      with a as (
+      select distinct xp.vendor_company_id,xcp.company_name as v_com,xp.partner_company_id,xcp1.company_name as p_com,xup1.email_id
+      ,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
+      from xt_user_profile xup
+      left join xt_company_profile xcp on xcp.company_id = xup.company_id
+      left join xt_partnership xp on xp.vendor_company_id = xcp.company_id
+      left join xt_user_profile xup1 on xup1.user_id = xp.partner_id
+      left join xt_company_profile xcp1 on xcp1.company_id = xup1.company_id
+      where xcp1.company_id is not null
+      ),
+      b as (
+      select xup.company_id,xup.user_id,xc.campaign_id ,xc.vendor_organization_id
+      from xt_campaign xc
+      left join xt_user_profile xup on xup.user_id = xc.customer_id
+      where xc.parent_campaign_id is not null
+      )
+      select distinct a.v_com,a.partner_company_id,a.p_com,a.email_id,a.firstname,a.lastname,a.datereg,a.datelastlogin
+      ,null::text,null::timestamp,null::text,null::timestamp,null::text,null::timestamp
+      from a left join b on a.partner_company_id = b.company_id and a.vendor_company_id = b.vendor_organization_id
+      where a.partner_company_id is not null
+      and b.campaign_id is null
+      ) as inactive
+      union all
+      select distinct xcp.company_name,xcp1.company_id,xcp1.company_name,xup1.email_id,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
+      ,null::text,null::timestamp,null::text,null::timestamp,null::text,null::timestamp
+      from xt_partnership xp
+      left join xt_company_profile xcp on xcp.company_id = xp.vendor_company_id
+      left join xt_user_profile xup1 on xup1.user_id = xp.partner_id
+      left join xt_company_profile xcp1 on xcp1.company_id = xup1.company_id
+      where partner_company_id is null
+      ) as incomplete
+      ),
+      b as (
+      select  xup.company_id,xc.campaign_id,xc.campaign_name,xc.campaign_type,xc.launch_time
+      from xt_campaign xc
+      left join xt_user_profile xup on xc.customer_id = xup.user_id
+      where xc.is_nurture_campaign and xc.parent_campaign_id is not null
+      )
+      select distinct a.*,b.campaign_id,b.campaign_name as "Campaign Name",b.campaign_type as "Campaign Type",b.launch_time as "Launch Time"
+      from a left join b on a.company_id = b.company_id
+      order by 1,2
        ;;
   }
 
@@ -5387,98 +5305,138 @@ view: dimensions {
     drill_fields: [detail*]
   }
 
-  dimension: auto_responses_summary_partner_company_name {
+  measure: Total_Redistributed_Campaigns{
+    type: count_distinct
+    sql: ${campaign_id};;
+    drill_fields: [campaign_name,campaign_type,launch_time_time]
+  }
+
+  dimension: vendor_company_name {
     type: string
-    sql: ${TABLE}."auto_responses_summary.partner_company_name" ;;
+    label: "Vendor Company Name"
+    sql: ${TABLE}."Vendor Company Name" ;;
   }
 
-  dimension: auto_responses_summary_campaign_name {
+  dimension: company_id {
+    type: number
+    sql: ${TABLE}."company_id" ;;
+  }
+
+  dimension: partner_company_name {
     type: string
-    sql: ${TABLE}."auto_responses_summary.campaign_name" ;;
+    label: "Partner Company Name"
+    sql: ${TABLE}."Partner Company Name" ;;
   }
 
-  dimension: auto_responses_summary_total_recipients {
-    type: number
-    sql: ${TABLE}."auto_responses_summary.Total_Recipients" ;;
+  dimension: email_id {
+    type: string
+    label: "Email ID"
+    sql: ${TABLE}."Email ID" ;;
   }
 
-  dimension: auto_responses_summary_active_recipients {
-    type: number
-    sql: ${TABLE}."auto_responses_summary.Active_Recipients" ;;
+  dimension: first_name {
+    type: string
+    label: "First Name"
+    sql: ${TABLE}."First Name" ;;
   }
 
-  dimension: auto_responses_summary_active_recipients_percent {
-    type: number
-    sql: ${TABLE}."auto_responses_summary.Active_Recipients_Percent" ;;
+  dimension: last_name {
+    type: string
+    label: "Last Name"
+    sql: ${TABLE}."Last Name" ;;
   }
 
-  dimension: auto_responses_summary_campaign_email_sent {
-    type: number
-    sql: ${TABLE}."auto_responses_summary.Campaign_Email_Sent" ;;
+  dimension_group: registered_date {
+    type: time
+    label: "Registered Date"
+    sql: ${TABLE}."Registered Date" ;;
   }
 
-  dimension: auto_responses_summary_email_opened {
-    type: number
-    sql: ${TABLE}."auto_responses_summary.Email_Opened" ;;
+  dimension_group: last_login_date {
+    type: time
+    label: "Last Login Date"
+    sql: ${TABLE}."Last Login Date" ;;
   }
 
-  dimension: auto_responses_summary_email_clicked {
-    type: number
-    sql: ${TABLE}."auto_responses_summary.Email_Clicked" ;;
+  dimension: first_campaign_name {
+    type: string
+    label: "First Campaign Name"
+    sql: ${TABLE}."First Campaign Name" ;;
   }
 
-  dimension: auto_responses_summary_email_not_opened {
-    type: number
-    sql: ${TABLE}."auto_responses_summary.Email_Not_Opened" ;;
+  dimension_group: first_campaign_launch_time {
+    type: time
+    label: "First Campaign Launch Time"
+    sql: ${TABLE}."First Campaign Launch Time" ;;
   }
 
-  dimension: auto_responses_summary_email_auto_responses {
-    type: number
-    sql: ${TABLE}."auto_responses_summary.Email_Auto_Responses" ;;
+  dimension: second_campaign_name {
+    type: string
+    label: "Second Campaign Name"
+    sql: ${TABLE}."Second Campaign Name" ;;
   }
 
-  dimension: auto_responses_summary_email_auto_respoonses_sent {
-    type: number
-    sql: ${TABLE}."auto_responses_summary.Email_Auto_Respoonses_Sent" ;;
+  dimension_group: second_campaign_launch_time {
+    type: time
+    label: "Second Campaign Launch Time"
+    sql: ${TABLE}."Second Campaign Launch Time" ;;
   }
 
-  dimension: auto_responses_summary_email_auto_responses_opened {
-    type: number
-    sql: ${TABLE}."auto_responses_summary.Email_Auto_Responses_Opened" ;;
+  dimension: recent_campaign_name {
+    type: string
+    label: "Recent Campaign Name"
+    sql: ${TABLE}."Recent Campaign Name" ;;
   }
 
-  dimension: auto_responses_summary_website_auto_responses {
-    type: number
-    sql: ${TABLE}."auto_responses_summary.Website_Auto_Responses" ;;
+  dimension_group: recent_campaign_launch_time {
+    type: time
+    label: "Recent Campaign Launch Time"
+    sql: ${TABLE}."Recent Campaign Launch Time" ;;
   }
 
-  dimension: auto_responses_summary_website_auto_responses_sent {
-    type: number
-    sql: ${TABLE}."auto_responses_summary.Website_Auto_Responses_Sent" ;;
+  dimension: campaign_id {
+    type: string
+    sql: ${TABLE}."campaign_id" ;;
   }
 
-  dimension: auto_responses_summary_website_auto_responses_opened {
-    type: number
-    sql: ${TABLE}."auto_responses_summary.Website_Auto_Responses_Opened" ;;
+  dimension: campaign_name {
+    type: string
+    label: "Campaign Name"
+    sql: ${TABLE}."Campaign Name" ;;
+  }
+
+  dimension: campaign_type {
+    type: string
+    label: "Campaign Type"
+    sql: ${TABLE}."Campaign Type" ;;
+  }
+
+  dimension_group: launch_time {
+    type: time
+    label: "Launch Time"
+    sql: ${TABLE}."Launch Time" ;;
   }
 
   set: detail {
     fields: [
-      auto_responses_summary_partner_company_name,
-      auto_responses_summary_campaign_name,
-      auto_responses_summary_total_recipients,
-      auto_responses_summary_active_recipients,
-      auto_responses_summary_active_recipients_percent,
-      auto_responses_summary_campaign_email_sent,
-      auto_responses_summary_email_opened,
-      auto_responses_summary_email_clicked,
-      auto_responses_summary_email_not_opened,
-      auto_responses_summary_email_auto_responses,
-      auto_responses_summary_email_auto_respoonses_sent,
-      auto_responses_summary_email_auto_responses_opened,
-      auto_responses_summary_website_auto_responses,
-      auto_responses_summary_website_auto_responses_sent,
-      auto_responses_summary_website_auto_responses_opened
+      vendor_company_name,
+      company_id,
+      partner_company_name,
+      email_id,
+      first_name,
+      last_name,
+      registered_date_time,
+      last_login_date_time,
+      first_campaign_name,
+      first_campaign_launch_time_time,
+      second_campaign_name,
+      second_campaign_launch_time_time,
+      recent_campaign_name,
+      recent_campaign_launch_time_time,
+      campaign_id,
+      campaign_name,
+      campaign_type,
+      launch_time_time
     ]
   }
 }
