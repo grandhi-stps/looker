@@ -2852,6 +2852,23 @@ view: partner_nurtures {
 
   }
 
+  # parameter: Total_Nurture_count {
+  #  label: "Total Nurture Count"
+  # allowed_value: {value:"Nurtures"}
+  #}
+
+  #measure: Nurture_count {
+  # type: count_distinct
+  #  sql:
+  # case when {% parameter Total_Nurture_count %} = 'Nurtures'
+  #  then ${action_id_a}
+  # end ;;
+  #}
+
+#  measure: inactive_nurtures {
+  #   label: "inactive_nurtures"
+  #  sql: ${Nurture_count}-${Active_Nurture} ;;
+  #}
 
   measure: Active_partners_with_Nurtures {
     type: count_distinct
@@ -2865,17 +2882,19 @@ view: partner_nurtures {
     ;;
 
     }
-  measure:Active_partners_without_Nurtures {
-    type: number
-    sql: ${partner_companies_d}-${Active_partners_with_Nurtures} ;;
-    drill_fields: [partner_id_xa_partnership]
-    link: {
-      label: "Active partners without nurture Details"
-      url: "https://stratappspartner.looker.com/dashboards/38?
-      &f[partner_nurtures.Company_Name]={{ _filter['partner_nurtures.Company_Name'] | url_encode }}
-      &f[partner_nurtures.Category_Selector]={{ _filter['partner_nurtures.Category_Selector'] | url_encode }}"
+    measure:Active_partners_without_Nurtures {
+      type: number
+      sql: ${partner_companies_d}-${Active_partners_with_Nurtures} ;;
+      drill_fields: [partner_id_xa_partnership]
+      link: {
+        label: "Active partners without nurture Details"
+        url: "https://stratappspartner.looker.com/dashboards/38?
+        &f[partner_nurtures.Company_Name]={{ filters['partner_nurtures.Company_Name'] | url_encode }}
+        &f[partner_nurtures.Category_Selector]={{ _filters['partner_nurtures.Category_Selector'] | url_encode }}"
+
+      }
+
     }
-  }
 
 
     measure: count {
@@ -2913,7 +2932,7 @@ view: partner_nurtures {
       type: count_distinct
       sql:case when  ${partner_company_id_xa_partnership} is not null then   ${partner_id_xa_partnership} end;;
 
-      filters:[customer_id_xa_campaign_d: "-NULL"]
+      filters:[customer_id_xa_campaign_d: "-NULL",totalPartner2: "-NULL"]
 
       drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
         datereg_xa_user_d1_time,status_xa_user_d1,name_xa_drip_email_history_d,
@@ -2926,7 +2945,7 @@ view: partner_nurtures {
       type: count_distinct
       sql:case when  ${partner_company_id_xa_partnership} is not null then   ${partner_id_xa_partnership} end;;
 
-      filters:[customer_id_xa_campaign_d: "NULL"]
+      filters:[customer_id_xa_campaign_d: "NULL",totalPartner2: "-NULL"]
 
       drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
         datereg_xa_user_d1_time,status_xa_user_d1,name_xa_drip_email_history_d,
@@ -2938,22 +2957,21 @@ view: partner_nurtures {
     measure: partner_companies_d {
       type: count_distinct
       sql:case when  ${partner_company_id_xa_partnership} is not null then   ${partner_id_xa_partnership} end;;
+      filters: [totalPartner1: "-NULL",partner_company_id_xa_partnership1: "-NULL"]
       drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
         datereg_xa_user_d1_time,status_xa_user_d1,name_xa_drip_email_history_d,
         subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_time
       ]
       link:{
         label:"With Nurture Details"
-        url: "https://stratappspartner.looker.com/dashboards/32?Company%20Name={{_filters['partner_nurtures.company_name']
-            | url_encode }}"
+        url: "https://stratappspartner.looker.com/dashboards/32?Company%20Name={{_filters['partner_nurtures.company_name'] | url_encode }}"
 
       }
 
 
       link: {
         label: "Without Nurture Details"
-        url: "https://stratappspartner.looker.com/dashboards/38?Company%20Name={{ _filters['partner_nurtures.company_name'] |
-            url_encode }}
+        url: "https://stratappspartner.looker.com/dashboards/38?Company%20Name={{ _filters['partner_nurtures.company_name'] | url_encode }}
         &f[partner_nurtures.Category_Selector]={{ _filters['partner_nurtures.Category_Selector'] | url_encode }}"
 
       }
@@ -2963,6 +2981,7 @@ view: partner_nurtures {
     measure: partner_without_companies {
       type: count_distinct
       sql:case when  ${partner_company_id_xa_partnership} is  null then   ${partner_id_xa_partnership} end;;
+      filters: [totalPartner1: "-NULL",partner_company_id_xa_partnership1: "NULL"]
       drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
         datereg_xa_user_d1_time,status_xa_user_d1,name_xa_drip_email_history_d,
         subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_time
@@ -2981,20 +3000,22 @@ view: partner_nurtures {
     measure: Partners_with_nurture{
       type: count_distinct
       sql: case when ${name_xa_drip_email_history_d} is not null and ${partner_company_id_xa_partnership} is not null then ${partner_id_xa_partnership} end;;
-      filters: {
-        field: name_xa_drip_email_history_d
-        value:  "-NULL"
-      }
+     # filters: {
+      #  field: name_xa_drip_email_history_d
+       # value:  "-NULL"
+      #}
+      filters: [name_xa_drip_email_history_d: "-NULL", totalPartner2: "-NULL"]
       drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_date,datereg_xa_user_d1_date,status_xa_user_d1]
 
     }
     measure: Partners_without_nurture{
       type: count_distinct
       sql: case when ${name_xa_drip_email_history_d} is null and ${partner_company_id_xa_partnership} is not null then ${partner_id_xa_partnership} end;;
-      filters: {
-        field: name_xa_drip_email_history_d
-        value:  "NULL"
-      }
+     # filters: {
+      #  field: name_xa_drip_email_history_d
+       # value:  "NULL"
+      #}
+      filters: [name_xa_drip_email_history_d: "NULL", totalPartner2: "-NULL"]
       drill_fields:[company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_date,datereg_xa_user_d1_date,datelastlogin_xa_user_d1_date,status_xa_user_d1]
 
     }
@@ -3069,6 +3090,11 @@ view: partner_nurtures {
       label: "partner_company_id"
       sql: ${TABLE}.partner_company_id ;;
     }
+  dimension: partner_company_id_xa_partnership1 {
+    type: string
+    label: "partner_company_id1"
+    sql: ${TABLE}.partner_company_id ;;
+  }
     dimension: role_id {
       type: number
       sql: ${TABLE}.role_id ;;
@@ -3279,11 +3305,11 @@ view: partner_nurtures {
     }
 
     dimension: totalPartner1 {
-      type: number
+      type: string
       sql: ${TABLE}.totalPartner1 ;;
     }
     dimension: totalPartner2 {
-      type: number
+      type: string
       sql: ${TABLE}.totalPartner2 ;;
     }
 
@@ -3374,7 +3400,6 @@ view: partner_nurtures {
       ]
     }
   }
-
 
 explore:team_members  {}
 view: team_members {
@@ -4486,12 +4511,21 @@ view: email_auto_respones {
     sql: case when {% parameter Parameter_Selector  %}='Total_Recipients'
              then ${Total_Recipients}
              when {% parameter Parameter_Selector  %}='Active_Recipients'
-            then  ${Active_Recipients}
+            then ${Active_Recipients}
             when {% parameter Parameter_Selector %}='Email_NotOpened'
             then ${Email_NotOpened}
             end
             ;;
   }
+  measure: param1 {
+    type: number
+    sql:  case when {% parameter Parameter_Selector  %}='Active_Recipients'
+             then ${Website_Responses_EmailOpened}
+            end
+    ;;
+  }
+
+
 
 
   measure: Email_Clicked{
