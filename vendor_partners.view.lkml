@@ -4,16 +4,24 @@ view: vendor_partners {
       ul.listby_partner_id  "Total Partners",
             c.company_name as "Vendor Company Name",
             c1.company_name as "Partner Company Name",
+            c1.company_id as "Partners Company ID",
             ud1.company_id as "Partner Company ID",
             ul.is_partner_userlist as "is_partner_userlist",
           cam.launch_time as "Launch Time" ,
-          ud1.email_id as "Partner Email ID",
-          ud1.firstname as "Partner Firstname",
-          ud1.lastname as "Partner Lastname",
-          ud.created_time as "Partner CreatedTime",
-          ud1.datereg as "Datereg",
-          ud1.status as"Status",
-          ud2.company_id as "Company_id"
+          ud1.user_id as "Partner Users",
+          ud2.email_id as "Partner Email ID",
+          ud2.firstname as "Partner Firstname",
+          ud2.lastname as "Partner Lastname",
+          ud2.created_time as "Partner CreatedTime",
+          ud2.datereg as "Datereg",
+          ud2.status as"Status",
+          ud2.company_id as "Company_id",
+          ud1.email_id as "Partners Email ID",
+          ud1.firstname as "Partners Firstname",
+          ud1.lastname as "Partners Lastname",
+          ud1.created_time as "Partners CreatedTime",
+          ud1.datereg as "DateReg",
+          ud1.status as"Partner Status"
           from
             xamplify_test.xa_user_d ud
             left join (select distinct c.company_id,c.company_name from xamplify_test.xa_company_d c, xamplify_test.xa_user_d  u,xamplify_test.xa_user_role_d r
@@ -27,7 +35,7 @@ view: vendor_partners {
           left join xamplify_test.xa_user_list_d ul on(ud.user_id=ul.customer_id)
           left join xamplify_test.xa_user_d ud2 on (ud2.user_id=ul.listby_partner_id)
           left join xamplify_test.xa_user_d ud1 on(ud1.user_id=cam1.customer_id)
-          left join xamplify_test.xa_company_d c1 on(ud1.company_id=c1.company_id)
+          left join xamplify_test.xa_company_d c1 on(ud2.company_id=c1.company_id)
             --where ud.company_id=399
             where ul.is_partner_userlist= true
  ;;
@@ -56,6 +64,12 @@ view: vendor_partners {
     sql: ${TABLE}."Partner Company Name" ;;
   }
 
+  dimension: partners_company_id {
+    type: number
+    label: "Partners Company ID"
+    sql: ${TABLE}."Partners Company ID" ;;
+  }
+
   dimension: partner_company_id {
     type: number
     label: "Partner Company ID"
@@ -71,6 +85,12 @@ view: vendor_partners {
     type: time
     label: "Launch Time"
     sql: ${TABLE}."Launch Time" ;;
+  }
+
+  dimension: partner_users {
+    type: number
+    label: "Partner Users"
+    sql: ${TABLE}."Partner Users" ;;
   }
 
   dimension: partner_email_id {
@@ -112,21 +132,64 @@ view: vendor_partners {
     sql: ${TABLE}."Company_id" ;;
   }
 
+  dimension: partners_email_id {
+    type: string
+    label: "Partners Email ID"
+    sql: ${TABLE}."Partners Email ID" ;;
+  }
+
+  dimension: partners_firstname {
+    type: string
+    label: "Partners Firstname"
+    sql: ${TABLE}."Partners Firstname" ;;
+  }
+
+  dimension: partners_lastname {
+    type: string
+    label: "Partners Lastname"
+    sql: ${TABLE}."Partners Lastname" ;;
+  }
+
+  dimension_group: partners_created_time {
+    type: time
+    label: "Partners CreatedTime"
+    sql: ${TABLE}."Partners CreatedTime" ;;
+  }
+
+  dimension_group: date_reg {
+    type: time
+    sql: ${TABLE}."DateReg" ;;
+  }
+
+  dimension: partner_status {
+    type: string
+    label: "Partner Status"
+    sql: ${TABLE}."Partner Status" ;;
+  }
+
   set: detail {
     fields: [
       total_partners,
       vendor_company_name,
       partner_company_name,
+      partners_company_id,
       partner_company_id,
       is_partner_userlist,
       launch_time_time,
+      partner_users,
       partner_email_id,
       partner_firstname,
       partner_lastname,
       partner_created_time_time,
       datereg_time,
       status,
-      company_id
+      company_id,
+      partners_email_id,
+      partners_firstname,
+      partners_lastname,
+      partners_created_time_time,
+      date_reg_time,
+      partner_status
     ]
   }
 }
