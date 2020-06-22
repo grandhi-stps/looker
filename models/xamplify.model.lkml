@@ -1608,7 +1608,7 @@ view: vendor_partners {
   measure: InActive_Partners {
     type: number
     sql:  ${Total_companies}-${Active_Partners};;
-    drill_fields:  [partner_company_name]
+    #drill_fields:  [partner_company_name]
 
   }
 
@@ -3864,7 +3864,7 @@ where ur.role_id=2 )  "Team Member"
   type: number
   sql: ${Team_members1};;
 
-  drill_fields: [vendor_company_name,Role,Team_member_name,teammember_email_id,
+  drill_fields: [vendor_company_name,Role,TeamMemberName,teammember_email_id,
     teammember_status,datereg_date,datelastlogin_date]
 
 }
@@ -3874,10 +3874,12 @@ where ur.role_id=2 )  "Team Member"
 measure: Team_members1 {
   type: count_distinct
   sql: ${teammember_id} ;;
-  drill_fields: [vendor_company_name,Team_member_name,teammember_email_id,
+  drill_fields: [vendor_company_name,TeamMemberName,teammember_email_id,
     teammember_status,teammember_user_role]
 
 }
+
+
 
 
 
@@ -3905,13 +3907,14 @@ dimension: Team_Member_Roles{
                     ;;
   }
 
-
-  dimension: Team_member_name {
+  dimension: TeamMemberName{
     type:  string
-    label: "Team Member Name"
-    sql: concat(${teammember_firstname} , ${teammember_lastname}) ;;
+    label: "TeamMemberName"
+    sql:  concat(${teammember_firstname} , ${teammember_lastname})  ;;
 
   }
+
+
 
   dimension: Partner_Name{
     type: string
@@ -4549,16 +4552,22 @@ view: email_templates {
 explore: partner_team_members  {}
 view: partner_team_members {
   derived_table: {
-    sql: select vendor_company.company_id as "Vendor Company Id",
-       vendor_company.company_name as "Vendor Company Name",
-       partner_company.company_id as "Partner Company Id",
-       partner_company.company_name as "Partner Company Name",
-       tm1.team_member_id as "Team Member ID",
+    sql: select
+      vendor_company.company_id as "Vendor Company Id",
+      vendor_company.company_name as "Vendor Company Name",
+      partner_company.company_id as "Partner Company Id",
+      partner_company.company_name as "Partner Company Name",
+      ud1.email_id as "Partner Email ID",
+      ud1.datereg as "Partner Datereg",
+      ud1.firstname as "Partner Firstname",
+      ud1.lastname as "Partner Lastname",
+      tm1.team_member_id as "Team Member ID",
       tm1.email_id as "Team Member Email Id",
       tm1.firstname as "Team Member First Name",
       tm1.lastname as "Team Member Last Name",
       tm1.status as "Team Member Status",
       tm1.created_time as "Team Member Created Time",
+      tm1.Role as "User Role",
       ud2.user_id "partner",
       c.campaign_id as "Campaign Id",
       c.campaign_name as "Campaign Name",
@@ -4579,20 +4588,61 @@ view: partner_team_members {
       left join xamplify_test.xa_user_d ud1 on ul.listby_partner_id=ud1.user_id
       left join xamplify_test.xa_company_d partner_company on partner_company.company_id=ud1.company_id
       left join xamplify_test.xa_user_d ud2 on(partner_company.company_id=ud2.company_id)
-      left join ( select team_member_id,email_id ,
-      firstname,
-      lastname,
-      status,
-      created_time
-         from xamplify_test.xa_team_member_d where team_member_id not in (select distinct user_id from
-          xamplify_test.xa_user_role_d where role_id in (2)
-        )) as  tm1 on tm1.team_member_id=ud2.user_id
+      left join (select
+          tm.team_member_id as "team_member_id",
+          tm.email_id ,
+          tm.firstname,
+          tm.lastname,
+          tm.status ,
+          tm.created_time,
+          'TeamMember' as Role
+from xamplify_test.xa_team_member_d tm
+where team_member_id in
+(select distinct user_id
+from xamplify_test.xa_user_role_d
+where user_id in
+(select distinct  user_id
+from xamplify_test.xa_user_d
+where company_id in
+(select distinct company_id
+from xamplify_test.xa_user_d
+where user_id in
+(select distinct listby_partner_id
+from xamplify_test.xa_user_list_d where is_partner_userlist=true
+and customer_id in
+(select distinct user_id from xamplify_test.xa_user_d ))))
+ and user_id not in (select user_id from xamplify_test.xa_user_role_d where role_id =2))
+
+ union all
+ (select distinct
+          ud.user_id as "team_member_id",
+          ud.email_id ,
+          ud.firstname,
+          ud.lastname,
+          ud.status ,
+          ud.created_time,
+          'OrgAdmin' as Role
+
+from xamplify_test.xa_user_role_d ur
+inner join
+ xamplify_test.xa_user_d ud on(ud.user_id=ur.user_id)
+where ud.company_id in
+(select distinct company_id
+from xamplify_test.xa_user_d
+where user_id in
+(select distinct listby_partner_id
+from xamplify_test.xa_user_list_d where is_partner_userlist=true
+and customer_id in
+(select distinct user_id from xamplify_test.xa_user_d )))  and ur.role_id =2))
+    tm1 on tm1.team_member_id=ud2.user_id
       left join xamplify_test.xa_campaign_d c on(c.customer_id=tm1.team_member_id)
       --left join xamplify_test.xa_campaign_user_userlist_d cul on(cul.campaign_id=c.campaign_id)
       left join xamplify_test.xa_user_role_d  ur on(ur.user_id=c.customer_id)
       left join xamplify_test.xa_emaillog_d el on(c.campaign_id=el.campaign_id)
       where ul.is_partner_userlist= true
+
        ;;
+
   }
 
   measure: count {
@@ -4607,11 +4657,11 @@ view: partner_team_members {
     drill_fields: [campaign_id,campaign_name,campaign_type,campaign_schedule_type]
   }
 
-    measure: Team_members {
-      type: count_distinct
-      sql: ${team_member_id} ;;
-      drill_fields: [team_member_id,Team_member_name,email_id,Team_Member_Status]
-    }
+  measure: Team_members {
+    type: count_distinct
+    sql: ${team_member_id} ;;
+    drill_fields: [team_member_id,Team_member_name,email_id,Team_Member_Status,teammember_user_role]
+  }
 
   measure: Views {
     type: count_distinct
@@ -4622,6 +4672,12 @@ view: partner_team_members {
   measure: Partners {
     type: count_distinct
     sql: ${partner_company_id} ;;
+    drill_fields: [partner_company_name,partner_email_id]
+  }
+
+  dimension: Partner_Name{
+    type: string
+    sql: concat (${partner_firstname},${partner_lastname} ;;
   }
 
   dimension: vendor_company_id {
@@ -4642,10 +4698,42 @@ view: partner_team_members {
     sql: ${TABLE}."Partner Company Id" ;;
   }
 
+
+  dimension:email_id{
+  type:  string
+  label: "Team Member Email Id"
+  sql: ${TABLE}."Team Member Email Id" ;;
+}
+
+
   dimension: partner_company_name {
     type: string
     label: "Partner Company Name"
     sql: ${TABLE}."Partner Company Name" ;;
+  }
+
+  dimension: partner_email_id {
+    type: string
+    label: "Partner Email ID"
+    sql: ${TABLE}."Partner Email ID" ;;
+  }
+
+  dimension_group: partner_datereg {
+    type: time
+    label: "Partner Firstname"
+    sql: ${TABLE}."Partner Firstname" ;;
+  }
+
+  dimension: partner_firstname {
+    type: string
+    label: "Partner Datereg"
+    sql: ${TABLE}."Partner Datereg" ;;
+  }
+
+  dimension: partner_lastname {
+    type: string
+    label: "Partner Lastname"
+    sql: ${TABLE}."Partner Lastname" ;;
   }
 
   dimension: team_member_id {
@@ -4654,18 +4742,17 @@ view: partner_team_members {
     sql: ${TABLE}."Team Member ID" ;;
   }
 
-  dimension: email_id {
-    type: string
-    label: "Team Member Email Id"
-    sql: ${TABLE}. "Team Member Email Id" ;;
-
-  }
 
   dimension: Team_Member_First_Name{
     type: string
     label: "Team Member First Name"
     sql: ${TABLE}. "Team Member First Name" ;;
 
+  }
+  dimension: teammember_user_role{
+    type:string
+    label: "Teammember user Role"
+    sql: ${TABLE}."User Role" ;;
   }
 
   dimension: Team_Member_Last_Name{
@@ -4763,8 +4850,13 @@ view: partner_team_members {
       vendor_company_name,
       partner_company_id,
       partner_company_name,
+      partner_email_id,
+      partner_datereg_time,
+      partner_firstname,
+      partner_lastname,
       team_member_id,
       email_id,
+       teammember_user_role,
       Team_Member_First_Name,
       Team_Member_Last_Name,
       Team_Member_Status,
@@ -4798,7 +4890,8 @@ view: partner_team_member_contacts {
           ul1.user_list_name as "user list name",
           ul1.user_list_id as "user list id",
           tm1.firstname as"Team member Firstname",
-          tm1.lastname as "Team memberLastname"
+          tm1.lastname as "Team memberLastname",
+          tm1.email_id as "Team member email_id"
 
            from
 
@@ -4901,6 +4994,12 @@ view: partner_team_member_contacts {
     sql: ${TABLE}."Team member Lastname" ;;
   }
 
+  dimension: teammember_email_id {
+    type: string
+    label: "Team member email_id"
+    sql: ${TABLE}."Team member email_id" ;;
+  }
+
   set: detail {
     fields: [
       vendor_company_id,
@@ -4914,7 +5013,8 @@ view: partner_team_member_contacts {
       user_list_name,
       user_list_id,
       teammember_firstname,
-      teammember_lastname
+      teammember_lastname,
+      teammember_email_id
     ]
   }
 }
