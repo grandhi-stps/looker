@@ -1046,12 +1046,17 @@ view:vendors {
 
   }
 
+  measure: Deals_KPI{
+    type:count_distinct
+    sql: (case when ${is_deal} then ${id} END);;
+   drill_fields: [ deal_partner_company,deal_first_name,deal_last_name,deal_email_id, deal_phone_number,deal_company,deal_created_time]
+   }
+
 
   measure: Deals  {
     type:count_distinct
     sql: (case when ${is_deal} then ${id} END);;
-    drill_fields: [ deal_partner_company,deal_first_name,deal_last_name,deal_email_id,
-      deal_phone_number,deal_company,deal_created_time]
+   # drill_fields: [ deal_partner_company,deal_first_name,deal_last_name,deal_email_id, deal_phone_number,deal_company,deal_created_time]
 
   }
   measure: Leads  {
@@ -1728,31 +1733,35 @@ view:leads_deals {
     drill_fields: [detail*]
   }
 
+
+
+
   measure: Deal  {
+
     type:count_distinct
     sql: (case when ${is_deal}='true' then ${id} END);;
-    drill_fields:[partner_company_name,Deal_email_id,
-      Deal_first_name,Deal_last_name
+    drill_fields:[partner_company_name,deal_first_name,deal_last_name,deal_email_id,
+      deal_phone_number
     ]
   }
 
 
-  measure: Deals {
-    type:count_distinct
-    sql: (case when ${is_deal}='true' then ${id} END);;
+measure: Deals {
+  type:count_distinct
+  sql: (case when ${is_deal}='true' then ${id} END);;
 
 
-  }
+}
 
 
-  measure: Leads  {
-    type:count_distinct
-    sql: ${id};;
-    #html: <font size="30"><b>{{ value }}<\b></font>
-    drill_fields: [partner_company_name,
-      deal_email_id,deal_first_name,deal_last_name]
-
-  }
+measure: Leads  {
+  type:count_distinct
+  sql: ${id};;
+  #html: <font size="30"><b>{{ value }}<\b></font>
+  drill_fields: [partner_company_name,
+    Lead_firstname,Lead_lastname,Lead_emailid,Lead_phonenumber
+  ]
+}
   dimension: company_name {
     type: string
     label: "Company Name"
@@ -1762,7 +1771,7 @@ view:leads_deals {
   dimension: Deal_company {
     type: string
     label: "Deals Company"
-    sql:  ${deal_company} ;;
+    sql:  case when ${is_deal}='true' then ${deal_company} ;;
   }
 
   dimension: campaign_name {
@@ -1774,25 +1783,25 @@ view:leads_deals {
   dimension: Deal_first_name {
     type: string
     label: "Deals First Name"
-    sql: ${deal_first_name};;
+    sql:case when ${is_deal}='true' then  ${deal_first_name};;
   }
 
   dimension: Deal_last_name {
     type: string
     label: "Deals Last Name"
-    sql: ${deal_last_name};;
+    sql: case when ${is_deal}='true' then ${deal_last_name};;
   }
 
   dimension: Deal_email_id {
     type: string
     label: "Deals Email ID"
-    sql:${deal_email_id} ;;
+    sql:case when ${is_deal}='true' then ${deal_email_id} ;;
   }
 
   dimension: Deal_phone_number {
     type: string
     label: "Deals Phone Number"
-    sql: ${deal_phone_number} ;;
+    sql:case when ${is_deal}='true' then  ${deal_phone_number} ;;
   }
 
 
@@ -1922,12 +1931,11 @@ view:leads_deals {
     value_format: "0\%"
   }
 
-  measure: Prev_Year_Leads {
+   measure: Prev_Year_Leads {
     type: count_distinct
     sql:case when extract(year from ${deal_created_time_date})= (extract(year from now())-1)
       and extract(year from ${deal_created_time_date})=2020  then ${id} end;;
-    drill_fields: [partner_company_name,
-      deal_email_id,deal_first_name,deal_last_name]
+
   }
 
 
@@ -1935,8 +1943,7 @@ view:leads_deals {
     type: count_distinct
     sql:case when extract(year from ${deal_created_time_date})= extract(year from now())
       and extract(year from ${deal_created_time_date})=2020 then ${id} end;;
-    drill_fields: [partner_company_name,
-      deal_email_id,deal_first_name,deal_last_name]
+
 
   }
 
@@ -1945,9 +1952,8 @@ view:leads_deals {
     sql:case when extract(year from ${deal_created_time_date})= (extract(year from now())-1)
               and extract(year from ${deal_created_time_date})=2020 and ${is_deal}='true'
     then ${id} end;;
-    drill_fields:[partner_company_name,Deal_email_id,
-      Deal_first_name,Deal_last_name
-    ]
+
+
 
 
   }
@@ -1956,12 +1962,10 @@ view:leads_deals {
     sql:case when extract(year from ${deal_created_time_date})= extract(year from now())
                       and extract(year from ${deal_created_time_date} )=2020   and ${is_deal}='true'
                 then ${id} end;;
-    drill_fields:[partner_company_name,Deal_email_id,
-      Deal_first_name,Deal_last_name
-    ]
 
 
-  }
+
+    }
 
   measure: Percent_change_Leads {
     type: percent_of_previous
@@ -2092,13 +2096,13 @@ view:leads_deals {
 
   dimension: redistributed_campaign_name {
     type: string
-    label: "Redistributed Campaign Name"
+    label: "Campaign Name"
     sql: ${TABLE}."Redistributed Campaign Name" ;;
   }
 
   dimension: redistributed_campaign_type {
     type: string
-    label: "Redistributed Campaign Type"
+    label: "Campaign Type"
     sql: ${TABLE}."Redistributed Campaign Type" ;;
 
   }
@@ -2111,7 +2115,7 @@ view:leads_deals {
 
   dimension_group: redistributed_cam_created_time {
     type: time
-    label: "Redistributed Cam Created Time"
+    label: "Created Time"
     sql: ${TABLE}."Redistributed Cam Created Time" ;;
   }
 
@@ -2145,9 +2149,6 @@ view:leads_deals {
     type: string
     label: "Year Qtr"
     sql: ${TABLE}."Year Qtr" ;;
-    drill_fields: [partner_company_name,
-      redistributed_campaign_name,redistributed_campaign_type,deal_email_id
-    ]
 
   }
 
@@ -2191,25 +2192,25 @@ view:leads_deals {
   }
   dimension: deal_first_name {
     type: string
-    label: "Lead First Name"
+    label: "Deal First Name"
     sql: ${TABLE}."Deal First Name" ;;
   }
 
   dimension: deal_last_name {
     type: string
-    label: "Lead Last Name"
+    label: "Deal Last Name"
     sql: ${TABLE}."Deal Last Name" ;;
   }
 
   dimension: deal_email_id {
     type: string
-    label: "Lead Email ID"
+    label: "Deal Email ID"
     sql: ${TABLE}."Deal Email ID" ;;
   }
 
   dimension: deal_phone_number {
     type: string
-    label: "Lead Phone Number"
+    label: "Deal Phone Number"
     sql: ${TABLE}."Deal Phone Number" ;;
   }
 
@@ -2268,6 +2269,30 @@ view:leads_deals {
   }
 
 
+  dimension: Lead_firstname {
+    type: string
+    label: "Lead First_Name"
+    sql: ${TABLE}."Deal First Name" ;;
+  }
+
+  dimension: Lead_lastname {
+    type: string
+    label: "Lead Last_Name"
+    sql: ${TABLE}."Deal Last Name" ;;
+  }
+
+  dimension: Lead_emailid {
+    type: string
+    label: "Lead Email_ID"
+    sql: ${TABLE}."Deal Email ID" ;;
+  }
+
+  dimension: Lead_phonenumber {
+    type: string
+    label: "Lead Phone_Number"
+    sql: ${TABLE}."Deal Phone Number" ;;
+  }
+
   set: detail {
     fields: [
       company_name,
@@ -2313,7 +2338,12 @@ view:leads_deals {
       partner_company_name,
       deal_status,
       Deal_status_created_time.created_time,
-      deal_company
+      deal_company,
+      Lead_firstname,
+      Lead_lastname,
+      Lead_phonenumber,
+      Lead_emailid
+
     ]
   }
 }
@@ -3727,17 +3757,29 @@ where row_number1=1) "Contacts" on ("Contacts".listby_partner_id="Partner Users"
     drill_fields: [detail*]
   }
 
+  dimension: Vendor_schedule_type {
+    type: string
+    label: "Vendor Campaign Schedule Type"
+    sql: case when ${vendor_cam_schedule_type}='NOW' then 'LAUNCHED'
+            when ${vendor_cam_schedule_type}='SAVE' then 'SAVE'
+            when ${vendor_cam_schedule_type}='SCHEDULE' then 'SCHEDULE'
+            end;;
+  }
+
+
+
 
   measure: Partners {
     type: count_distinct
     sql: case when ${is_partner_user_list}=true then ${list_by_partner_id} end ;;
-    drill_fields: [user_list_name,userlist_created_time,partner_email_id,partner_company_name,Partner_Name]
+    drill_fields: [user_list_name,userlist_created_time,partner_email_id,
+      partner_company_name,Partner_Name]
   }
 
   measure: Contacts {
     type: count_distinct
     sql: case when ${is_partner_user_list}=false then ${list_by_partner_id} end;;
-    drill_fields: [user_list_name,userlist_created_time,contact_email_id,Contact_Name]
+
 
   }
 
@@ -3758,14 +3800,14 @@ where row_number1=1) "Contacts" on ("Contacts".listby_partner_id="Partner Users"
     type: count_distinct
     sql: ${vendor_campaign_id} ;;
     drill_fields: [vendor_campaign_name,vendor_campaign_type,
-      vendor_cam_schedule_type,vendor_cam_launch_time]
+      Vendor_schedule_type,vendor_cam_launch_time]
   }
 
   measure: Team_members {
     type: number
     sql: ${Team_members1};;
 
-    drill_fields: [vendor_company_name,Role,Team_MemberName,email_id,
+    drill_fields: [email_id,Role,Team_MemberName,
       status,datereg_date,datelastlogin_date]
 
   }
@@ -3775,10 +3817,32 @@ where row_number1=1) "Contacts" on ("Contacts".listby_partner_id="Partner Users"
   measure: Team_members1 {
     type: count_distinct
     sql: ${team_member_id} ;;
-    drill_fields: [vendor_company_name,Team_MemberName,email_id,
+    drill_fields: [email_id,Team_MemberName,
       status,roles]
 
   }
+
+
+  measure: Org_Admin {
+    type: count_distinct
+    sql: case when ${roles}='OrgAdmin' then ${team_member_id} end ;;
+    drill_fields: [Org_Admin_Email_id,Org_Admin_Name,roles]
+  }
+
+
+  dimension: Org_Admin_Email_id {
+    type: string
+    label: "Email_id"
+    sql: case when ${roles}='OrgAdmin' then  ${email_id} end ;;
+}
+
+  dimension: Org_Admin_Name {
+    type: string
+    label: "Org_Admin_Name"
+    sql: case when ${roles}='OrgAdmin' then  ${Team_MemberName} end ;;
+  }
+
+
 
 
   dimension: Contact_User_ID {
@@ -3854,7 +3918,8 @@ where row_number1=1) "Contacts" on ("Contacts".listby_partner_id="Partner Users"
   dimension: Partner_Name{
     type: string
     label: "Partner Name"
-    sql: case when ${is_partner_user_list}=true then concat(${partner_first_name}, ${partner_last_name}) end ;;
+    sql: case when ${is_partner_user_list}=true then
+    concat(${partner_first_name},' ' , ${partner_last_name}) end ;;
   }
 
   dimension: Contact_Name{
@@ -4171,7 +4236,10 @@ where row_number1=1) "Contacts" on ("Contacts".listby_partner_id="Partner Users"
       Contact_State,
       Contact_Zip_Code,
       Contact_Country,
-      Contact_Mobile_Number
+      Contact_Mobile_Number,
+      Org_Admin,
+      Org_Admin_Email_id,
+      Org_Admin_Name
 
 
 
@@ -4248,6 +4316,26 @@ view: email_templates {
     drill_fields: [detail*]
   }
 
+  dimension: Vendor_schedule_type {
+    type: string
+    label: "Vendor Campaign Schedule Type"
+    sql: case when ${campaign_schedule_type}='NOW' then 'LAUNCHED'
+            when ${campaign_schedule_type}='SAVE' then 'SAVE'
+            when${campaign_schedule_type}'SCHEDULE' then 'SCHEDULE'
+            end;;
+  }
+
+  dimension: Email_template_schedule_type {
+    type: string
+    label: "Campaign Schedule Type"
+    sql: case when ${Email_Template_campaign_schedule_type}='NOW' then 'LAUNCHED'
+            when ${Email_Template_campaign_schedule_type}='SAVE' then 'SAVE'
+            when ${Email_Template_campaign_schedule_type}'SCHEDULE' then 'SCHEDULE'
+            end;;
+  }
+
+
+
   measure: email_templates {
     type: count_distinct
     sql: ${emailtemplate_id} ;;
@@ -4283,7 +4371,7 @@ view: email_templates {
     label: "# Campaigns"
     sql: ${campaign_template} ;;
     drill_fields: [campaign_templateName,Email_Template_campaign_type,
-      Email_Template_campaign_schedule_type,Email_campaign_launch_time]
+     Email_Template_campaign_schedule_type,Email_campaign_launch_time]
   }
 
 
@@ -4354,7 +4442,7 @@ view: email_templates {
 
   dimension: emailtemplate_name {
     type: string
-    label: "Template Name"
+    label: "Email_Template Name"
     sql: ${TABLE}."Emailtemplate name" ;;
   }
 
@@ -4573,7 +4661,7 @@ view: email_templates {
 
 
 
-explore: partner_team_members  {}
+explore: partner_team_members {}
 view: partner_team_members {
   derived_table: {
     sql: select
@@ -4581,6 +4669,9 @@ view: partner_team_members {
       vendor_company.company_name as "Vendor Company Name",
       partner_company.company_id as "Partner Company Id",
       partner_company.company_name as "Partner Company Name",
+      ud1.user_id as "Partner user_id",
+    ul.listby_partner_id as "Partner Users",
+    ul.is_partner_userlist as "Is Partner Userlist",
       ud1.email_id as "Partner Email ID",
       ud1.datereg as "Partner Datereg",
       ud1.firstname as "Partner Firstname",
@@ -4665,45 +4756,57 @@ and customer_id in
       left join xamplify_test.xa_user_role_d  ur on(ur.user_id=c.customer_id)
       left join xamplify_test.xa_emaillog_d el on(c.campaign_id=el.campaign_id)
       where ul.is_partner_userlist= true
-
-       ;;
-
+ ;;
   }
 
   measure: count {
     type: count
     drill_fields: [detail*]
   }
-
+  dimension: Vendor_schedule_type {
+    type: string
+    label: "Vendor Campaign Schedule Type"
+    sql: case when ${campaign_schedule_type}='NOW' then 'LAUNCHED'
+            when ${campaign_schedule_type}='SAVE' then 'SAVE'
+            when${campaign_schedule_type}'SCHEDULE' then 'SCHEDULE'
+            end;;
+  }
 
   measure: Campaigns {
     type: count_distinct
     sql:  ${campaign_id};;
-    drill_fields: [campaign_name,campaign_type,campaign_schedule_type,Campaign_launch_time]
+    drill_fields: [campaign_name,campaign_type,campaign_schedule_type,campaign_launch_time]
   }
 
   measure: Team_members {
     type: count_distinct
     sql: ${team_member_id} ;;
-    drill_fields: [Team_member_name,email_id,Team_Member_Status,teammember_user_role]
+    drill_fields: [team_member_email_id,Team_member_name,team_member_status,user_role]
   }
 
   measure: Views {
     type: count_distinct
-    sql: ${emaillog_id} ;;
+    sql: ${view_id} ;;
 
   }
 
   measure: Partners {
     type: count_distinct
-    sql: ${partner_company_id} ;;
-    drill_fields: [partner_company_name,partner_email_id]
+    sql: ${partner_user_id} ;;
+    drill_fields: [partner_company_name,partner_email_id,partner_firstname,partner_lastname]
   }
 
   dimension: Partner_Name{
     type: string
     sql: concat (${partner_firstname},${partner_lastname} ;;
   }
+
+  dimension: Team_member_name {
+    type: string
+    label: "Team Member Name"
+    sql: concat(${team_member_first_name}, ${team_member_last_name}) ;;
+  }
+
 
   dimension: vendor_company_id {
     type: number
@@ -4723,18 +4826,28 @@ and customer_id in
     sql: ${TABLE}."Partner Company Id" ;;
   }
 
-
-  dimension:email_id{
-  type:  string
-  label: "Email Id"
-  sql: ${TABLE}."Team Member Email Id" ;;
-}
-
-
   dimension: partner_company_name {
     type: string
     label: "Partner Company Name"
     sql: ${TABLE}."Partner Company Name" ;;
+  }
+
+  dimension: partner_user_id {
+    type: number
+    label: "Partner user_id"
+    sql: ${TABLE}."Partner user_id" ;;
+  }
+
+  dimension: partner_users {
+    type: number
+    label: "Partner Users"
+    sql: ${TABLE}."Partner Users" ;;
+  }
+
+  dimension: is_partner_userlist {
+    type: string
+    label: "Is Partner Userlist"
+    sql: ${TABLE}."Is Partner Userlist" ;;
   }
 
   dimension: partner_email_id {
@@ -4745,19 +4858,19 @@ and customer_id in
 
   dimension_group: partner_datereg {
     type: time
-    label: "Partner Firstname"
-    sql: ${TABLE}."Partner Firstname" ;;
-  }
-
-  dimension: partner_firstname {
-    type: string
     label: "Partner Datereg"
     sql: ${TABLE}."Partner Datereg" ;;
   }
 
+  dimension: partner_firstname {
+    type: string
+    label: "Firstname"
+    sql: ${TABLE}."Partner Firstname" ;;
+  }
+
   dimension: partner_lastname {
     type: string
-    label: "Partner Lastname"
+    label: "Lastname"
     sql: ${TABLE}."Partner Lastname" ;;
   }
 
@@ -4767,54 +4880,51 @@ and customer_id in
     sql: ${TABLE}."Team Member ID" ;;
   }
 
-
-  dimension: Team_Member_First_Name{
+  dimension: team_member_email_id {
     type: string
-    label: "First Name"
-    sql: ${TABLE}. "Team Member First Name" ;;
-
+    label: "Email Id"
+    sql: ${TABLE}."Team Member Email Id" ;;
   }
-  dimension: teammember_user_role{
-    type:string
-    label: "Role"
+
+  dimension: team_member_first_name {
+    type: string
+    label: "Team Member First Name"
+    sql: ${TABLE}."Team Member First Name" ;;
+  }
+
+  dimension: team_member_last_name {
+    type: string
+    label: "Team Member Last Name"
+    sql: ${TABLE}."Team Member Last Name" ;;
+  }
+
+  dimension: team_member_status {
+    type: string
+    label: "Team Member Status"
+    sql: ${TABLE}."Team Member Status" ;;
+  }
+
+  dimension_group: team_member_created{
+    type: time
+    label: "Team Member Created"
+    sql: ${TABLE}."Team Member Created Time" ;;
+  }
+
+  dimension: user_role {
+    type: string
+    label: "User Role"
     sql: ${TABLE}."User Role" ;;
   }
 
-  dimension: Team_Member_Last_Name{
-    type: string
-    label: "Last Name"
-    sql: ${TABLE}. "Team Member Last Name" ;;
-
+  dimension: partner {
+    type: number
+    sql: ${TABLE}."partner" ;;
   }
-
-  dimension: Team_member_name {
-    type:  string
-    label: "Team Member Name"
-    sql: concat(${Team_Member_First_Name} , ${Team_Member_Last_Name}) ;;
-    drill_fields: [campaign_name,campaign_type,Team_Member_Created_time]
-  }
-
-  dimension: Team_Member_Status{
-    type: string
-    label: "Status"
-    sql: ${TABLE}. "Team Member Status" ;;
-
-  }
-
-
-
-  dimension_group: Team_Member_Created{
-    type: time
-    label: "Team Member Created"
-    sql: ${TABLE}. "Team Member Created Time" ;;
-
-  }
-
 
   dimension: campaign_id {
-    type: string
+    type: number
     label: "Campaign Id"
-    sql: ${TABLE}. "Campaign Id" ;;
+    sql: ${TABLE}."Campaign Id" ;;
   }
 
   dimension: campaign_name {
@@ -4835,81 +4945,84 @@ and customer_id in
     sql: ${TABLE}."Campaign Schedule Type" ;;
   }
 
-dimension_group: Campaign_launch {
-  type:time
-  label: "Campaign Launch"
-  sql: ${TABLE}."Campaign Launch Time" ;;
-}
+  dimension_group: campaign_launch {
+    type: time
+    label: "Campaign Launch"
+    sql: ${TABLE}."Campaign Launch Time" ;;
+  }
 
-  dimension: emaillog_id {
+  dimension: view_id {
     type: number
     label: "View Id"
     sql: ${TABLE}."View Id" ;;
   }
 
-  dimension: emaillog_action_id {
-    type: number
-    label: "Action Id"
-    sql: ${TABLE}."Action Id" ;;
-  }
-
-  dimension: emaillog_user_id {
+  dimension: user_id {
     type: number
     label: "User Id"
     sql: ${TABLE}."User Id" ;;
   }
 
-  dimension: emaillog_Time {
-    type: string
-    label: "Time"
+  dimension: action_id {
+    type: number
+    label: "Action Id"
+    sql: ${TABLE}."Action Id" ;;
+  }
+
+  dimension_group: time {
+    type: time
     sql: ${TABLE}."Time" ;;
   }
 
-  dimension: role_id {
+  dimension: user_role_id {
     type: number
     label: "User Role ID"
     sql: ${TABLE}."User Role ID" ;;
   }
 
-
-  set:detail {
-    fields:
-    [
+  set: detail {
+    fields: [
       vendor_company_id,
       vendor_company_name,
       partner_company_id,
       partner_company_name,
+      partner_user_id,
+      partner_users,
+      is_partner_userlist,
       partner_email_id,
       partner_datereg_time,
       partner_firstname,
       partner_lastname,
       team_member_id,
-      email_id,
-       teammember_user_role,
-      Team_Member_First_Name,
-      Team_Member_Last_Name,
-      Team_Member_Status,
-      Team_Member_Created_time,
+      team_member_email_id,
+      team_member_first_name,
+      team_member_last_name,
+      team_member_status,
+      team_member_created_time,
+      user_role,
+      partner,
       campaign_id,
       campaign_name,
       campaign_type,
       campaign_schedule_type,
-      Campaign_launch_time,
-      emaillog_id,
-      emaillog_user_id,
-      emaillog_action_id,
-      emaillog_Time,
-      role_id
-
+      campaign_launch_time,
+      view_id,
+      user_id,
+      action_id,
+      time_time,
+      user_role_id
     ]
   }
 }
 
 
+
+
+
 explore: partner_team_member_contacts  {}
 view: partner_team_member_contacts {
   derived_table: {
-    sql: select vendor_company.company_id as "vendor company id",
+    sql:  select vendor_company.company_id as "vendor company id",
           ul1.is_partner_userlist as "is partner userlist",
           vendor_company.company_name as "Vendor Company Name",
           partner_company.company_id as "partner company id",
@@ -4921,7 +5034,18 @@ view: partner_team_member_contacts {
           ul1.user_list_id as "user list id",
           tm1.firstname as"Team member Firstname",
           tm1.lastname as "Team memberLastname",
-          tm1.email_id as "Team member email_id"
+          tm1.email_id as "Team member email_id",
+    "Contacts".listby_partner_id as "Contact User ID",
+    "Contacts".first_name as "Contact First Name",
+    "Contacts".last_name as "Contact Last Name" ,
+    "Contacts".contact_company as "Conatact Company" ,
+    "Contacts".email_id as "Contact Email ID",
+    "Contacts".address as "Contact Adress",
+    "Contacts".city as "Contact City",
+    "Contacts".state as "Contact State",
+    "Contacts".zip_code as "Contact Zip Code",
+    "Contacts".country as "Contact Country",
+    "Contacts".mobile_number as "Contact Mobile Number"
 
            from
 
@@ -4933,6 +5057,21 @@ view: partner_team_member_contacts {
             left join xamplify_test.xa_user_d ud2 on(partner_company.company_id=ud2.company_id)
       left join xamplify_test.xa_team_member_d tm1 on tm1.team_member_id=ud2.user_id
       left join xamplify_test.xa_user_list_d ul1 on(ul1.customer_id=tm1.team_member_id)
+    left join (select * from
+(select distinct listby_partner_id ,
+    first_name,
+    last_name ,
+    contact_company ,
+    email_id,
+    address,
+    city,
+    state,
+    zip_code,
+    country,
+    mobile_number,
+    company_name ,ROW_NUMBER () OVER (PARTITION BY listby_partner_id order by 1,2,3,4,5,6,7,8,9,10 desc nulls last) as row_number1
+from xamplify_test.xa_user_list_d where is_partner_userlist='false') c
+where row_number1=1) "Contacts" on ("Contacts".listby_partner_id=ul1.listby_partner_id)
       where ul.is_partner_userlist= true
        ;;
   }
@@ -4945,7 +5084,72 @@ view: partner_team_member_contacts {
   measure: Contacts {
     type: count_distinct
     sql: (case when ${is_partner_userlist}=false then ${listby_partner_id} end) ;;
-    drill_fields: [user_list_name,list_created_time,contact_email_id,listby_partner_id]
+    drill_fields: [Contact_Email_ID,Conatact_Company,Contact_First_Name,Contact_Last_Name,Contact_City
+      ,Contact_State,Contact_Adress,Contact_Country,Contact_Zip_Code,Contact_Mobile_Number]
+  }
+
+
+  measure: Contact {
+    type: count_distinct
+    sql: (case when ${is_partner_userlist}=false then ${listby_partner_id} end) ;;
+
+}
+  dimension: Contact_User_ID {
+    type: number
+    label: "Contact User ID"
+    sql: ${TABLE}."Contact User ID" ;;
+  }
+
+  dimension: Contact_First_Name {
+    type: string
+    label: "Contact First Name"
+    sql: ${TABLE}."Contact First Name" ;;
+  }
+  dimension: Contact_Last_Name {
+    type: string
+    label: "Contact Last Name"
+    sql: ${TABLE}."Contact Last Name" ;;
+  }
+  dimension: Conatact_Company {
+    type: string
+    label: "Conatact Company"
+    sql: ${TABLE}."Conatact Company";;
+  }
+  dimension: Contact_Email_ID {
+    type: string
+    label: "Contact Email ID"
+    sql: ${TABLE}."Contact Email ID";;
+  }
+
+  dimension: Contact_Adress {
+    type: string
+    label: "Contact Adress"
+    sql: ${TABLE}."Contact Adress";;
+  }
+  dimension: Contact_City {
+    type: string
+    label: "Contact City"
+    sql: ${TABLE}."Contact City";;
+  }
+  dimension: Contact_State {
+    type: string
+    label: "Contact State"
+    sql: ${TABLE}."Contact State";;
+  }
+  dimension: Contact_Zip_Code{
+    type: string
+    label: "Contact Zip Code"
+    sql: ${TABLE}."Contact Zip Code";;
+  }
+  dimension: Contact_Country{
+    type: string
+    label: "Contact Country"
+    sql: ${TABLE}."Contact Country";;
+  }
+  dimension: Contact_Mobile_Number{
+    type: string
+    label: "Contact Mobile Number"
+    sql: ${TABLE}."Contact Mobile Number";;
   }
   dimension: Team_Member_Name {
     type: string
@@ -5045,7 +5249,18 @@ view: partner_team_member_contacts {
       user_list_id,
       teammember_firstname,
       teammember_lastname,
-      teammember_email_id
+      teammember_email_id,
+      Contact_User_ID,
+      Contact_First_Name,
+      Contact_Last_Name,
+      Conatact_Company,
+      Contact_Email_ID,
+      Contact_Adress,
+      Contact_City,
+      Contact_State,
+      Contact_Zip_Code,
+      Contact_Country,
+      Contact_Mobile_Number
     ]
   }
 }
@@ -6258,9 +6473,9 @@ view: vendor_partners1 {
       select * from (
       select * from (
 with pc1 as(
-select  v_com,customer_id,company_id,p_com,email_id,firstname,lastname,datereg,datelastlogin
+select  v_com,customer_id,company_id,p_com,user_id,email_id,firstname,lastname,datereg,datelastlogin
 ,campaign_name as first_campaign_name,launch_time as first_campaign_launch_time,"OrgAdmin",is_launched from (
-select distinct xcp.company_name as v_com ,xc1.customer_id,xup1.email_id,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
+select distinct xcp.company_name as v_com ,xc1.customer_id,xup1.user_id,xup1.email_id,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
 ,xup1.company_id,xcp1.company_name as p_com,xc1.campaign_name,xc1.launch_time,"OrgAdmin".email_id as "OrgAdmin",xc1.is_launched
 ,row_number()over(partition by xup1.company_id order by xc1.launch_time) rn
 from xamplify_test."xa_campaign_d" xc
@@ -6274,9 +6489,9 @@ left join (select * from xamplify_test.xa_user_d where user_id in
   where xc1.is_launched='true'
 ) fc where rn = 1),
 pc2 as (
-select  v_com,customer_id,company_id,p_com,email_id,firstname,lastname,datereg,datelastlogin
+select  v_com,customer_id,company_id,p_com,user_id,email_id,firstname,lastname,datereg,datelastlogin
 ,campaign_name as second_campaign_name,launch_time as second_campaign_launch_time from (
-select distinct xcp.company_name as v_com ,xc1.customer_id,xup1.email_id,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
+select distinct xcp.company_name as v_com ,xc1.customer_id,xup1.user_id,xup1.email_id,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
 ,xup1.company_id,xcp1.company_name as p_com,xc1.campaign_name,xc1.launch_time
 ,row_number()over(partition by xup1.company_id order by xc1.launch_time) rn
 from xamplify_test."xa_campaign_d" xc
@@ -6289,9 +6504,9 @@ LEFT JOIN xamplify_test."xa_company_d" "xcp1" ON ("xup1"."company_id" = "xcp1"."
 ) sc where rn = 2
 order by p_com),
 pc3 as (
-select v_com,customer_id,company_id,p_com,email_id,firstname,lastname,datereg,datelastlogin
+select v_com,customer_id,company_id,p_com,user_id,email_id,firstname,lastname,datereg,datelastlogin
 ,campaign_name as recent_campaign_name,launch_time as recent_campaign_launch_time from (
-select distinct xcp.company_name as v_com ,xc1.customer_id,xup1.email_id,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
+select distinct xcp.company_name as v_com ,xc1.customer_id,xup1.user_id,xup1.email_id,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
 ,xup1.company_id,xcp1.company_name as p_com,xc1.campaign_name,xc1.launch_time
 ,row_number()over(partition by xup1.company_id order by xc1.launch_time desc) rn
 from xamplify_test."xa_campaign_d" xc
@@ -6303,7 +6518,7 @@ LEFT JOIN xamplify_test."xa_company_d" "xcp1" ON ("xup1"."company_id" = "xcp1"."
   where xc1.is_launched='true'
 ) rc where rn = 1
 order by p_com)
-select distinct pc1.v_com as "Vendor Company Name",pc1.company_id,pc1.p_com as "Partner Company Name",pc1.email_id as "Email ID"
+select distinct pc1.v_com as "Vendor Company Name",pc1.company_id,pc1.p_com as "Partner Company Name",pc1.user_id as "User ID" ,pc1.email_id as "Email ID"
 ,pc1.firstname as "First Name",pc1.lastname "Last Name",pc1.datereg as "Registered Date",pc1.datelastlogin as "Last Login Date"
   ,pc1."OrgAdmin",pc1."is_launched"
 ,pc1.first_campaign_name as "First Campaign Name",pc1.first_campaign_launch_time as "First Campaign Launch Time"
@@ -6315,7 +6530,7 @@ order by pc1.v_com,pc1.p_com) total
       union all
       select * from (
       with a as (
-      select distinct xp.vendor_company_id,xcp.company_name as v_com,xp.partner_company_id,xcp1.company_name as p_com,xup1.email_id
+      select distinct xp.vendor_company_id,xcp.company_name as v_com,xp.partner_company_id,xcp1.company_name as p_com,xup1.user_id,xup1.email_id
       ,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
       from xt_user_profile xup
       left join xamplify_test.xa_company_d xcp on xcp.company_id = xup.company_id
@@ -6341,14 +6556,14 @@ order by pc1.v_com,pc1.p_com) total
       and ud1.company_id not in (select company_id from xamplify_test.xa_campaign_d c inner join xamplify_test.xa_user_d up
                  on (c.customer_id=up.user_id) where parent_campaign_id is not null
     and is_launched='true') )
-      select distinct a.v_com,a.partner_company_id,a.p_com,a.email_id,a.firstname,a.lastname,a.datereg,a.datelastlogin,null::text,b.is_launched
+      select distinct a.v_com,a.partner_company_id,a.p_com,a.user_id,a.email_id,a.firstname,a.lastname,a.datereg,a.datelastlogin,null::text,b.is_launched
       ,null::text,null::timestamp,null::text,null::timestamp,null::text,null::timestamp
       from a inner join b on a.partner_company_id = b.company_id and a.vendor_company_id = b.vendor_organization_id
       where a.partner_company_id is not null
       and b.campaign_id is null
       ) as inactive
       union all
-      select distinct xcp.company_name,xcp1.company_id,xcp1.company_name,xup1.email_id,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
+      select distinct xcp.company_name,xcp1.company_id,xcp1.company_name,xup1.user_id,xup1.email_id,xup1.firstname,xup1.lastname,xup1.datereg,xup1.datelastlogin
      ,null::text,null::boolean,null::text,null::timestamp,null::text,null::timestamp,null::text,null::timestamp
       from xamplify_test.xa_partnership_d xp
       left join xamplify_test.xa_company_d xcp on xcp.company_id = xp.vendor_company_id
@@ -6376,7 +6591,8 @@ order by pc1.v_com,pc1.p_com) total
   measure: Active_Partners{
     type: count_distinct
     sql: case when ${campaign_id} is not null then ${company_id} end  ;;
-    drill_fields: [partner_company_name,OrgAdmin,recent_campaign_name,recent_campaign_launch_time_time,first_campaign_name,first_campaign_launch_time_time]
+    drill_fields: [partner_company_name,Patner_Email_ID,Redistributed_campaigns,recent_campaign_name,
+      recent_campaign_launch_time,first_campaign_name,first_campaign_launch_time]
   }
 
   measure: InActive_Partners{
@@ -6387,19 +6603,24 @@ order by pc1.v_com,pc1.p_com) total
 
   measure: Total_Partners{
     type: count_distinct
-    sql: ${email_id} ;;
-    drill_fields: [partner_company_name,first_name,last_name,email_id,registered_date_time]
+    sql: ${user_id} ;;
+    drill_fields: [user_id,partner_company_name,first_name,last_name,email_id,registered_date_time]
   }
 
   measure:Partners_with_companies{
     type: count_distinct
-    sql: case when ${company_id} is not null then ${email_id} end  ;;
+    sql: case when ${company_id} is not null then ${user_id} end  ;;
     drill_fields:[partner_company_name,first_name,last_name,email_id,registered_date_time]
   }
   measure:Partners_without_companies{
     type: count_distinct
-    sql: case when ${company_id} is  null then ${email_id} end  ;;
-    drill_fields: [partner_company_name,first_name,last_name,email_id,registered_date_time]
+    sql: case when ${company_id} is  null then ${user_id} end  ;;
+    drill_fields: [user_id,partner_company_name,first_name,last_name,email_id,registered_date_time]
+  }
+  measure: Redistributed_campaigns{
+    type: count_distinct
+    sql: ${campaign_name};;
+    drill_fields: [campaign_name,campaign_type,launch_time_time]
   }
   dimension: vendor_company_name {
     type: string
@@ -6421,6 +6642,12 @@ order by pc1.v_com,pc1.p_com) total
     type: string
     label: "is_launched"
     sql: ${TABLE}."is_launched" ;;
+  }
+
+  dimension: user_id {
+    type: string
+    label: "User ID"
+    sql: ${TABLE}."User ID" ;;
   }
 
   dimension: email_id {
@@ -6459,9 +6686,9 @@ order by pc1.v_com,pc1.p_com) total
     sql: ${TABLE}."First Campaign Name" ;;
   }
 
-  dimension_group: first_campaign_launch_time {
+  dimension_group: first_campaign_launch {
     type: time
-    label: "First Campaign Launch Time"
+    label: "First Campaign Launch"
     sql: ${TABLE}."First Campaign Launch Time" ;;
   }
 
@@ -6471,9 +6698,9 @@ order by pc1.v_com,pc1.p_com) total
     sql: ${TABLE}."Second Campaign Name" ;;
   }
 
-  dimension_group: second_campaign_launch_time {
+  dimension_group: second_campaign_launch {
     type: time
-    label: "Second Campaign Launch Time"
+    label: "Second Campaign Launch"
     sql: ${TABLE}."Second Campaign Launch Time" ;;
   }
 
@@ -6483,12 +6710,12 @@ order by pc1.v_com,pc1.p_com) total
     sql: ${TABLE}."Recent Campaign Name" ;;
   }
 
-  dimension_group: recent_campaign_launch_time {
+  dimension_group: recent_campaign_launch {
     type: time
-    label: "Recent Campaign Launch Time"
+    label: "Recent Campaign Launch"
     sql: ${TABLE}."Recent Campaign Launch Time" ;;
   }
-  dimension: OrgAdmin {
+  dimension: Patner_Email_ID{
     type: string
     sql: ${TABLE}."OrgAdmin" ;;
   }
@@ -6527,17 +6754,18 @@ order by pc1.v_com,pc1.p_com) total
       registered_date_time,
       last_login_date_time,
       first_campaign_name,
-      first_campaign_launch_time_time,
+      first_campaign_launch_time,
       second_campaign_name,
-      second_campaign_launch_time_time,
+      second_campaign_launch_time,
       recent_campaign_name,
-      recent_campaign_launch_time_time,
+      recent_campaign_launch_time,
       campaign_id,
       campaign_name,
       campaign_type,
       launch_time_time,
-      OrgAdmin,
-      is_launched
+      Patner_Email_ID,
+      is_launched,
+      user_id
     ]
   }
 }
