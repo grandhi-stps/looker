@@ -19,7 +19,7 @@ explore:campaign1   {
 }
 view: campaign1 {
   derived_table: {
-    sql: with a as (select distinct "Redistributed Cam".campaign_id as "Redistributed Campaign ID",
+    sql:with a as  (select distinct "Redistributed Cam".campaign_id as "Redistributed Campaign ID",
       "Vendor Campaign".campaign_id as "Vendor Campaign ID",
       "Vendor Campaign".campaign_name as "Vendor Campaign Name",
       "Vendor Company".company_id as "Vendor Company ID",
@@ -102,7 +102,7 @@ view: campaign1 {
       left outer join
       xamplify_test.xa_campaign_d "Redistributed Cam1"
       on "Vendor Campaign1".campaign_id = "Redistributed Cam1".parent_campaign_id
-      join xamplify_test.xa_campaign_user_userlist_d "Contact Received Campaigns"
+      join xamplify_test.xa_campaign_user_userlists_d "Contact Received Campaigns"
       on "Redistributed Cam1".campaign_id = "Contact Received Campaigns".campaign_id
       left JOIN xamplify_test.xa_emaillog_d "Email View"
       ON (("Redistributed Cam1".campaign_id = "Email View".campaign_id)
@@ -118,13 +118,17 @@ contact_mobile_number as "Contact Mobile Number",
 contact_country as "Contact Country",
 contact_state as "Contact State",
 contact_city as "Contact City",
-contact_zip as "Contact Zip Code",ROW_NUMBER () OVER (PARTITION BY user_id order by 1,2,3,4,5,6,7,8,9,10 desc nulls last) as row_number1
-from xamplify_test.xa_campaign_user_userlist_d)
+contact_zip as "Contact Zip Code",
+bounce as "Bounce",
+bounce_reason as "Bounce_Reason",
+block as "Block",
+spam as "Spam" ,
+       ROW_NUMBER () OVER (PARTITION BY user_id order by 1,2,3,4,5,6,7,8,9,10,11,12,13,14 desc nulls last) as row_number1
+from xamplify_test.xa_campaign_user_userlists_d)
       select * from a left join b on a."Redistributed Campaign ID" = b."Redistributed Campaign ID1"
       inner join c on b."Contact User ID" = c."Contact User ID1"
      -- where a."Vendor Company ID" in (202,262,268,269,283,291,305,325,328,343,399,422,464)
       and c.row_number1 = 1
-     -- and b."Contact User ID" is not null
  ;;
   }
 
@@ -204,6 +208,7 @@ dimension: Vendor_schedule_type {
         &f[campaign1.partner_company_name]={{ _filters['campaign1.partner_company_name'] | url_encode }}
         &f[campaign1.redistributed_campaign_name]={{ _filters['campaign1.redistributed_campaign_name'] | url_encode }}
         &f[campaign1.redistributed_cam_launch_date]={{ _filters['campaign1.redistributed_cam_launch_date'] | url_encode }}"
+        icon_url: "http://www.looker.com/favicon.ico"
       }
 
     }
@@ -240,13 +245,33 @@ dimension: Vendor_schedule_type {
   }
 
 
+ measure: Delivered{
+  type: count_distinct
+  sql: case when ${Bounce}=false and ${Block}=false and ${Spam}=false
+       then ${contact_user_id} end;;
+  drill_fields: [
+    email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city
+  ]
 
+
+ }
+
+  measure: Not_Delivered{
+    type: count_distinct
+    sql: case when ${Bounce}=true or ${Block}=true or ${Spam}=true
+      then ${contact_user_id} end;;
+    drill_fields: [
+      email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city
+    ]
+
+
+  }
 
 
 
     measure: Email_Opened{
       type: count_distinct
-      sql: ${view_user_id} ;;
+      sql: case when ${Bounce}=false and ${Block}=false and ${Spam}=false then ${view_user_id} end ;;
       drill_fields: [
         email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city
       ]
@@ -262,7 +287,7 @@ dimension: Vendor_schedule_type {
 
     measure: Email_Not_Opened{
       type: number
-      sql: ${Total_Recipients}-${Email_Opened};;
+      sql: ${Delivered}-${Email_Opened};;
       link: {
         label: "Email Not Opened Details"
         url: "https://stratappspartner.looker.com/looks/33?
@@ -270,6 +295,7 @@ dimension: Vendor_schedule_type {
         &f[campaign1.partner_company_name]={{ _filters['campaign1.partner_company_name'] | url_encode }}
         &f[campaign1.redistributed_campaign_name]={{ _filters['campaign1.redistributed_campaign_name'] | url_encode }}
         &f[campaign1.redistributed_cam_launch_date]={{ _filters['campaign1.redistributed_cam_launch_date'] | url_encode }}"
+        icon_url: "http://www.looker.com/favicon.ico"
       }
       # drill_fields: [
       #  partner_company_name,redistributed_campaign_name,email_id,contact_mobile_number
@@ -292,7 +318,7 @@ dimension: Vendor_schedule_type {
     }
     measure: Email_Opened_Percent{
       type: number
-      sql:Round(100.00* ${Email_Opened}/NULLIF(${Total_Recipients},0)) ;;
+      sql:Round(100.00* ${Email_Opened}/NULLIF(${Delivered},0)) ;;
       value_format: "0\%"
     }
 
@@ -312,7 +338,7 @@ dimension: Vendor_schedule_type {
 
     measure: Email_Not_Opened_Percent {
       type: number
-      sql: round(100.00* ${Email_Not_Opened}/NULLIF(${Total_Recipients},0)) ;;
+      sql: round(100.00* ${Email_Not_Opened}/NULLIF(${Delivered},0)) ;;
       value_format: "0\%"
     }
     measure: Email_Not_Opened_Percentstr {
@@ -353,9 +379,7 @@ dimension: Vendor_schedule_type {
     measure: Views {
       type: count_distinct
       sql: ${view_id} ;;
-      drill_fields: [
-        email_id,
-        view_time_time,view_id,email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city]
+      drill_fields: [email_id,view_time_time,view_id, email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city]
     }
 
     measure: partners {
@@ -378,6 +402,22 @@ dimension: Vendor_schedule_type {
       type: count_distinct
       sql: ${view_id} ;;
     }
+    dimension: Bounce {
+      type: string
+      sql:  ${TABLE}."Bounce" ;;
+    }
+  dimension: Bounce_Reason {
+    type: string
+    sql:  ${TABLE}."Bounce_Reason" ;;
+  }
+  dimension: Block {
+    type: string
+    sql:  ${TABLE}."Block" ;;
+  }
+  dimension:Spam {
+    type: string
+    sql:  ${TABLE}."Spam" ;;
+  }
     dimension: redistributed_campaign_id {
       type: number
       label: "Redistributed Campaign ID"
@@ -493,7 +533,7 @@ dimension: Vendor_schedule_type {
 
     dimension_group: redistributed_cam_launch {
       type: time
-      label: "Redistributed Cam Launch"
+      label: "Redistributed Campaign Launch"
       sql: ${TABLE}."Redistributed Cam Launch Time" ;;
       drill_fields: [redistributed_cam_launch_month,redistributed_cam_launch_week]
     }
@@ -593,7 +633,7 @@ dimension: Vendor_schedule_type {
 
     dimension_group: view_time {
       type: time
-      label: "View Time"
+      label: "View"
       sql: ${TABLE}."View Time" ;;
       drill_fields: [partner_company_name,redistributed_campaign_name,email_id]
     }
@@ -868,7 +908,11 @@ dimension: Vendor_schedule_type {
         zip,
         longitude,
         latitude,
-        user_location
+        user_location,
+        Bounce,
+        Bounce_Reason,
+        Block,
+        Spam
       ]
     }
   }
@@ -2534,7 +2578,7 @@ view: vendor_nurtures {
   measure: Name {
     type: count_distinct
     sql: ${name};;
-    drill_fields: [company_name,email_id,created_time_raw,datereg_raw,name,subject,sent_time_raw]
+    drill_fields: [company_name,email_id,created_time,datereg_time,name,subject,sent_time]
   }
 
   measure: Active_Nurtures{
@@ -2547,7 +2591,7 @@ view: vendor_nurtures {
   measure: Pie_count{
     type: count_distinct
     sql: ${company_id_xa_company_d} ;;
-    drill_fields: [company_name,email_id,created_time_date,datereg_date,status]
+    drill_fields: [company_name,email_id,created_time,datereg_time,status]
   }
 
   measure: Vendor_nurtures{
@@ -2570,7 +2614,7 @@ view: vendor_nurtures {
       value:  "-NULL"
     }
 
-    drill_fields: [company_name,email_id,name,subject,sent_time_date]
+    drill_fields: [company_name,email_id,name,subject,sent_time]
   }
 
   measure: Vendors_without_Nurtures{
@@ -2580,7 +2624,7 @@ view: vendor_nurtures {
       field: name
       value:  "NULL"
     }
-    drill_fields: [company_name,email_id,created_time_date,datereg_date,status]
+    drill_fields: [company_name,email_id,created_time,datereg_time,status]
   }
 
 
@@ -2588,7 +2632,7 @@ view: vendor_nurtures {
     type: count_distinct
     sql: case when (${role_id}=2 or ${role_id}=13) then ${user_id} end;;
 
-    drill_fields: [company_id_xa_company_d,company_name,email_id,created_time_date,datereg_date]
+    drill_fields: [company_name,email_id,created_time,datereg_time]
 
     link:{
       label:"With Nurture Details"
@@ -2619,7 +2663,7 @@ view: vendor_nurtures {
   measure: Campaigns {
     type: count_distinct
     sql: ${campaign_id_xa_campaign_d} ;;
-    drill_fields: [company_name,email_id,campaign_name,created_time_date,launch_time_date]
+    drill_fields: [company_name,email_id,campaign_name,created_time,launch_time]
   }
 
 
@@ -2630,7 +2674,8 @@ view: vendor_nurtures {
       field: campaign_id_xa_campaign_d
       value:  "-NULL"
     }
-    drill_fields: [company_name,email_id,created_time_date,datereg_date,name,subject,sent_time_date]
+    drill_fields: [company_name,email_id,created_time,datereg_date,name,
+      subject,sent_time]
   }
 
   measure: Vendor_stats_2 {
@@ -2640,19 +2685,20 @@ view: vendor_nurtures {
       field: campaign_id_xa_campaign_d
       value:  "NULL"
     }
-    drill_fields: [company_name,email_id,created_time_date,datereg_date,name,subject,sent_time_date]
+    drill_fields: [company_name,email_id,created_time,datereg_time,name,subject,sent_time]
   }
 
 
-  measure: launch_time {
+  measure: launch {
     type: count_distinct
-    sql: ${launch_time_raw} ;;
+
+    sql: ${launch_raw} ;;
   }
 
   measure: Inactive_vendors{
     type: count_distinct
     sql: ${user_id} ;;
-    drill_fields: [email_id,created_time_date,datereg_date,name,subject,sent_time_date]
+    drill_fields: [email_id,created_time,datereg_time,name,subject,sent_time]
 
   }
 
@@ -2672,7 +2718,7 @@ view: vendor_nurtures {
       value:  "-NULL"
     }
 
-    drill_fields: [company_id_xa_company_d,company_name,email_id,created_time_date,datereg_date]
+    drill_fields: [company_id_xa_company_d,company_name,email_id,created_time,datereg_time]
     link:{
       label:"With Nurture Details"
       url: "https://stratappspartner.looker.com/dashboards/46"
@@ -2693,7 +2739,7 @@ view: vendor_nurtures {
       field: company_id_xa_user_d
       value:  "NULL"
     }
-    drill_fields: [email_id,created_time_date,datereg_date,name,subject,sent_time_date]
+    drill_fields: [email_id,created_time,datereg_time,name,subject,sent_time]
 
   }
 
@@ -2728,6 +2774,7 @@ view: vendor_nurtures {
 
   dimension_group: datereg {
     type: time
+    label: "Registered"
     sql: ${TABLE}.datereg ;;
   }
 
@@ -2737,8 +2784,9 @@ view: vendor_nurtures {
   }
 
 
-  dimension_group: created_time {
+  dimension_group: created {
     type: time
+    label: "Created"
     sql: ${TABLE}.created_time ;;
   }
 
@@ -2780,8 +2828,9 @@ view: vendor_nurtures {
     sql: ${TABLE}.created_time_d ;;
   }
 
-  dimension_group: launch_time {
+  dimension_group: launch {
     type: time
+    label: "Launch"
     sql: ${TABLE}.launch_time ;;
   }
 
@@ -2838,8 +2887,9 @@ view: vendor_nurtures {
     sql: ${TABLE}.action_id_drip ;;
   }
 
-  dimension_group: sent_time {
+  dimension_group: sent {
     type: time
+    label: "Sent"
     sql: ${TABLE}.sent_time ;;
   }
 
@@ -2921,7 +2971,7 @@ view: vendor_nurtures {
       status,
       datereg_time,
       datelastlogin_time,
-      created_time_time,
+      created_time,
       mobile_number,
       company_id_xa_user_d,
       campaign_id_xa_campaign_d,
@@ -2929,13 +2979,13 @@ view: vendor_nurtures {
       campaign_name,
       campaign_type,
       created_time_xa_campaign_d_time,
-      launch_time_time,
+      launch_time,
       parent_campaign_id,
       is_launched,
       company_id_xa_company_d,
       company_name,
       user_id_xa_drip_email_history_d,
-      sent_time_time,
+      sent_time,
       name,
       type,
       subject,
@@ -3138,7 +3188,8 @@ view: partner_nurtures {
     measure: Nurture_Count{
       type: count_distinct
       sql: ${name_xa_drip_email_history_d1};;
-      drill_fields: [name_xa_drip_email_history_d1,subject_xa_drip_email_history_d1,sent_time_xa_drip_email_history_d1_date]
+      drill_fields: [name_xa_drip_email_history_d1,subject_xa_drip_email_history_d1,
+        sent_time_xa_drip_email_history_d1_time]
 
     }
     measure: Active_Nurture {
@@ -3151,7 +3202,8 @@ view: partner_nurtures {
     measure: Total_Partners{
       type: count_distinct
       sql: ${partner_id_xa_partnership};;
-      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_time,
+      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,
+        created_time_xa_user_d1_time,
         datereg_xa_user_d1_time,status_xa_user_d1
       ]
     }
@@ -3233,7 +3285,8 @@ view: partner_nurtures {
        # value:  "-NULL"
       #}
       filters: [name_xa_drip_email_history_d: "-NULL", totalPartner2: "-NULL"]
-      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_date,datereg_xa_user_d1_date,status_xa_user_d1]
+      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,
+        created_time_xa_user_d1_time,datereg_xa_user_d1_time,status_xa_user_d1]
 
     }
     measure: Partners_without_nurture{
@@ -3244,13 +3297,17 @@ view: partner_nurtures {
        # value:  "NULL"
       #}
       filters: [name_xa_drip_email_history_d: "NULL", totalPartner2: "-NULL"]
-      drill_fields:[company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,created_time_xa_user_d1_date,datereg_xa_user_d1_date,datelastlogin_xa_user_d1_date,status_xa_user_d1]
+      drill_fields:[company_name_xa_company_d1,email_id_xa_user_d1,Full_Name,
+        created_time_xa_user_d1_time,datereg_xa_user_d1_time,datelastlogin_xa_user_d1_time,
+        status_xa_user_d1]
 
     }
     measure: Name {
       type: count_distinct
       sql: ${name_xa_drip_email_history_d};;
-      drill_fields: [company_name_xa_company_d1,created_time_xa_user_d1_raw,datereg_xa_user_d1_raw,name_xa_drip_email_history_d,subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_raw]
+      drill_fields: [company_name_xa_company_d1,created_time_xa_user_d1_time,
+        datereg_xa_user_d1_time,name_xa_drip_email_history_d,
+        subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_raw]
     }
 
 
@@ -3258,22 +3315,26 @@ view: partner_nurtures {
     measure: Partners_count{
       type: count_distinct
       sql: ${partner_id_xa_partnership};;
-      drill_fields:[company_name_xa_company_d1,Full_Name,email_id_xa_user_d1,name_xa_drip_email_history_d,subject_xa_drip_email_history_d,sent_time_xa_drip_email_history_d_date]
+      drill_fields:[company_name_xa_company_d1,Full_Name,email_id_xa_user_d1,
+        name_xa_drip_email_history_d,subject_xa_drip_email_history_d,
+        sent_time_xa_drip_email_history_d1_time]
 
     }
 
     measure: Campaigns {
       type: count_distinct
       sql: ${campaign_id_xa_campaign_d} ;;
-      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,campaign_name_xa_campaign_d,created_time_xa_campaign_d_date
-        ,launch_time_xa_campaign_d_date]
+      drill_fields: [company_name_xa_company_d1,email_id_xa_user_d1,
+        campaign_name_xa_campaign_d,created_time_xa_campaign_d_time
+        ,launch_time_xa_campaign_d_time]
     }
 
     measure: Team_members{
       type: count_distinct
       sql: ${team_member_id} ;;
-      drill_fields: [TM_Full_Name,email_id_t,created_time_t_date,status_t,name_xa_drip_email_history_d1,
-        subject_xa_drip_email_history_d1,sent_time_xa_drip_email_history_d1_date]
+      drill_fields: [TM_Full_Name,email_id_t,created_time_t_time,status_t,
+        name_xa_drip_email_history_d1,
+        subject_xa_drip_email_history_d1,sent_time_xa_drip_email_history_d1_time]
     }
 
 
@@ -3346,12 +3407,12 @@ view: partner_nurtures {
     }
     dimension_group: created_time_xa_campaign_d {
       type: time
-      label: "created_time_Pc"
+      label: "Created"
       sql: ${TABLE}.created_time_Pc ;;
     }
     dimension_group: launch_time_xa_campaign_d {
       type: time
-      label: "Launch_Time"
+      label: "Launch"
       sql: ${TABLE}.Launch_Time ;;
     }
     dimension: parent_campaign_id_xa_campaign_d {
@@ -3378,12 +3439,12 @@ view: partner_nurtures {
     }
     dimension_group: created_time_xa_campaign_d1 {
       type: time
-      label: "TM_Created_time_Tc"
+      label: "Created "
       sql: ${TABLE}.TM_Created_time_Tc ;;
     }
     dimension_group: launch_time_xa_campaign_d1 {
       type: time
-      label: "TM_Launch_Time"
+      label: "Launched"
       sql: ${TABLE}.TM_Launch_Time ;;
     }
     dimension: parent_campaign_id_xa_campaign_d1 {
@@ -3403,7 +3464,7 @@ view: partner_nurtures {
     }
     dimension_group: sent_time_xa_drip_email_history_d {
       type: time
-      label: "Nurture_Sent_Time"
+      label: "Nurture Sent"
       sql: ${TABLE}.Nurture_Sent_Time ;;
     }
     dimension: action_id_a {
@@ -3434,7 +3495,7 @@ view: partner_nurtures {
     }
     dimension_group: datereg_xa_user_d1 {
       type: time
-      label: "Datereg"
+      label: "Registered"
       sql: ${TABLE}.Datereg ;;
     }
     dimension_group: datelastlogin_xa_user_d1 {
@@ -3444,7 +3505,7 @@ view: partner_nurtures {
     }
     dimension_group: created_time_xa_user_d1 {
       type: time
-      label: "Created_Time"
+      label: "Created"
       sql: ${TABLE}.Created_Time ;;
     }
     dimension: status_xa_user_d1 {
@@ -3473,7 +3534,7 @@ view: partner_nurtures {
     }
     dimension_group: created_time_t {
       type: time
-      label: "TM_Created_Time"
+      label: "Team Member Created"
       sql: ${TABLE}.TM_Created_Time ;;
     }
     dimension: firstname_t {
@@ -3494,17 +3555,17 @@ view: partner_nurtures {
     }
     dimension: name_xa_drip_email_history_d1 {
       type: string
-      label: "TM_Nurture_Name"
+      label: "Nurture Name"
       sql: ${TABLE}.TM_Nurture_Name ;;
     }
     dimension: subject_xa_drip_email_history_d1{
       type: string
-      label: "TM_Nurture_Subject"
+      label: "Nurture Subject"
       sql: ${TABLE}.TM_Nurture_Subject ;;
     }
     dimension_group: sent_time_xa_drip_email_history_d1 {
       type: time
-      label: "TM_Nurture_Sent_Time"
+      label: "Nuture Sent"
       sql: ${TABLE}.TM_Nurture_Sent_Time ;;
     }
 
@@ -3528,7 +3589,7 @@ view: partner_nurtures {
 
     dimension: TM_Full_Name {
       type: string
-      label: "TM_Full Name"
+      label: "Team member Name"
       sql: concat(${firstname_t},' ',${lastname_t}) ;;
     }
 
@@ -5420,7 +5481,7 @@ view: email_auto_respones {
   measure:Campaigns{
     type: count_distinct
     sql: ${campaign_id} ;;
-    drill_fields: [partner_company_name,campaign_name,launch_time_date,
+    drill_fields: [campaign_name,launch_time_time,
       campaign_email_sent_time_time]
   }
 
@@ -5472,7 +5533,7 @@ view: email_auto_respones {
 
   dimension_group: launch_time {
     type: time
-    label: "Launch Time"
+    label: "Launch"
     sql: ${TABLE}."Launch Time" ;;
   }
 
@@ -5556,14 +5617,14 @@ view: email_auto_respones {
 
   dimension_group: email_Opened_time {
     type: time
-    label: "Email Opened Time"
+    label: "Email Opened"
     sql: ${TABLE}."#Email Opened Time" ;;
 
   }
 
   dimension_group: email_clicked_time {
     type: time
-    label: "Email Clicked Time"
+    label: "Email Clicked"
     sql: ${TABLE}."#Email Clicked Time" ;;
   }
 
@@ -5587,7 +5648,7 @@ view: email_auto_respones {
 
   dimension_group: email_response_reply_time {
     type: time
-    label: "Email Response Reply Time"
+    label: "Email Response Reply"
     sql: ${TABLE}."Email Response Reply Time" ;;
   }
 
@@ -5599,7 +5660,7 @@ view: email_auto_respones {
 
   dimension_group: email_auto_responses_opened_time {
     type: time
-    label: "Email Auto Responses Opened Time"
+    label: "Email Auto Responses Opened"
     sql: ${TABLE}."Email Auto Responses Opened Time" ;;
   }
 
@@ -5611,7 +5672,7 @@ view: email_auto_respones {
 
   dimension_group: email_response_sent_time {
     type: time
-    label: "Email Response Sent Time"
+    label: "Email Response Sent"
     sql: ${TABLE}."Email Response Sent Time" ;;
   }
 
@@ -5635,7 +5696,7 @@ view: email_auto_respones {
 
   dimension_group: website_response_reply_time {
     type: time
-    label: "Website Response Reply Time"
+    label: "Website Response Reply"
     sql: ${TABLE}."Website Response Reply Time" ;;
   }
 
@@ -5647,7 +5708,7 @@ view: email_auto_respones {
 
   dimension_group: website_auto_responses_opened_time {
     type: time
-    label: "Website Auto Responses Opened Time"
+    label: "Website Auto Responses Opened"
     sql: ${TABLE}."Website Auto Responses Opened Time" ;;
   }
 
@@ -5659,7 +5720,7 @@ view: email_auto_respones {
 
   dimension_group: website_response_sent_time {
     type: time
-    label: "Website Response Sent Time"
+    label: "Website Response Sent"
     sql: ${TABLE}."Website Response Sent Time" ;;
   }
 
@@ -5671,7 +5732,7 @@ view: email_auto_respones {
 
   dimension_group: campaign_email_sent_time {
     type: time
-    label: "Campaign Email Sent Time"
+    label: "Campaign Email Sent"
     sql: ${TABLE}."Campaign Email Sent Time" ;;
   }
 
@@ -5899,7 +5960,7 @@ view: auto_responses_summary {
   dimension_group: launch_time {
     type: time
     label: "Launch Time"
-    sql: ${TABLE}."Launch Time" ;;
+    sql: ${TABLE}."Launch" ;;
   }
 
   dimension: total_recipients {
@@ -5929,14 +5990,14 @@ view: auto_responses_summary {
 
   dimension_group: email_Opened_time {
     type: time
-    label: "Email Opened Time"
+    label: "Email Opened"
     sql: ${TABLE}."#Email Opened Time" ;;
 
   }
 
   dimension_group: email_clicked_time {
     type: time
-    label: "Email Clicked Time"
+    label: "Email Clicked"
     sql: ${TABLE}."#Email Clicked Time" ;;
   }
 
@@ -5961,7 +6022,7 @@ view: auto_responses_summary {
 
   dimension_group: email_response_reply_time {
     type: time
-    label: "Email Response Reply Time"
+    label: "Email Response Reply"
     sql: ${TABLE}."Email Response Reply Time" ;;
   }
 
@@ -5997,7 +6058,7 @@ view: auto_responses_summary {
 
   dimension_group: website_response_reply_time {
     type: time
-    label: "Website Response Reply Time"
+    label: "Website Response Reply"
     sql: ${TABLE}."Website Response Reply Time" ;;
   }
 
@@ -6021,13 +6082,13 @@ view: auto_responses_summary {
 
   dimension_group: Email_Auto_Response_Opened_time {
     type: time
-    label: "Auto Responses Opened Time"
+    label: "Auto Responses Opened"
     sql: ${TABLE}."Email Auto Responses Opened Time" ;;
   }
 
   dimension_group: Website_Auto_Response_Opened_time {
     type: time
-    label: "Website Responses Opened Time"
+    label: "Website Responses Opened"
     sql: ${TABLE}."Website Auto Responses Opened Time" ;;
   }
 
@@ -6214,13 +6275,13 @@ view: partner_analytics {
 
   dimension_group: registered_date {
     type: time
-    label: "Registered Date"
+    label: "Registered"
     sql: ${TABLE}."Registered Date" ;;
   }
 
   dimension_group: last_login_date {
     type: time
-    label: "Last Login Date"
+    label: "Last Login"
     sql: ${TABLE}."Last Login Date" ;;
   }
 
@@ -6244,7 +6305,7 @@ view: partner_analytics {
 
   dimension_group: second_campaign_launch_time {
     type: time
-    label: "Second Campaign Launch Time"
+    label: "Second Campaign Launch"
     sql: ${TABLE}."Second Campaign Launch Time" ;;
   }
 
@@ -6256,7 +6317,7 @@ view: partner_analytics {
 
   dimension_group: recent_campaign_launch_time {
     type: time
-    label: "Recent Campaign Launch Time"
+    label: "Recent Campaign Launch"
     sql: ${TABLE}."Recent Campaign Launch Time" ;;
   }
 
@@ -6280,7 +6341,7 @@ view: partner_analytics {
   dimension_group: launch_time {
     type: time
     label: "Launch Time"
-    sql: ${TABLE}."Launch Time" ;;
+    sql: ${TABLE}."Launch" ;;
   }
 
   set: detail {
@@ -6401,7 +6462,7 @@ view: partner_analytics_details {
 
   dimension_group: redistributed_date {
     type: time
-    label: "Redistributed Date"
+    label: "Redistributed"
     sql: ${TABLE}."Redistributed Date" ;;
 
   }
@@ -6670,7 +6731,7 @@ order by pc1.v_com,pc1.p_com) total
 
   dimension_group: registered_date {
     type: time
-    label: "Registered Date"
+    label: "Registered"
     sql: ${TABLE}."Registered Date" ;;
   }
 
@@ -6729,6 +6790,13 @@ order by pc1.v_com,pc1.p_com) total
     type: string
     label: "Campaign Name"
     sql: ${TABLE}."Campaign Name" ;;
+     link:{
+
+      label:"{{value}} Partner Dashboard"
+      url: "https://stratappspartner.looker.com/dashboards/16?Vendor%20Company%20Name={{_filters['vendor_partners1.vendor_company_name'] | encode_uri }}&Campaign%20Name={{ value | encode_uri }}"
+      icon_url: "http://www.looker.com/favicon.ico"
+    }
+
   }
 
   dimension: campaign_type {
