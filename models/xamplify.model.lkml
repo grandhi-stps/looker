@@ -109,22 +109,25 @@ view: campaign1 {
       and "Email View".user_id = "Contact Received Campaigns".user_id)
       where "Redistributed Cam1".is_nurture_campaign = true
       ),
-       c as (select distinct user_id as "Contact User ID1",
-contact_company as "Contact Company",
-email_id as "Contact Email ID",
-contact_first_name as "Contact First Name",
-contact_last_name as "Contact Last Name",
-contact_mobile_number as "Contact Mobile Number",
-contact_country as "Contact Country",
-contact_state as "Contact State",
-contact_city as "Contact City",
-contact_zip as "Contact Zip Code",
-bounce as "Bounce",
-bounce_reason as "Bounce_Reason",
-block as "Block",
-spam as "Spam" ,
-       ROW_NUMBER () OVER (PARTITION BY user_id order by 1,2,3,4,5,6,7,8,9,10,11,12,13,14 desc nulls last) as row_number1
-from xamplify_test.xa_campaign_user_userlists_d)
+       c as (select distinct cuul.user_id as "Contact User ID1",
+cuul.contact_company as "Contact Company",
+cuul.email_id as "Contact Email ID",
+cuul.contact_first_name as "Contact First Name",
+cuul.contact_last_name as "Contact Last Name",
+cuul.contact_mobile_number as "Contact Mobile Number",
+cuul.contact_country as "Contact Country",
+cuul.contact_state as "Contact State",
+cuul.contact_city as "Contact City",
+cuul.contact_zip as "Contact Zip Code",
+cuul.bounce as "Bounce",
+cuul.bounce_reason as "Bounce_Reason",
+cuul.block as "Block",
+cuul.spam as "Spam" ,
+ud.is_email_valid as "Is_Email_Valid",
+
+       ROW_NUMBER () OVER (PARTITION BY cuul.user_id order by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 desc nulls last) as row_number1
+from xamplify_test.xa_campaign_user_userlists_d cuul left join xamplify_test.xa_user_d ud
+    on(cuul.user_id=ud.user_id) )
       select * from a left join b on a."Redistributed Campaign ID" = b."Redistributed Campaign ID1"
       inner join c on b."Contact User ID" = c."Contact User ID1"
      -- where a."Vendor Company ID" in (202,262,268,269,283,291,305,325,328,343,399,422,464)
@@ -245,27 +248,69 @@ dimension: Vendor_schedule_type {
   }
 
 
+
+
  measure: Delivered{
   type: count_distinct
-  sql: case when ${Bounce}=false and ${Block}=false and ${Spam}=false
+  sql: case when ${Bounce}=false and ${Block}=false and ${Spam}=false and ${Is_Email_Valid}=true
        then ${contact_user_id} end;;
   drill_fields: [
     email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city
   ]
+}
+
+  parameter: type_select {
+    label: "type_select"
+
+    allowed_value: { value: "Bounces"}
+    allowed_value: { value: "Blocks"}
+    allowed_value: { value: "Spam"}
+   }
+
+  measure: types {
+    type:number
+    sql: case when {% parameter type_select %} = 'Bounces'
+               then ${Bounce1}
+               when {% parameter type_select %} = 'Blocks'
+              then ${block1}
+               when {% parameter type_select %} = 'Spam'
+              then ${spam1}
+              end ;;
+  }
 
 
- }
+
 
   measure: Not_Delivered{
     type: count_distinct
-    sql: case when ${Bounce}=true or ${Block}=true or ${Spam}=true
+    sql: case when ${Bounce}=true or ${Block}=true or ${Spam}=true or ${Is_Email_Valid}=false
       then ${contact_user_id} end;;
     drill_fields: [
       email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city
     ]
+   }
 
 
+
+
+  measure: Bounce1 {
+    type: count_distinct
+    sql: case when ${Bounce}=true or ${Is_Email_Valid}=false or ${Block}=true or ${Spam}=true then ${contact_user_id} end  ;;
   }
+
+
+
+  measure: block1 {
+    type: count_distinct
+    sql: case when ${Block}=true  then ${contact_user_id} end  ;;
+  }
+
+  measure: spam1 {
+    type: count_distinct
+    sql: case when ${Spam}=true  then ${contact_user_id} end  ;;
+  }
+
+
 
 
 
@@ -401,6 +446,11 @@ dimension: Vendor_schedule_type {
     measure: View {
       type: count_distinct
       sql: ${view_id} ;;
+    }
+    dimension: Is_Email_Valid {
+      type:string
+      sql:${TABLE}."Is_Email_Valid"  ;;
+
     }
     dimension: Bounce {
       type: string
@@ -912,7 +962,8 @@ dimension: Vendor_schedule_type {
         Bounce,
         Bounce_Reason,
         Block,
-        Spam
+        Spam,
+        Is_Email_Valid
       ]
     }
   }
