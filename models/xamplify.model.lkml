@@ -6925,3 +6925,313 @@ order by pc1.v_com,pc1.p_com) total
     ]
   }
 }
+explore:sendgrid  {}
+view: sendgrid {
+  derived_table: {
+    sql: select
+      cp.company_id "Vendor Company Id" ,
+      cp.company_name "Vendor Company Name",
+      ud1.user_id "Partners",
+      cp1.company_id "Partner Company Id",
+      cp1.company_name "Partner Company Name",
+      ca1.campaign_id "Redistributed Campaign Id",
+      ca1.campaign_name "Redistributed Campaign Name",
+      cuul.user_id "Partner Recieved Users",
+      sg.user_id "Send grid Users",
+      sg.bounce "Bounce",
+      sg.block "Block",
+      sg.spam "Spam",
+      ud3.is_email_valid "Is Email Valid"
+
+
+      from
+      xamplify_test.xa_user_d ud left join xamplify_test.xa_company_d cp on(ud.company_id=cp.company_id)
+      left join xamplify_test.xa_campaign_d ca  on (ca.customer_id=ud.user_id)
+      left join xamplify_test.xa_campaign_d ca1 on (ca.campaign_id=ca1.parent_campaign_id)
+      left join xamplify_test.xa_user_d ud1 on (ud1.user_id=ca1.customer_id)
+      left join xamplify_test.xa_company_d cp1 on (cp1.company_id=ud1.company_id)
+      inner join xamplify_test.xa_campaign_user_userlist_d cuul on (cuul.campaign_id=ca1.campaign_id)
+      left join xamplify_test.xa_sendgrid_d sg on (sg.user_id=cuul.user_id)
+      left join xamplify_test.xa_user_d ud3 on (ud3.user_id=cuul.user_id)
+       ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+  measure: Redistributed_Campaigns{
+    type: count_distinct
+    sql: ${redistributed_campaign_id} ;;
+  }
+
+  measure: Total_Recipients{
+    type: count_distinct
+    sql: ${partner_recieved_users} ;;
+  }
+  measure: Bounce_users {
+    type: count_distinct
+    sql: case when ${bounce}=true then ${send_grid_users}  end;;
+  }
+  measure: Block_users {
+    type: count_distinct
+    sql: case when ${block}=true then ${send_grid_users}  end;;
+  }
+  measure: Spam_users {
+    type: count_distinct
+    sql: case when ${spam}=true then ${send_grid_users}  end;;
+  }
+  measure: Invalid_Users{
+    type: count_distinct
+    sql: case when ${is_email_valid}=false then ${partner_recieved_users}  end;;
+  }
+
+
+  dimension: vendor_company_id {
+    type: number
+    label: "Vendor Company Id"
+    sql: ${TABLE}."Vendor Company Id" ;;
+  }
+
+  dimension: vendor_company_name {
+    type: string
+    label: "Vendor Company Name"
+    sql: ${TABLE}."Vendor Company Name" ;;
+  }
+
+  dimension: partners {
+    type: number
+    sql: ${TABLE}."Partners" ;;
+  }
+
+  dimension: partner_company_id {
+    type: number
+    label: "Partner Company Id"
+    sql: ${TABLE}."Partner Company Id" ;;
+  }
+
+  dimension: partner_company_name {
+    type: string
+    label: "Partner Company Name"
+    sql: ${TABLE}."Partner Company Name" ;;
+  }
+
+  dimension: redistributed_campaign_id {
+    type: number
+    label: "Redistributed Campaign Id"
+    sql: ${TABLE}."Redistributed Campaign Id" ;;
+  }
+
+  dimension: redistributed_campaign_name {
+    type: string
+    label: "Redistributed Campaign Name"
+    sql: ${TABLE}."Redistributed Campaign Name" ;;
+  }
+
+  dimension: partner_recieved_users {
+    type: number
+    label: "Partner Recieved Users"
+    sql: ${TABLE}."Partner Recieved Users" ;;
+  }
+
+  dimension: send_grid_users {
+    type: number
+    label: "Send grid Users"
+    sql: ${TABLE}."Send grid Users" ;;
+  }
+
+  dimension: bounce {
+    type: string
+    sql: ${TABLE}."Bounce" ;;
+  }
+
+  dimension: block {
+    type: string
+    sql: ${TABLE}."Block" ;;
+  }
+
+  dimension: spam {
+    type: string
+    sql: ${TABLE}."Spam" ;;
+  }
+
+  dimension: is_email_valid {
+    type: string
+    label: "Is Email Valid"
+    sql: ${TABLE}."Is Email Valid" ;;
+  }
+
+  set: detail {
+    fields: [
+      vendor_company_id,
+      vendor_company_name,
+      partners,
+      partner_company_id,
+      partner_company_name,
+      redistributed_campaign_id,
+      redistributed_campaign_name,
+      partner_recieved_users,
+      send_grid_users,
+      bounce,
+      block,
+      spam,
+      is_email_valid
+    ]
+  }
+}
+
+explore:sendgrid1  {}
+view: sendgrid1 {
+  derived_table: {
+    sql: select
+      distinct cp.company_name "Vendor Company Name",
+      cp1.company_name "Partner Company Name",
+      ca1.campaign_id "Redistributed Campaign Id",
+      ca1.campaign_name "Redistributed Campaign Name",
+      ca1.launch_time "Redistributed Launch time",
+      cuul.user_id "Partner Recieved Users",
+      bo.created "Bounced time",
+      bo.email "Bounced Email",
+      bl.created "Blocked time",
+      bl.email "Blocked Email",
+      sp.created "Spamed time",
+      sp.email "Spamed Email"
+      from xamplify_test.xa_user_d ud
+      left outer join xamplify_test.xa_company_d cp on(ud.company_id=cp.company_id)
+      left outer join xamplify_test.xa_campaign_d ca on(ca.customer_id=ud.user_id)
+      left outer join xamplify_test.xa_campaign_d ca1 on(ca1.parent_campaign_id=ca.campaign_id)
+      left outer join xamplify_test.xa_user_d ud1 on(ud1.user_id=ca1.customer_id)
+      left outer join xamplify_test.xa_company_d cp1 on(cp1.company_id=ud1.company_id)
+      left outer join xamplify_test.xa_campaign_user_userlist_d cuul on (cuul.campaign_id=ca1.campaign_id)
+      left outer join xamplify_test.xa_user_d ud3 on(ud3.user_id=cuul.user_id)
+      left outer join xamplify_test.xa_bounce_d bo on(bo.email=ud3.email_id)
+      left outer join xamplify_test.xa_block_d bl on (bl.email=ud3.email_id)
+      left outer join xamplify_test.xa_spam_d sp on (sp.email=ud3.email_id)
+       ;;
+  }
+
+  measure: count {
+    type: count
+    drill_fields: [detail*]
+  }
+
+  dimension: Blocked {
+    type: number
+    sql: case when ${redistributed_launch_time_date} <=${blocked_time_date}
+     then ( DATE_PART('day',age(${blocked_time_date},${redistributed_launch_time_date}))*12*30*24+
+    date_part('month',age(${blocked_time_date},${redistributed_launch_time_date}))*30*24+
+
+    DATE_PART('day',age(${blocked_time_date},${redistributed_launch_time_date}))*24+
+DATE_PART('hour', age(${blocked_time_date},${redistributed_launch_time_date}) ) ) end;;
+
+  }
+  dimension: Bounced {
+    type: number
+    sql: case when ${redistributed_launch_time_date}<=${bounced_time_date}
+           then (DATE_PART('year',age(${bounced_time_date},${redistributed_launch_time_date}))*12*30*24+
+          DATE_PART('month',age(${bounced_time_date},${redistributed_launch_time_date}))*24*30+
+          DATE_PART('day',age(${bounced_time_date},${redistributed_launch_time_date}))*24+
+      DATE_PART('hour', age(${bounced_time_date},${redistributed_launch_time_date}) ) ) end;;
+
+    }
+  dimension: Spamed {
+    type: number
+    sql: case when ${redistributed_launch_time_raw}<=${spamed_time_raw}
+           then (  DATE_PART('year',age(${spamed_time_date},${redistributed_launch_time_date}))*24*30*12+
+          DATE_PART('month',age(${spamed_time_date},${redistributed_launch_time_date}))*24*30+
+          DATE_PART('day',age(${spamed_time_date},${redistributed_launch_time_date}))*24+
+      DATE_PART('hour', age(${spamed_time_date},${redistributed_launch_time_date}) ) ) end;;
+
+    }
+
+
+
+  dimension: vendor_company_name {
+    type: string
+    label: "Vendor Company Name"
+    sql: ${TABLE}."Vendor Company Name" ;;
+  }
+
+  dimension: partner_company_name {
+    type: string
+    label: "Partner Company Name"
+    sql: ${TABLE}."Partner Company Name" ;;
+  }
+
+  dimension: redistributed_campaign_id {
+    type: number
+    label: "Redistributed Campaign Id"
+    sql: ${TABLE}."Redistributed Campaign Id" ;;
+  }
+
+  dimension: redistributed_campaign_name {
+    type: string
+    label: "Redistributed Campaign Name"
+    sql: ${TABLE}."Redistributed Campaign Name" ;;
+  }
+
+  dimension_group: redistributed_launch_time {
+    type: time
+    label: "Redistributed Launch time"
+    sql: ${TABLE}."Redistributed Launch time" ;;
+  }
+
+  dimension: partner_recieved_users {
+    type: number
+    label: "Partner Recieved Users"
+    sql: ${TABLE}."Partner Recieved Users" ;;
+  }
+
+  dimension_group: bounced_time {
+    type: time
+    label: "Bounced time"
+    sql: ${TABLE}."Bounced time" ;;
+  }
+
+  dimension: bounced_email {
+    type: string
+    label: "Bounced Email"
+    sql: ${TABLE}."Bounced Email" ;;
+  }
+
+  dimension_group: blocked_time {
+    type: time
+    label: "Blocked time"
+    sql: ${TABLE}."Blocked time" ;;
+  }
+
+  dimension: blocked_email {
+    type: string
+    label: "Blocked Email"
+    sql: ${TABLE}."Blocked Email" ;;
+  }
+
+  dimension_group: spamed_time {
+    type: time
+    label: "Spamed time"
+    sql: ${TABLE}."Spamed time" ;;
+  }
+
+  dimension: spamed_email {
+    type: string
+    label: "Spamed Email"
+    sql: ${TABLE}."Spamed Email" ;;
+  }
+
+  set: detail {
+    fields: [
+      vendor_company_name,
+      partner_company_name,
+      redistributed_campaign_id,
+      redistributed_campaign_name,
+      redistributed_launch_time_time,
+      partner_recieved_users,
+      bounced_time_time,
+      bounced_email,
+      blocked_time_time,
+      blocked_email,
+      spamed_time_time,
+      spamed_email
+    ]
+  }
+}
