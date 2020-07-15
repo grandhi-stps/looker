@@ -7083,7 +7083,7 @@ view: sendgrid {
 explore:sendgrid1  {}
 view: sendgrid1 {
   derived_table: {
-    sql: select
+    sql:select
       distinct cp.company_name "Vendor Company Name",
       cp1.company_name "Partner Company Name",
       ca1.campaign_id "Redistributed Campaign Id",
@@ -7104,9 +7104,21 @@ view: sendgrid1 {
       left outer join xamplify_test.xa_company_d cp1 on(cp1.company_id=ud1.company_id)
       left outer join xamplify_test.xa_campaign_user_userlist_d cuul on (cuul.campaign_id=ca1.campaign_id)
       left outer join xamplify_test.xa_user_d ud3 on(ud3.user_id=cuul.user_id)
-      left outer join xamplify_test.xa_bounce_d bo on(bo.email=ud3.email_id)
-      left outer join xamplify_test.xa_block_d bl on (bl.email=ud3.email_id)
-      left outer join xamplify_test.xa_spam_d sp on (sp.email=ud3.email_id)
+      full outer join xamplify_test.xa_bounce_d bo on(bo.email=ud3.email_id)
+     full outer join xamplify_test.xa_block_d bl on (bl.email=ud3.email_id)
+     full outer join xamplify_test.xa_spam_d sp on (sp.email=ud3.email_id)
+   where ((DATE_PART('year',age(bl.created,ca1.launch_time))*12*30*24+
+  DATE_PART('month',age(bl.created,ca1.launch_time))*30*24+
+DATE_PART('day',age(bl.created,ca1.launch_time))*24+ DATE_PART('hour', age(bl.created,ca1.launch_time) ))<=3
+and bl.created>=ca1.launch_time)
+ or ((DATE_PART('year',age(bo.created,ca1.launch_time))*12*30*24+
+  DATE_PART('month',age(bo.created,ca1.launch_time))*30*24+
+DATE_PART('day',age(bo.created,ca1.launch_time))*24+ DATE_PART('hour', age(bo.created,ca1.launch_time) ))<=3
+and bo.created>=ca1.launch_time)
+ or((DATE_PART('year',age(sp.created,ca1.launch_time))*12*30*24+
+  DATE_PART('month',age(sp.created,ca1.launch_time))*30*24+
+DATE_PART('day',age(sp.created,ca1.launch_time))*24+ DATE_PART('hour', age(sp.created,ca1.launch_time) ))<=3
+and sp.created>=ca1.launch_time)
        ;;
   }
 
@@ -7114,33 +7126,51 @@ view: sendgrid1 {
     type: count
     drill_fields: [detail*]
   }
+  measure: Blocked_User{
+    type: count_distinct
+    sql: case when ${Blocked}<=3 then ${blocked_email} end ;;
+    drill_fields: [blocked_email,partner_company_name,redistributed_campaign_name,
+      redistributed_launch_time_time,blocked_time_time]
+  }
+  measure: Spam_User{
+    type: count_distinct
+    sql: case when  ${Spamed}<=3 then ${spamed_email} end ;;
+    drill_fields: [spamed_email,partner_company_name,redistributed_campaign_name,
+      redistributed_launch_time_time,spamed_time_time]
+  }
+  measure: Bounced_User{
+    type: count_distinct
+    sql: case when  ${Bounced}<=3 then ${bounced_email} end ;;
+    drill_fields: [bounced_email,partner_company_name,redistributed_campaign_name,
+      redistributed_launch_time_time,bounced_time_time]
+  }
 
   dimension: Blocked {
     type: number
-    sql: case when ${redistributed_launch_time_date} <=${blocked_time_date}
-     then ( DATE_PART('day',age(${blocked_time_date},${redistributed_launch_time_date}))*12*30*24+
-    date_part('month',age(${blocked_time_date},${redistributed_launch_time_date}))*30*24+
+    sql: case when ${redistributed_launch_time_raw} <=${blocked_time_raw}
+     then ( DATE_PART('year',age(${blocked_time_raw},${redistributed_launch_time_raw}))*12*30*24+
+    date_part('month',age(${blocked_time_raw},${redistributed_launch_time_raw}))*30*24+
 
-    DATE_PART('day',age(${blocked_time_date},${redistributed_launch_time_date}))*24+
-DATE_PART('hour', age(${blocked_time_date},${redistributed_launch_time_date}) ) ) end;;
+    DATE_PART('day',age(${blocked_time_raw},${redistributed_launch_time_raw}))*24+
+DATE_PART('hour', age(${blocked_time_raw},${redistributed_launch_time_raw}) ) ) end;;
 
   }
   dimension: Bounced {
     type: number
-    sql: case when ${redistributed_launch_time_date}<=${bounced_time_date}
-           then (DATE_PART('year',age(${bounced_time_date},${redistributed_launch_time_date}))*12*30*24+
-          DATE_PART('month',age(${bounced_time_date},${redistributed_launch_time_date}))*24*30+
-          DATE_PART('day',age(${bounced_time_date},${redistributed_launch_time_date}))*24+
-      DATE_PART('hour', age(${bounced_time_date},${redistributed_launch_time_date}) ) ) end;;
+    sql: case when ${redistributed_launch_time_raw}<=${bounced_time_raw}
+           then (DATE_PART('year',age(${bounced_time_raw},${redistributed_launch_time_raw}))*12*30*24+
+          DATE_PART('month',age(${bounced_time_raw},${redistributed_launch_time_raw}))*24*30+
+          DATE_PART('day',age(${bounced_time_raw},${redistributed_launch_time_raw}))*24+
+      DATE_PART('hour', age(${bounced_time_raw},${redistributed_launch_time_raw}) ) ) end;;
 
     }
   dimension: Spamed {
     type: number
     sql: case when ${redistributed_launch_time_raw}<=${spamed_time_raw}
-           then (  DATE_PART('year',age(${spamed_time_date},${redistributed_launch_time_date}))*24*30*12+
-          DATE_PART('month',age(${spamed_time_date},${redistributed_launch_time_date}))*24*30+
-          DATE_PART('day',age(${spamed_time_date},${redistributed_launch_time_date}))*24+
-      DATE_PART('hour', age(${spamed_time_date},${redistributed_launch_time_date}) ) ) end;;
+           then (  DATE_PART('year',age(${spamed_time_raw},${redistributed_launch_time_raw}))*24*30*12+
+          DATE_PART('month',age(${spamed_time_raw},${redistributed_launch_time_raw}))*24*30+
+          DATE_PART('day',age(${spamed_time_raw},${redistributed_launch_time_raw}))*24+
+      DATE_PART('hour',age( ${spamed_time_raw},${redistributed_launch_time_raw})) ) end;;
 
     }
 
@@ -7172,7 +7202,7 @@ DATE_PART('hour', age(${blocked_time_date},${redistributed_launch_time_date}) ) 
 
   dimension_group: redistributed_launch_time {
     type: time
-    label: "Redistributed Launch time"
+    label: "Redistributed Launch"
     sql: ${TABLE}."Redistributed Launch time" ;;
   }
 
@@ -7184,7 +7214,7 @@ DATE_PART('hour', age(${blocked_time_date},${redistributed_launch_time_date}) ) 
 
   dimension_group: bounced_time {
     type: time
-    label: "Bounced time"
+    label: "Bounced"
     sql: ${TABLE}."Bounced time" ;;
   }
 
@@ -7196,7 +7226,7 @@ DATE_PART('hour', age(${blocked_time_date},${redistributed_launch_time_date}) ) 
 
   dimension_group: blocked_time {
     type: time
-    label: "Blocked time"
+    label: "Blocked"
     sql: ${TABLE}."Blocked time" ;;
   }
 
@@ -7208,13 +7238,13 @@ DATE_PART('hour', age(${blocked_time_date},${redistributed_launch_time_date}) ) 
 
   dimension_group: spamed_time {
     type: time
-    label: "Spamed time"
+    label: "Spam"
     sql: ${TABLE}."Spamed time" ;;
   }
 
   dimension: spamed_email {
     type: string
-    label: "Spamed Email"
+    label: "Spam Email"
     sql: ${TABLE}."Spamed Email" ;;
   }
 
