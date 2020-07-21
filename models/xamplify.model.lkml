@@ -1040,13 +1040,13 @@ view:vendors {
                 "Redistributed Cam".parent_campaign_id as "Parent Campaign ID",
                 "Redistributed Cam".is_launched "Redistributed Cam Is Launched",
                 "Redistributed Cam".launch_time "Redistributed Cam Launch Time",
-                "Partner Received Campaigns".campaign_id as "Partner Received Campaign",
-               "Partner Received Campaigns".user_id "Partner User ID",
-                "Partner Received Campaigns".email_id as "Partner Email ID",
+                --"Partner Received Campaigns".campaign_id as "Partner Received Campaign",
+               --"Partner Received Campaigns".user_id "Partner User ID",
+                --"Partner Received Campaigns".email_id as "Partner Email ID",
                -- "Partner Received Campaigns".user_list_id "Partner User List ID",
                 --"Partner Received Campaigns".partner_first_name "Partner First Name",
                -- "Partner Received Campaigns".partner_last_name "Partner Last Name",
-                "Partner Received Campaigns".partner_company_name "Partner Company Name1",
+                --"Partner Received Campaigns".partner_company_name "Partner Company Name1",
                 "Partner Users".datereg as "Partner Datereg",
                  "Partner Users".user_id as "Partner Users ID",
                   "Partner Users".email_id as "Partners email_id",
@@ -1077,7 +1077,7 @@ view:vendors {
                 left JOIN xamplify_test.xa_campaign_d "Redistributed Cam" ON ("Vendor Campaign".campaign_id = "Redistributed Cam".parent_campaign_id)
                 left JOIN xamplify_test.xa_user_d "Partner Users" ON ("Redistributed Cam".customer_id = "Partner Users".user_id)
                 left JOIN xamplify_test.xa_company_d "Partner Company" ON ("Partner Users".company_id = "Partner Company".company_id)
-                left JOIN (select distinct campaign_id ,user_id,partner_company_name,email_id from xamplify_test.xa_campaign_user_userlist_d) "Partner Received Campaigns" ON ("Vendor Campaign".campaign_id = "Partner Received Campaigns".campaign_id)
+               -- left JOIN (select distinct campaign_id ,user_id,partner_company_name,email_id from xamplify_test.xa_campaign_user_userlist_d) "Partner Received Campaigns" ON ("Vendor Campaign".campaign_id = "Partner Received Campaigns".campaign_id)
                 left join xamplify_test.xa_campaign_deal_registration_d "Campaign Deal Reg" on "Redistributed Cam".campaign_id = "Campaign Deal Reg".campaign_id
                 left join xamplify_test.xa_date_dim "Date" on (split_part("Vendor Campaign".launch_time::text , '-',1)||split_part("Vendor Campaign".launch_time::text , '-',2)||left(split_part("Vendor Campaign".launch_time::text , '-',3),2))::int
                 = "Date".date_key
@@ -1108,61 +1108,6 @@ view:vendors {
             end;;
   }
 
-
-  measure: Partners{
-    type: count_distinct
-    label: "Received Partners"
-    sql: ${partner_user_id};;
-    drill_fields: [partner_company_name1,partner_email_id]
-  }
-
-
-  measure: Vendor_Cam_Lauched{
-    type: count_distinct
-    sql: (case when ${vendor_cam_is_launched} then ${vendor_campaign_id} END);;
-    #html: <font size="20">{{ value }}</font> ;;
-    #html:   <font color="white">{{value}}</font>
-    # <title>HTML text bold</title>;;
-    #(IF ${vendor_cam_is_launched}  THEN  ${vendor_campaign_id} END);;
-    drill_fields: [vendor_campaign_name,vendor_campaign_type, Vendor_schedule_type,
-      Partners,Redistributed_Partners]
-    # link: {
-    #  label: "Detail Report"
-    # url: "{{https://stratappspartner.looker.com/looks/20}}"
-    #  }
-
-  }
-
-  measure: Total_Campaigns {
-    type: count_distinct
-    label: "Total Campaigns"
-    sql: ${vendor_campaign_id} ;;
-    drill_fields: [vendor_campaign_name,vendor_campaign_type,Vendor_schedule_type,
-      vendor_cam_created_time,Partners,Redistributed_Partners]
-  }
-
-  measure:campaigns_received_Partner{
-    type: count_distinct
-    sql: ${partner_received_campaign} ;;
-    drill_fields: [vendor_campaign_name,vendor_campaign_type,Vendor_schedule_type,
-      vendor_cam_launch_time,Partners,Redistributed_Campaigns]
-
-  }
-  measure: Redistributed_Partners {
-    type: count_distinct
-    sql: ${Partners_users} ;;
-    drill_fields: [Partners_email_id,partner_company_name,Redistributed_Campaigns]
-  }
-
-
-
-  measure: campaigns_Redistribued_by_Partners{
-    type: count_distinct
-    sql: ${parent_campaign_id} ;;
-    drill_fields: [vendor_campaign_name,vendor_campaign_type,Vendor_schedule_type,
-      vendor_cam_launch_time,Partners,Redistributed_Partners]
-  }
-
   measure: Partners_Recieved_Campaigns{
     type: count_distinct
     sql: ${parent_campaign_id} ;;
@@ -1170,13 +1115,6 @@ view:vendors {
       vendor_cam_launch_time,Redistributed_Campaigns]
   }
 
-  measure:Not_Redistributed  {
-    type:number
-    sql: ${campaigns_received_Partner}- ${campaigns_Redistribued_by_Partners} ;;
-    drill_fields: [vendor_campaign_name,vendor_campaign_type,Vendor_schedule_type,
-      vendor_cam_launch_time,Partners,Redistributed_Partners]
-
-  }
 
   measure: Deals_KPI{
     type:count_distinct
@@ -1194,8 +1132,8 @@ view:vendors {
   measure: Leads  {
     type:count_distinct
     sql: ${id};;
-    drill_fields: [deal_partner_company,deal_first_name,deal_last_name,deal_email_id,
-      deal_phone_number,deal_company,deal_created_time]
+    drill_fields: [lead_partner_company,lead_first_name,lead_last_name,lead_email_id,
+      lead_phone_number,lead_company,lead_created_time]
 
 
   }
@@ -1486,8 +1424,49 @@ view:vendors {
     sql: ${TABLE}."Deal Company" ;;
   }
 
+  dimension_group: lead_created {
+    type: time
+    label: "Lead Created"
+    sql: ${TABLE}."Deal Created Time" ;;
+  }
+
+  dimension: lead_first_name {
+    type: string
+    label: "Lead First Name"
+    sql: ${TABLE}."Deal First Name" ;;
+  }
+
+  dimension: lead_last_name {
+    type: string
+    label: "Lead Last Name"
+    sql: ${TABLE}."Deal Last Name" ;;
+  }
+
+  dimension: lead_email_id {
+    type: string
+    label: "Lead Email ID"
+    sql: ${TABLE}."Deal Email ID" ;;
+  }
+
+  dimension: lead_phone_number {
+    type: string
+    label: "Lead Phone Number"
+    sql: ${TABLE}."Deal Phone Number" ;;
+  }
 
 
+
+  dimension: lead_partner_company {
+    type: string
+    label: "Lead Partner Company"
+    sql: ${TABLE}."Deal Partner Company" ;;
+  }
+
+  dimension: lead_company {
+    type: string
+    label: "Lead Company"
+    sql: ${TABLE}."Deal Company" ;;
+  }
 
   set: detail {
     fields: [
@@ -1532,56 +1511,64 @@ view:vendors {
       deal_phone_number,
       opportunity_amt,
       deal_partner_company,
-      deal_company
+      deal_company,
+      lead_company,
+      lead_partner_company,
+      lead_phone_number,
+      lead_email_id,
+      lead_last_name,
+      lead_first_name,
+      lead_created_time,
+
     ]
   }
 }
-explore:vendor_partners  {}
-view: vendor_partners {
+
+
+
+explore: vendor_received_campaigns  {}
+view: vendor_received_campaigns {
   derived_table: {
-    sql: select
-              ul.listby_partner_id  "Total Partners",
-                    c.company_name as "Vendor Company Name",
-                    c1.company_name as "Partner Company Name",
-                    c2.company_name as "Active Partner Company Name",
-                    c1.company_id as "Partners Company ID",
-                    ud1.company_id as "Partner Company ID",
-                    ul.is_partner_userlist as "is_partner_userlist",
-                  cam.launch_time as "Launch Time" ,
-                  cam1.launch_time as "Redistributed Launch Time",
-                  ud1.user_id as "Partner Users",
-                  ud2.email_id as "Partner Email ID",
-                  ud2.firstname as "Partner Firstname",
-                  ud2.lastname as "Partner Lastname",
-                  ud2.created_time as "Partner CreatedTime",
-                  ud2.datereg as "Datereg",
-                  ud2.status as"Status",
-                  ud2.company_id as "Company_id",
-                  ud1.email_id as "Partners Email ID",
-                  ud1.firstname as "Partners Firstname",
-                  ud1.lastname as "Partners Lastname",
-                  ud1.created_time as "Partners CreatedTime",
-                  ud1.datereg as "DateReg",
-                  ud1.status as"Partner Status",
-                  cam1.campaign_id as "Redistributed Campaign ID"
-                  from
-                    xamplify_test.xa_user_d ud
-                    left join (select distinct c.company_id,c.company_name from xamplify_test.xa_company_d c, xamplify_test.xa_user_d  u,xamplify_test.xa_user_role_d r
-                                           where u.company_id=c.company_id
-                                           and u.user_id=r.user_id
-                                           and r.role_id in(2,13) and c.company_id not in(231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
-                                           380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)) as c
-                                  on(ud.company_id=c.company_id)
-                  left join  xamplify_test.xa_campaign_d cam on(ud.user_id=cam.customer_id)
-                  left join  xamplify_test.xa_campaign_d cam1 on(cam.campaign_id=cam1.parent_campaign_id)
-                  left join xamplify_test.xa_user_list_d ul on(ud.user_id=ul.customer_id)
-                  left join xamplify_test.xa_user_d ud2 on (ud2.user_id=ul.listby_partner_id)
-                  left join xamplify_test.xa_user_d ud1 on(ud1.user_id=cam1.customer_id)
-                  left join xamplify_test.xa_company_d c1 on(ud2.company_id=c1.company_id)
-                  left join xamplify_test.xa_company_d c2 on(ud1.company_id=c2.company_id )
-                    --where ud.company_id=399
-                    where ul.is_partner_userlist= true
-         ;;
+    sql: select distinct "Vendor Campaign".campaign_id as "Vendor Campaign ID",
+                "Vendor Campaign".campaign_name as "Vendor Campaign Name",
+                "Vendor Company".company_id as "Vendor Company ID",
+                "Vendor Company".company_name as "Vendor Company Name",
+                "Vendor Campaign".is_launched "Vendor Cam Is Launched",
+                "Vendor Campaign".launch_time "Vendor Cam Launch Time",
+                "Vendor Campaign".created_time "Vendor Cam Created Time",
+                "Vendor Campaign".campaign_type "Vendor Campaign Type",
+                 "Vendor Campaign".campaign_schedule_type "Vendor Campaign Schedule Type",
+                "Partner Company".company_id "Partner Company ID",
+                "Partner Company".company_name "Partner Company Name",
+                "Redistributed Cam".campaign_id as "Redistributed Campaign ID",
+                "Redistributed Cam".campaign_name as "Redistributed Campaign Name",
+                "Redistributed Cam".campaign_type as "Redistributed Campaign Type",
+                "Redistributed Cam".campaign_schedule_type as "Redistributed Cam Schedule Type",
+                "Redistributed Cam".created_time as "Redistributed Cam Created Time",
+                "Redistributed Cam".parent_campaign_id as "Parent Campaign ID",
+                "Redistributed Cam".is_launched "Redistributed Cam Is Launched",
+                "Redistributed Cam".launch_time "Redistributed Cam Launch Time",
+                "Partner Received Campaigns".campaign_id as "Partner Received Campaign",
+               "Partner Received Campaigns".user_id "Partner User ID",
+                "Partner Received Campaigns".email_id as "Partner Email ID",
+                "Partner Received Campaigns".partner_company_name "Partner Company Name1",
+                "Partner Users".datereg as "Partner Datereg",
+                 "Partner Users".user_id as "Partner Users ID",
+                  "Partner Users".email_id as "Partners email_id"
+
+                from
+                xamplify_test.xa_campaign_d "Vendor Campaign"
+                left JOIN xamplify_test.xa_user_d "Vendor Users" ON ("Vendor Campaign".customer_id = "Vendor Users".user_id)
+                left JOIN (select distinct c.company_id,c.company_name from xamplify_test.xa_company_d c, xamplify_test.xa_user_d  u,xamplify_test.xa_user_role_d r
+                       where u.company_id=c.company_id
+                       and u.user_id=r.user_id
+                       and r.role_id in(2,13) and c.company_id not in(231,130,265,266,313,391,280,281,303,307,311,357,320,326,331,334,356,270,368,370,369,372,376,
+                       380,382,398,215,273,410,413,415,374,389,322,332,333,335,367,349,358,359,362,371,378,379,381,385,386,388,393,395,401,414,384,421,424)) "Vendor Company" ON ("Vendor Users".company_id = "Vendor Company".company_id)
+                left JOIN xamplify_test.xa_campaign_d "Redistributed Cam" ON ("Vendor Campaign".campaign_id = "Redistributed Cam".parent_campaign_id)
+                left JOIN xamplify_test.xa_user_d "Partner Users" ON ("Redistributed Cam".customer_id = "Partner Users".user_id)
+                left JOIN xamplify_test.xa_company_d "Partner Company" ON ("Partner Users".company_id = "Partner Company".company_id)
+                left JOIN (select distinct campaign_id ,user_id,partner_company_name,email_id from xamplify_test.xa_campaign_user_userlist_d) "Partner Received Campaigns" ON ("Vendor Campaign".campaign_id = "Partner Received Campaigns".campaign_id)
+ ;;
   }
 
   measure: count {
@@ -1589,49 +1576,101 @@ view: vendor_partners {
     drill_fields: [detail*]
   }
 
-
-  measure: Total_Partners {
-    type: count_distinct
-    sql: ${total_partners} ;;
-    drill_fields: [partner_company_name,partner_email_id,datereg_time,status]
+  dimension: Vendor_schedule_type {
+    type: string
+    label: "Vendor Campaign Schedule Type"
+    sql: case when ${vendor_campaign_schedule_type}='NOW' then 'LAUNCHED'
+            when ${vendor_campaign_schedule_type}='SAVE' then 'SAVE'
+            when ${vendor_campaign_schedule_type}='SCHEDULE' then 'SCHEDULE'
+            end;;
   }
 
-  measure: Active_Partners {
-    type: count_distinct
-    sql: ${partner_company_id} ;;
-    drill_fields:  [active_partner_company_name]
+  dimension: Partner_schedule_type {
+    type: string
+    label: "Redistributed Campaign Schedule Type"
+    sql: case when ${redistributed_cam_schedule_type} ='NOW' then 'LAUNCHED'
+            when ${redistributed_cam_schedule_type}='SAVE' then 'SAVE'
+            when ${redistributed_cam_schedule_type}='SCHEDULE' then 'SCHEDULE'
+            end;;
   }
 
 
-  measure: Total_companies {
+  measure: Partners{
     type: count_distinct
-    sql: ${company_id};;
+    label: "Received Partners"
+    sql: ${partner_user_id};;
+    drill_fields: [partner_company_name1,partner_email_id]
+  }
+
+
+  measure: Vendor_Cam_Lauched{
+    type: count_distinct
+    sql: (case when ${vendor_cam_is_launched} then ${vendor_campaign_id} END);;
+    drill_fields: [vendor_campaign_name,vendor_campaign_type, Vendor_schedule_type,
+      vendor_cam_launch_time_time,Partners,Redistributed_Partners]
 
   }
 
-  measure: InActive_Partners {
+  measure: Total_Campaigns {
+    type: count_distinct
+    label: "Total Campaigns"
+    sql: ${vendor_campaign_id} ;;
+    drill_fields: [vendor_campaign_name,vendor_campaign_type,Vendor_schedule_type,
+      vendor_cam_created_time_time,Partners,Redistributed_Partners]
+  }
+
+  measure:campaigns_received_Partner{
+    type: count_distinct
+    sql: ${partner_received_campaign} ;;
+    drill_fields: [vendor_campaign_name,vendor_campaign_type,Vendor_schedule_type,
+     vendor_cam_launch_time_time,Partners,Redistributed_Partners]
+  }
+
+  measure:Not_Redistributed  {
+    type:number
+    sql: ${campaigns_received_Partner}- ${campaigns_Redistribued_by_Partners} ;;
+    drill_fields: [vendor_campaign_name,vendor_campaign_type,Vendor_schedule_type,
+      vendor_cam_launch_time_time,Partners,Redistributed_Partners]
+
+  }
+
+  measure: Redistributed_Campaigns  {
+    type:count_distinct
+    sql: ${redistributed_campaign_id};;
+    drill_fields: [redistributed_campaign_name,redistributed_campaign_type,
+      Partner_schedule_type,redistributed_cam_launch_time_time]
+
+  }
+  measure: Redistributed_Partners {
+    type: count_distinct
+    sql: ${partner_users_id} ;;
+    drill_fields: [partners_email_id,partner_company_name,Redistributed_Campaigns]
+  }
+
+  measure: campaigns_Redistribued_by_Partners{
+    type: count_distinct
+    sql: ${parent_campaign_id} ;;
+    drill_fields: [vendor_campaign_name,vendor_campaign_type,Vendor_schedule_type,
+      vendor_cam_launch_time_time,Partners,Redistributed_Partners]
+  }
+
+
+  dimension: vendor_campaign_id {
     type: number
-    sql:  ${Total_companies}-${Active_Partners};;
-    #drill_fields:  [partner_company_name]
-
+    label: "Vendor Campaign ID"
+    sql: ${TABLE}."Vendor Campaign ID" ;;
   }
 
-  measure: Partners_with_Companies {
-    type: count_distinct
-    sql: case when ${partners_company_id} is not null then ${total_partners} end ;;
-    drill_fields: [partner_company_name,partner_email_id,datereg_time,status]
+  dimension: vendor_campaign_name {
+    type: string
+    label: "Vendor Campaign Name"
+    sql: ${TABLE}."Vendor Campaign Name" ;;
   }
 
-  measure: Partners_without_Companies {
-    type: count_distinct
-    sql: case when ${partners_company_id} is null then ${total_partners} end  ;;
-    drill_fields:  [partner_company_name,partner_email_id,datereg_time,status]
-  }
-
-  dimension: total_partners {
+  dimension: vendor_company_id {
     type: number
-    label: "Total Partners"
-    sql: ${TABLE}."Total Partners" ;;
+    label: "Vendor Company ID"
+    sql: ${TABLE}."Vendor Company ID" ;;
   }
 
   dimension: vendor_company_name {
@@ -1640,24 +1679,34 @@ view: vendor_partners {
     sql: ${TABLE}."Vendor Company Name" ;;
   }
 
-  dimension: partner_company_name {
+  dimension: vendor_cam_is_launched {
     type: string
-    label: "Partner Company Name"
-    sql: ${TABLE}."Partner Company Name" ;;
+    label: "Vendor Cam Is Launched"
+    sql: ${TABLE}."Vendor Cam Is Launched" ;;
   }
 
-
-
-  dimension: active_partner_company_name {
-    type: string
-    label: "Active Partner Company Name"
-    sql: ${TABLE}."Active Partner Company Name" ;;
+  dimension_group: vendor_cam_launch_time {
+    type: time
+    label: "Vendor Campaign Launch"
+    sql: ${TABLE}."Vendor Cam Launch Time" ;;
   }
 
-  dimension: partners_company_id {
-    type: number
-    label: "Partners Company ID"
-    sql: ${TABLE}."Partners Company ID" ;;
+  dimension_group: vendor_cam_created_time {
+    type: time
+    label: "Vendor Campaign Created"
+    sql: ${TABLE}."Vendor Cam Created Time" ;;
+  }
+
+  dimension: vendor_campaign_type {
+    type: string
+    label: "Vendor Campaign Type"
+    sql: ${TABLE}."Vendor Campaign Type" ;;
+  }
+
+  dimension: vendor_campaign_schedule_type {
+    type: string
+    label: "Vendor Campaign Schedule Type"
+    sql: ${TABLE}."Vendor Campaign Schedule Type" ;;
   }
 
   dimension: partner_company_id {
@@ -1666,102 +1715,10 @@ view: vendor_partners {
     sql: ${TABLE}."Partner Company ID" ;;
   }
 
-  dimension: is_partner_userlist {
+  dimension: partner_company_name {
     type: string
-    sql: ${TABLE}."is_partner_userlist" ;;
-  }
-
-  dimension_group: launch_time {
-    type: time
-    label: "Launch Time"
-    sql: ${TABLE}."Launch Time" ;;
-  }
-
-
-  dimension_group: redistributed_launch_time {
-    type: time
-    label: "Redistributed Launch Time"
-    sql: ${TABLE}."Redistributed Launch Time";;
-  }
-
-  dimension: partner_users {
-    type: number
-    label: "Partner Users"
-    sql: ${TABLE}."Partner Users" ;;
-  }
-
-  dimension: partner_email_id {
-    type: string
-    label: "Partner Email ID"
-    sql: ${TABLE}."Partner Email ID" ;;
-  }
-
-  dimension: partner_firstname {
-    type: string
-    label: "Partner Firstname"
-    sql: ${TABLE}."Partner Firstname" ;;
-  }
-
-  dimension: partner_lastname {
-    type: string
-    label: "Partner Lastname"
-    sql: ${TABLE}."Partner Lastname" ;;
-  }
-
-  dimension_group: partner_created_time {
-    type: time
-    label: "Partner CreatedTime"
-    sql: ${TABLE}."Partner CreatedTime" ;;
-  }
-
-  dimension_group: datereg {
-    type: time
-    sql: ${TABLE}."Datereg" ;;
-  }
-
-  dimension: status {
-    type: string
-    sql: ${TABLE}."Status" ;;
-  }
-
-  dimension: company_id {
-    type: number
-    sql: ${TABLE}."Company_id" ;;
-  }
-
-  dimension: partners_email_id {
-    type: string
-    label: "Partners Email ID"
-    sql: ${TABLE}."Partners Email ID" ;;
-  }
-
-  dimension: partners_firstname {
-    type: string
-    label: "Partners Firstname"
-    sql: ${TABLE}."Partners Firstname" ;;
-  }
-
-  dimension: partners_lastname {
-    type: string
-    label: "Partners Lastname"
-    sql: ${TABLE}."Partners Lastname" ;;
-  }
-
-  dimension_group: partners_created_time {
-    type: time
-    label: "Partners CreatedTime"
-    sql: ${TABLE}."Partners CreatedTime" ;;
-  }
-
-  dimension_group: date_reg {
-    type: time
-    sql: ${TABLE}."DateReg" ;;
-  }
-
-  dimension: partner_status {
-    type: string
-    label: "Partner Status"
-    sql: ${TABLE}."Partner Status" ;;
+    label: "Partner Company Name"
+    sql: ${TABLE}."Partner Company Name" ;;
   }
 
   dimension: redistributed_campaign_id {
@@ -1770,35 +1727,123 @@ view: vendor_partners {
     sql: ${TABLE}."Redistributed Campaign ID" ;;
   }
 
+  dimension: redistributed_campaign_name {
+    type: string
+    label: "Redistributed Campaign Name"
+    sql: ${TABLE}."Redistributed Campaign Name" ;;
+  }
+
+  dimension: redistributed_campaign_type {
+    type: string
+    label: "Redistributed Campaign Type"
+    sql: ${TABLE}."Redistributed Campaign Type" ;;
+  }
+
+  dimension: redistributed_cam_schedule_type {
+    type: string
+    label: "Redistributed Cam Schedule Type"
+    sql: ${TABLE}."Redistributed Cam Schedule Type" ;;
+  }
+
+  dimension_group: redistributed_cam_created_time {
+    type: time
+    label: "Redistributed Cam Created Time"
+    sql: ${TABLE}."Redistributed Cam Created Time" ;;
+  }
+
+  dimension: parent_campaign_id {
+    type: number
+    label: "Parent Campaign ID"
+    sql: ${TABLE}."Parent Campaign ID" ;;
+  }
+
+  dimension: redistributed_cam_is_launched {
+    type: string
+    label: "Redistributed Cam Is Launched"
+    sql: ${TABLE}."Redistributed Cam Is Launched" ;;
+  }
+
+  dimension_group: redistributed_cam_launch_time {
+    type: time
+    label: "Redistributed Cam Launch Time"
+    sql: ${TABLE}."Redistributed Cam Launch Time" ;;
+  }
+
+  dimension: partner_received_campaign {
+    type: number
+    label: "Partner Received Campaign"
+    sql: ${TABLE}."Partner Received Campaign" ;;
+  }
+
+  dimension: partner_user_id {
+    type: number
+    label: "Partner User ID"
+    sql: ${TABLE}."Partner User ID" ;;
+  }
+
+  dimension: partner_email_id {
+    type: string
+    label: "Partner Email ID"
+    sql: ${TABLE}."Partner Email ID" ;;
+  }
+
+  dimension: partner_company_name1 {
+    type: string
+    label: "Partner Company Name"
+    sql: ${TABLE}."Partner Company Name1" ;;
+  }
+
+  dimension_group: partner_datereg {
+    type: time
+    label: "Partner Datereg"
+    sql: ${TABLE}."Partner Datereg" ;;
+  }
+
+  dimension: partner_users_id {
+    type: number
+    label: "Partner Users ID"
+    sql: ${TABLE}."Partner Users ID" ;;
+  }
+
+  dimension: partners_email_id {
+    type: string
+    label: "Partners email_id"
+    sql: ${TABLE}."Partners email_id" ;;
+  }
+
   set: detail {
     fields: [
-      total_partners,
+      vendor_campaign_id,
+      vendor_campaign_name,
+      vendor_company_id,
       vendor_company_name,
-      partner_company_name,
-      active_partner_company_name,
-      partners_company_id,
+      vendor_cam_is_launched,
+      vendor_cam_launch_time_time,
+      vendor_cam_created_time_time,
+      vendor_campaign_type,
+      vendor_campaign_schedule_type,
       partner_company_id,
-      is_partner_userlist,
-      launch_time_time,
-      redistributed_launch_time_time,
-      partner_users,
+      partner_company_name,
+      redistributed_campaign_id,
+      redistributed_campaign_name,
+      redistributed_campaign_type,
+      redistributed_cam_schedule_type,
+      redistributed_cam_created_time_time,
+      parent_campaign_id,
+      redistributed_cam_is_launched,
+      redistributed_cam_launch_time_time,
+      partner_received_campaign,
+      partner_user_id,
       partner_email_id,
-      partner_firstname,
-      partner_lastname,
-      partner_created_time_time,
-      datereg_time,
-      status,
-      company_id,
-      partners_email_id,
-      partners_firstname,
-      partners_lastname,
-      partners_created_time_time,
-      date_reg_time,
-      partner_status,
-      redistributed_campaign_id
+      partner_company_name1,
+      partner_datereg_time,
+      partner_users_id,
+      partners_email_id
     ]
   }
 }
+
+
 
 
 
@@ -1857,6 +1902,8 @@ view:leads_deals {
                 left join xamplify_test.xa_campaign_deal_status_d "Campaign Deal Status" on "Campaign Deal Status".deal_id = "Campaign Deal Reg".id
                 left join xamplify_test.xa_date_dim "Date" on (split_part("Campaign Deal Reg".created_time::text , '-',1)||split_part("Campaign Deal Reg".created_time::text , '-',2)||left(split_part("Campaign Deal Reg".created_time::text , '-',3),2))::int
                 = "Date".date_key
+                left join xamplify_test.xa_user_role_d "User_Role" on "Vendor Users".user_id="User_Role".user_id
+                where "User_Role".role_id in(2,13)
                  ;;
   }
 
@@ -1891,7 +1938,7 @@ measure: Leads  {
   sql: ${id};;
   #html: <font size="30"><b>{{ value }}<\b></font>
   drill_fields: [partner_company_name,
-    Lead_firstname,Lead_lastname,Lead_emailid,Lead_phonenumber
+    Lead_firstname,Lead_lastname,Lead_emailid,Lead_company,Lead_phonenumber,deal_created_time_time
   ]
 }
   dimension: company_name {
@@ -1905,6 +1952,12 @@ measure: Leads  {
     label: "Deals Company"
     sql:  case when ${is_deal}='true' then ${deal_company} ;;
   }
+  dimension: Lead_company {
+    type: string
+    label: "Lead Company"
+    sql: ${TABLE}."Deal Company";;
+  }
+
 
   dimension: campaign_name {
     type: string
@@ -1941,71 +1994,49 @@ measure: Leads  {
 
 
 
-  measure: 20Q1leads{
-    type: count_distinct
-    sql: case when ${year_qtr}='20Q1' then ${id} end ;;
-  }
-
-  measure: 20Q2leads{
-    type: count_distinct
-    sql: case when ${year_qtr}='20Q2' then ${id} end ;;
-
-  }
-
-  measure: 20Q1Deals{
-    type: count_distinct
-    sql: case when ${year_qtr}='20Q1' and ${is_deal}='true' then ${id} end ;;
-  }
-
-  measure: 20Q2Deals{
-    type: count_distinct
-    sql: case when ${year_qtr}='20Q2' and ${is_deal}='true' then ${id} end ;;
-
-  }
-
-  measure: 20Q1DealPercentage {
+  measure: Prev_Qtr_DealPercentage {
     type: number
-    sql:100* ${20Q1Deals}/coalesce(NULLIF(${20Q1leads},0),1) ;;
+    sql:100* ${Previous_Quarter_Deals}/coalesce(NULLIF(${Previous_Quarter_Leads},0),1) ;;
     value_format: "0\%"
   }
 
-  measure: 20Q2DealPercentage {
+  measure: Current_Qtr_DealPercentage {
     type: number
-    sql: 100* ${20Q2Deals}/coalesce(NULLIF(${20Q2leads},0),1);;
+    sql: 100* ${Current_Quarter_Deals}/coalesce(NULLIF(${Current_Quarter_Leads},0),1);;
     value_format: "0\%"
 
   }
 
   measure: Lead_QTD_Growth_Percentage {
     type: number
-    sql:100*coalesce((${20Q2leads}-${20Q1leads}),0)/coalesce(NULLIF(${20Q1leads},0),1);;
+    sql:100*coalesce((${Current_Quarter_Leads}-${Previous_Quarter_Leads}),0)/coalesce(NULLIF(${Previous_Quarter_Leads},0),1);;
     value_format: "0\%"
   }
 
   measure: Deal_QTD_Growth_Percentage {
     type: number
-    sql: 100*coalesce((${20Q2Deals}-${20Q1Deals}),0)/coalesce(NULLIF(${20Q1Deals},0),1);;
+    sql: 100*coalesce((${Current_Quarter_Deals}-${Previous_Quarter_Deals}),0)/coalesce(NULLIF(${Previous_Quarter_Deals},0),1);;
     value_format: "0\%"
   }
 
   measure: Percentage_QOQ_Deals{
     type: number
-    sql:100*coalesce((${20Q2DealPercentage}-${20Q1DealPercentage}),0)/coalesce(NULLIF(${20Q1DealPercentage},0),1);;
+    sql:100*coalesce(${Current_Qtr_DealPercentage},0)/coalesce(NULLIF(${Prev_Qtr_DealPercentage},0),1);;
     value_format: "0\%"
   }
 
   measure: Prev_Month_Leads {
     type: count_distinct
-    sql:case when extract(month from ${deal_created_time_date})= (extract(month from now())-1)
-      and extract(year from ${deal_created_time_date})=2020  then ${id} end;;
+    sql:case when extract(month from ${deal_created_time_raw})= extract(month from now())-1
+      and extract(year from ${deal_created_time_raw})=extract(year from now())  then ${id} end;;
   }
 
 
   measure: Cur_Month_Leads {
     type: count_distinct
-    sql:case when extract(month from ${deal_created_time_date})= extract(month from now())
-      and extract(year from ${deal_created_time_date})=2020 then ${id} end;;
-    #html: <font size="30 px"><b>{{ value }}<\b></font>
+    sql:case when extract(month from ${deal_created_time_raw})= extract(month from now())
+      and extract(year from ${deal_created_time_raw})=extract(year from now()) then ${id} end;;
+
 
 
   }
@@ -2014,8 +2045,8 @@ measure: Leads  {
 
   measure: Prev_Month_Deals{
     type: count_distinct
-    sql:case when extract(month from ${deal_created_time_date})= (extract(month from now())-1)
-              and extract(year from ${deal_created_time_date})=2020 and ${is_deal}='true'
+    sql:case when extract(month from ${deal_created_time_raw})= extract(month from now())-1
+              and extract(year from ${deal_created_time_raw})=extract(year from now()) and ${is_deal}='true'
     then ${id} end;;
     drill_fields:[partner_company_name,Deal_email_id,
       Deal_first_name,Deal_last_name
@@ -2026,8 +2057,8 @@ measure: Leads  {
 
   measure: Cur_Month_Deals{
     type: count_distinct
-    sql:case when extract(month from ${deal_created_time_date})= extract(month from now())
-                      and extract(year from ${deal_created_time_date} )=2020   and ${is_deal}='true'
+    sql:case when extract(month from ${deal_created_time_raw})= extract(month from now())
+                      and extract(year from ${deal_created_time_raw} )=extract(year from now())  and ${is_deal}='true'
                 then ${id} end;;
 
 
@@ -2063,39 +2094,103 @@ measure: Leads  {
     value_format: "0\%"
   }
 
-   measure: Prev_Year_Leads {
-    type: count_distinct
-    sql:case when extract(year from ${deal_created_time_date})= (extract(year from now())-1)
-      and extract(year from ${deal_created_time_date})=2020  then ${id} end;;
-
-  }
-
 
   measure: Cur_Year_Leads {
     type: count_distinct
-    sql:case when extract(year from ${deal_created_time_date})= extract(year from now())
-      and extract(year from ${deal_created_time_date})=2020 then ${id} end;;
+    sql:case when extract(year from ${deal_created_time_raw})= extract(year from now())
+      then ${id} end;;
 
 
   }
 
-  measure: Prev_Year_Deals{
+  measure: Prev_Year_Leads {
     type: count_distinct
-    sql:case when extract(year from ${deal_created_time_date})= (extract(year from now())-1)
-              and extract(year from ${deal_created_time_date})=2020 and ${is_deal}='true'
-    then ${id} end;;
+    sql:case when extract(year from ${deal_created_time_raw})= extract(year from now())-1
+      then ${id} end;;
 
+  }
+
+
+  measure: Previous_year_percentage_change_Leads {
+    type: number
+    sql:coalesce(round((${leads_deals.Cur_Year_Leads}-${leads_deals.Prev_Year_Leads})
+      /NULLIF(${leads_deals.Prev_Year_Leads},0)::numeric,2),1)*100  ;;
+  }
+
+  measure: Previous_year_percentage_change_Deals {
+    type: number
+    sql:coalesce(round((${Cur_Year_Deals}-${Prev_Year_Deals})
+      /NULLIF(${Prev_Year_Deals},0)::numeric,2),1)*100  ;;
+  }
+
+
+
+
+    measure: Current_Quarter_Leads {
+      type: count_distinct
+      sql: CASE
+          WHEN extract(quarter from ${deal_created_time_raw} ):: character varying= extract(quarter from now()):: character varying
+            AND
+              extract(year from ${deal_created_time_raw}):: character varying = extract(year from now()):: character varying
+
+
+            THEN ${id} end
+;;
+    }
+
+
+    measure: Previous_Quarter_Leads {
+      type: count_distinct
+      sql:  CASE
+          WHEN extract(quarter from ${deal_created_time_raw} )= extract(quarter from now())-1            AND
+              extract(year from ${deal_created_time_raw})= extract(year from now())
+
+
+            THEN ${id} end
+                ;;
+    }
+  measure: Current_Quarter_Deals{
+    type: count_distinct
+    sql: CASE
+          WHEN extract(quarter from ${deal_created_time_raw} ):: character varying= extract(quarter from now()):: character varying
+            AND
+              extract(year from ${deal_created_time_raw}):: character varying = extract(year from now()):: character varying
+            AND ${is_deal}='true'
+
+
+            THEN ${id} end
+;;
+  }
+
+
+  measure: Previous_Quarter_Deals {
+    type: count_distinct
+    sql:  CASE
+          WHEN extract(quarter from ${deal_created_time_raw} )= extract(quarter from now())-1            AND
+              extract(year from ${deal_created_time_raw})= extract(year from now())
+     AND ${is_deal}='true'
+
+            THEN ${id} end
+                ;;
+  }
+
+
+
+ measure: Prev_Year_Deals{
+    type: count_distinct
+    sql:case when extract(year from ${deal_created_time_raw})= extract(year from now())-1
+              and extract(year from ${deal_created_time_date})=extract(year from now()) and ${is_deal}='true'
+    then ${id} end;;
 
 
 
   }
   measure: Cur_Year_Deals{
     type: count_distinct
-    sql:case when extract(year from ${deal_created_time_date})= extract(year from now())
-                      and extract(year from ${deal_created_time_date} )=2020   and ${is_deal}='true'
+    sql:case when extract(year from ${deal_created_time_raw})= extract(year from now())
+                      and extract(year from ${deal_created_time_date} )=extract(year from now())
+                      and ${is_deal}='true'
                 then ${id} end;;
-
-
 
     }
 
@@ -2110,6 +2205,8 @@ measure: Leads  {
     sql: 100*coalesce(((${Cur_Year_Deals}-${Prev_Year_Deals})*100),0)/coalesce(NULLIF(${Prev_Year_Deals},0),1) ;;
 
   }
+
+
   dimension: Year_Mon {
     type: string
     sql:  concat(cast(extract(year from ${deal_status_created_time_date}) as character varying),'-',
@@ -2314,8 +2411,9 @@ measure: Leads  {
 
   dimension_group: deal_created_time {
     type: time
-    label: "Lead Created Time"
+    label: "Lead Created"
     sql: ${TABLE}."Deal Created Time" ;;
+   # drill_fields: [deal_created_time_month,deal_created_time_week]
   }
   dimension_group: deal_status_created_time {
     type: time
@@ -7095,30 +7193,41 @@ view: sendgrid1 {
       bl.created "Blocked time",
       bl.email "Blocked Email",
       sp.created "Spamed time",
-      sp.email "Spamed Email"
+      sp.email "Spamed Email",
+      ud3.email_id "User Email",
+      bl.reason "Blocked Reason",
+      bo.reason "Bounced Reason",
+      cuul.user_id as "Contact User ID",
+cuul1.contact_company as "Contact Company",
+cuul1.email_id as "Contact Email ID",
+cuul1.contact_first_name as "Contact First Name",
+cuul1.contact_last_name as "Contact Last Name",
+cuul1.contact_mobile_number as "Contact Mobile Number",
+cuul1.contact_country as "Contact Country",
+cuul1.contact_state as "Contact State",
+cuul1.contact_city as "Contact City",
+cuul1.contact_zip as "Contact Zip Code"
       from xamplify_test.xa_user_d ud
       left outer join xamplify_test.xa_company_d cp on(ud.company_id=cp.company_id)
       left outer join xamplify_test.xa_campaign_d ca on(ca.customer_id=ud.user_id)
       left outer join xamplify_test.xa_campaign_d ca1 on(ca1.parent_campaign_id=ca.campaign_id)
       left outer join xamplify_test.xa_user_d ud1 on(ud1.user_id=ca1.customer_id)
       left outer join xamplify_test.xa_company_d cp1 on(cp1.company_id=ud1.company_id)
-      left outer join xamplify_test.xa_campaign_user_userlist_d cuul on (cuul.campaign_id=ca1.campaign_id)
-      left outer join xamplify_test.xa_user_d ud3 on(ud3.user_id=cuul.user_id)
-      full outer join xamplify_test.xa_bounce_d bo on(bo.email=ud3.email_id)
-     full outer join xamplify_test.xa_block_d bl on (bl.email=ud3.email_id)
-     full outer join xamplify_test.xa_spam_d sp on (sp.email=ud3.email_id)
-   where ((DATE_PART('year',age(bl.created,ca1.launch_time))*12*30*24+
-  DATE_PART('month',age(bl.created,ca1.launch_time))*30*24+
-DATE_PART('day',age(bl.created,ca1.launch_time))*24+ DATE_PART('hour', age(bl.created,ca1.launch_time) ))<=3
-and bl.created>=ca1.launch_time)
- or ((DATE_PART('year',age(bo.created,ca1.launch_time))*12*30*24+
-  DATE_PART('month',age(bo.created,ca1.launch_time))*30*24+
-DATE_PART('day',age(bo.created,ca1.launch_time))*24+ DATE_PART('hour', age(bo.created,ca1.launch_time) ))<=3
-and bo.created>=ca1.launch_time)
- or((DATE_PART('year',age(sp.created,ca1.launch_time))*12*30*24+
-  DATE_PART('month',age(sp.created,ca1.launch_time))*30*24+
-DATE_PART('day',age(sp.created,ca1.launch_time))*24+ DATE_PART('hour', age(sp.created,ca1.launch_time) ))<=3
-and sp.created>=ca1.launch_time)
+      left outer join
+      xamplify_test.xa_campaign_user_userlist_d
+      cuul on (cuul.campaign_id=ca1.campaign_id)
+    left outer join (select distinct user_id,
+ max(contact_company) "contact_company",max(email_id) "email_id",max(contact_first_name) "contact_first_name",
+           max(contact_last_name)"contact_last_name",max(contact_mobile_number)"contact_mobile_number",
+max(contact_country)"contact_country",max(contact_state)"contact_state",max(contact_city)"contact_city",
+           max(contact_zip)"contact_zip"
+      from
+      xamplify_test.xa_campaign_user_userlist_d group by 1)cuul1 on(
+                                      cuul.user_id=cuul1.user_id)
+      left outer join xamplify_test.xa_user_d ud3 on(ud3.user_id=cuul1.user_id)
+      left outer join xamplify_test.xa_bounce_d bo on(bo.email=ud3.email_id)
+     left outer join xamplify_test.xa_block_d bl on (bl.email=ud3.email_id)
+     left outer join xamplify_test.xa_spam_d sp on (sp.email=ud3.email_id)
        ;;
   }
 
@@ -7130,7 +7239,7 @@ and sp.created>=ca1.launch_time)
     type: count_distinct
     sql: case when ${Blocked}<=3 then ${blocked_email} end ;;
     drill_fields: [blocked_email,partner_company_name,redistributed_campaign_name,
-      redistributed_launch_time_time,blocked_time_time]
+      redistributed_launch_time_time,blocked_time_time,Blocked_Reason]
   }
   measure: Spam_User{
     type: count_distinct
@@ -7142,7 +7251,17 @@ and sp.created>=ca1.launch_time)
     type: count_distinct
     sql: case when  ${Bounced}<=3 then ${bounced_email} end ;;
     drill_fields: [bounced_email,partner_company_name,redistributed_campaign_name,
-      redistributed_launch_time_time,bounced_time_time]
+      redistributed_launch_time_time,bounced_time_time,Bounced_Reason]
+  }
+  measure: Total_User {
+    type: count_distinct
+    sql:
+     ${contact_user_id}  ;;
+    drill_fields: [User_Email,partner_company_name,contact_mobile_number,contact_country,contact_state,
+                   contact_city]
+
+
+
   }
 
   dimension: Blocked {
@@ -7248,6 +7367,105 @@ DATE_PART('hour', age(${blocked_time_raw},${redistributed_launch_time_raw}) ) ) 
     sql: ${TABLE}."Spamed Email" ;;
   }
 
+  dimension: User_Email {
+    type: string
+    label: "User Email"
+    sql: ${TABLE}."User Email" ;;
+  }
+  dimension: Status {
+    type: string
+    sql: ${TABLE}."Status"
+      ;;
+      }
+
+  dimension:Blocked_Reason  {
+    type: string
+    sql: ${TABLE}."Blocked Reason"
+      ;;
+  }
+  dimension:Bounced_Reason  {
+    type: string
+    sql: ${TABLE}."Bounced Reason"
+      ;;
+  }
+
+  dimension_group:Spam_Time {
+    type: time
+    label: "Spam_"
+    sql: ${TABLE}."Spam Time" ;;
+  }
+  dimension_group:Bounce_Time {
+    type: time
+    label: "Bounce_"
+    sql: ${TABLE}."Bounce Time" ;;
+  }
+  dimension_group:Block_Time {
+    type: time
+    label: "Block_"
+    sql: ${TABLE}."Block Time" ;;
+  }
+  dimension: contact_user_id {
+    type: number
+    label: "Contact User ID"
+    sql: ${TABLE}."Contact User ID" ;;
+  }
+
+
+  dimension: contact_company {
+    type: string
+    label: "Contact Company"
+    sql: ${TABLE}."Contact Company" ;;
+  }
+
+  dimension: email_id {
+    type: string
+    label: "Contact Email ID"
+    sql: ${TABLE}."Contact Email ID" ;;
+  }
+
+  dimension: contact_first_name {
+    type: string
+    label: "Contact First Name"
+    sql: ${TABLE}."Contact First Name" ;;
+  }
+
+  dimension: contact_last_name {
+    type: string
+    label: "Contact Last Name"
+    sql: ${TABLE}."Contact Last Name" ;;
+  }
+
+  dimension: contact_mobile_number {
+    type: string
+    label: "Contact Mobile Number"
+    sql: ${TABLE}."Contact Mobile Number" ;;
+  }
+
+  dimension: contact_country {
+    type: string
+    map_layer_name: countries
+    label: "Contact Country"
+    sql: ${TABLE}."Contact Country" ;;
+  }
+
+  dimension: contact_state {
+    type: string
+    map_layer_name: us_states
+    label: "Contact State"
+    sql: ${TABLE}."Contact State" ;;
+  }
+  dimension: contact_city {
+    type: string
+    label: "Contact City"
+    sql: ${TABLE}."Contact City" ;;
+  }
+
+  dimension: contact_zip {
+    type: zipcode
+    label: "Contact Zip Code"
+    sql: ${TABLE}."Contact Zip Code" ;;
+  }
+
   set: detail {
     fields: [
       vendor_company_name,
@@ -7261,7 +7479,25 @@ DATE_PART('hour', age(${blocked_time_raw},${redistributed_launch_time_raw}) ) ) 
       blocked_time_time,
       blocked_email,
       spamed_time_time,
-      spamed_email
+      spamed_email,
+      User_Email,
+      Status,
+      Blocked_Reason,
+      Bounced_Reason,
+      Block_Time_time,
+      Bounce_Time_time,
+      Spam_Time_time,
+      contact_user_id,
+
+        contact_company,
+        email_id,
+        contact_first_name,
+        contact_last_name,
+        contact_mobile_number,
+        contact_country,
+        contact_state,
+        contact_city,
+        contact_zip,
     ]
   }
 }
