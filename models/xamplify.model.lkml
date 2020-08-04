@@ -452,8 +452,17 @@ dimension: Vendor_schedule_type {
     measure: Views {
       type: count_distinct
       sql: ${view_id} ;;
-      drill_fields: [email_id,view_time_time,view_id, email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city]
+      drill_fields: [email_id,view_time_minute,view_id, email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city]
     }
+
+  measure: Views1 {
+    type: count_distinct
+    sql:  ${view_time_minute} ;;
+    drill_fields: [email_id,view_time_minute, email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city]
+  }
+
+
+
 
     measure: partners {
       type: count_distinct
@@ -2078,6 +2087,13 @@ measure: Leads  {
     sql: 100*${Cur_Month_Deals}/coalesce(NULLIF(${Cur_Month_Leads},0),1) ;;
     value_format: "0\%"
   }
+
+  measure: Cur_Month_Leads_Percentage{
+    type: number
+    sql:coalesce(round((${leads_deals.Cur_Month_Leads}-${leads_deals.Prev_Month_Leads})
+    /NULLIF(${leads_deals.Prev_Month_Leads},0)::numeric,2),1)*100 ;;
+  }
+
   measure:Percentage_Leads_Growth{
     type: number
     sql: 100*coalesce((${Cur_Month_Leads}-${Prev_Month_Leads}),0)/coalesce(NULLIF(${Prev_Month_Leads},0),1);;
@@ -2149,6 +2165,7 @@ measure: Leads  {
             THEN ${id} end
                 ;;
     }
+
   measure: Current_Quarter_Deals{
     type: count_distinct
     sql: CASE
@@ -2173,6 +2190,18 @@ measure: Leads  {
             THEN ${id} end
                 ;;
   }
+
+  measure: Current_Qtr_Lead_percentage {
+  type: number
+  sql: coalesce(round((${leads_deals.Current_Quarter_Leads}-(${leads_deals.Previous_Quarter_Leads})
+  /NULLIF(${leads_deals.Previous_Quarter_Leads},0)::numeric,2),1)/100 ;;
+}
+
+  measure: Current_Qtr_Deal_percentage {
+  type: number
+  sql: coalesce(round(((${leads_deals.Current_Quarter_Deals}-${leads_deals.Previous_Quarter_Deals})
+  /NULLIF(${leads_deals.Previous_Quarter_Deals},0)::numeric,2),1)/100 ;;
+}
 
 
 
