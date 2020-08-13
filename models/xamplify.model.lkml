@@ -104,7 +104,7 @@ view: campaign1 {
       on "Vendor Campaign1".campaign_id = "Redistributed Cam1".parent_campaign_id
       join xamplify_test.xa_campaign_user_userlist_d "Contact Received Campaigns"
       on "Redistributed Cam1".campaign_id = "Contact Received Campaigns".campaign_id
-      left JOIN xamplify_test.xa_emaillog_d "Email View"
+      left JOIN  xamplify_test.xa_emaillog_d "Email View"
       ON (("Redistributed Cam1".campaign_id = "Email View".campaign_id)
       and "Email View".user_id = "Contact Received Campaigns".user_id)
       where "Redistributed Cam1".is_nurture_campaign = true
@@ -350,6 +350,16 @@ dimension: Vendor_schedule_type {
 
     }
 
+  measure: Email_Opened_Quarter{
+    type: count_distinct
+    sql:
+      ${view_user_id} ;;
+   # filters: [redistributed_cam_launch_quarter: ""]
+   # drill_fields: [
+     # email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city ]
+
+  }
+
 
 
     #dimension: Boolean_filter{
@@ -456,9 +466,14 @@ dimension: Vendor_schedule_type {
     }
 
   measure: Views1 {
-    type: count_distinct
-    sql:  ${view_time_minute} ;;
-    drill_fields: [email_id,view_time_minute, email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city]
+   type: number
+    sql: count(${view_user_id});;
+    drill_fields: [ email_id, view_time_minute, contact_company,contact_mobile_number,contact_country,contact_state,contact_city]
+  }
+  measure: Views2{
+    type: number
+    sql: count(${view_user_id}) ;;
+    #drill_fields: [email_id,view_time_minute,view_id, email_id,contact_company,contact_mobile_number,contact_country,contact_state,contact_city]
   }
 
 
@@ -5060,12 +5075,11 @@ and customer_id in
     drill_fields: [team_member_email_id,Team_member_name,team_member_status,user_role]
   }
 
-  measure: Views {
+  measure:Views {
     type: count_distinct
-    sql: ${view_id} ;;
+    sql: ${time_minute} ;;
 
   }
-
   measure: Partners {
     type: count_distinct
     sql: ${partner_user_id} ;;
